@@ -9,9 +9,9 @@ OUTPUT_FILE = Path("swe_bench_tasks.json")
 TARGET_QUOTAS = {
     "psf/requests": 6,          # All available in Lite
     "pallets/flask": 3,         # All available in Lite
-    # "pytest-dev/pytest": 17,    # All available in Lite
-    # "pylint-dev/pylint": 6,     # All available in Lite
-    # "mwaskom/seaborn": 4,       # All available in Lite
+    "pytest-dev/pytest": 17,    # All available in Lite
+    "pylint-dev/pylint": 6,     # All available in Lite
+    "mwaskom/seaborn": 4,       # All available in Lite
     # "django/django": 14         # Lightweight slice (forms, utils, validators)
 }
 

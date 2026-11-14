@@ -70,7 +70,7 @@ def parse_usage(traj_data: Dict[str, Any]) -> Dict[str, float]:
 
 
 def analyze_trajectory_steps(trajectory: List[Dict[str, Any]], turns_taken: int) -> Dict[str, Any]:
-    """Computes Time-to-First-Edit, Post-Fix Overhead, Command Count, and Amnesia Redundancy Rate."""
+    """Computes Time-to-First-Edit, Post-Fix Overhead, Command Count, and File Re-Inspection Rate."""
     shell_cmds = []
     first_edit_turn: Optional[int] = None
     last_edit_turn: Optional[int] = None
@@ -89,11 +89,22 @@ def analyze_trajectory_steps(trajectory: List[Dict[str, Any]], turns_taken: int)
             last_edit_turn = turn
 
     total_cmds = len(shell_cmds)
-    # Normalize commands to detect repeated file inspections (Exploration Amnesia)
-    normalized_cmds = [re.sub(r"\s+", " ", c) for c in shell_cmds]
-    unique_cmds = len(set(normalized_cmds))
-    duplicate_cmds = total_cmds - unique_cmds
-    redundancy_pct = (duplicate_cmds / total_cmds * 100.0) if total_cmds > 0 else 0.0
+
+    # --- UPDATED BLOCK: Track file-level re-inspections (Exploration Amnesia) ---
+    inspected_files = []
+    for c in shell_cmds:
+        # Extract all file paths referenced in the command (e.g., src/flask/config.py)
+        files_in_turn = set(re.findall(r"[\w./-]+\.(?:py|rst|toml|json|cfg|md|txt)", c))
+        inspected_files.extend(files_in_turn)
+
+    total_inspections = len(inspected_files)
+    unique_inspections = len(set(inspected_files))
+    redundancy_pct = (
+        ((total_inspections - unique_inspections) / total_inspections * 100.0)
+        if total_inspections > 0
+        else 0.0
+    )
+    # ----------------------------------------------------------------------------
 
     post_fix_overhead = (turns_taken - last_edit_turn) if last_edit_turn is not None else None
 

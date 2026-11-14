@@ -45,7 +45,6 @@ def run_experiment(condition: str, limit: int = 1, offset: int = 0):
 
     llm = LLMClient()
     
-    # Inside run_experiment() in run_benchmark.py before the task loop:
     completed_ids = set()
     if predictions_file.exists():
         with open(predictions_file, "r") as f:
@@ -53,17 +52,13 @@ def run_experiment(condition: str, limit: int = 1, offset: int = 0):
                 if line.strip():
                     completed_ids.add(json.loads(line)["instance_id"])
 
-    
-    for idx, task in enumerate(tasks, 1):
-        # Inside the loop over tasks:
-        if task["instance_id"] in completed_ids:
-            print(f"Skipping already completed task: {task['instance_id']}")
-            continue
+    for idx, task in enumerate(tasks, start=1):
         instance_id = task["instance_id"]
-        print('-' * 150)
-        print(f"\n--- Progress: Task[{instance_id}] {idx}/{total_tasks} ---")
+        if instance_id in completed_ids:
+            print(f"--- Skipping already completed task: {instance_id} ({idx}/{len(tasks)}) ---")
+            continue
 
-        # Instantiate orchestrator using the decoupled harness
+        print(f"\n--- Progress: Task[{instance_id}] {idx}/{len(tasks)} ---")
         agent = AgentOrchestrator(task=task, harness=harness, llm_client=llm)
         result = agent.run()
 
@@ -79,6 +74,7 @@ def run_experiment(condition: str, limit: int = 1, offset: int = 0):
 
         # 2. Persist comprehensive turn-by-turn trajectory logs
         traj_file = output_dir / f"{instance_id}_traj.json"
+        result["usage_metrics"] = llm.tracker.to_dict()
         result["usage_summary"] = llm.tracker.summary()
         with open(traj_file, "w") as f:
             json.dump(result, f, indent=2)

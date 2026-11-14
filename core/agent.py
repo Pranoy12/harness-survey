@@ -1,3 +1,4 @@
+import time
 from typing import Dict, Any
 from config import CONFIG
 from core.sandbox import DockerSandbox
@@ -16,14 +17,16 @@ class AgentOrchestrator:
         self.sandbox = DockerSandbox(self.instance_id)
 
     def run(self) -> Dict[str, Any]:
+        # Reset per-task token/call counters while keeping cumulative session spend
+        self.llm.tracker.reset_task()
+        start_time = time.time()
+
         print("=" * 100)
         print(f"Starting Task: {self.instance_id} [{self.harness.condition_name}]")
         print(f"Repository: {self.repo}")
         print(f"Problem Statement: {self.problem_statement}")
         print("=" * 100)
         print("\n\n")
-        
-        self.llm.tracker.reset_task()
 
         # 1. Start Docker container sandbox
         self.sandbox.start()
@@ -46,6 +49,7 @@ class AgentOrchestrator:
 
         turns_taken = 0
         finished = False
+        empty_action_retries = 0
         trajectory = []
         final_patch = ""
 
@@ -86,7 +90,7 @@ class AgentOrchestrator:
                 actions = self.harness.parse_action(response_msg)
 
                 if not actions:
-                    # Condition-aware nudge when no action was parsed
+                    empty_action_retries += 1
                     if tools is None:
                         nudge = (
                             "No executable bash code block was found in your response. "
@@ -109,7 +113,8 @@ class AgentOrchestrator:
                     trajectory.append({
                         "turn": turns_taken,
                         "action": fn_name,
-                        "args": fn_args
+                        "args": fn_args,
+                        "metrics_snapshot": self.llm.tracker.to_dict(),
                     })
 
                     if fn_name == "finish_task":
@@ -122,7 +127,6 @@ class AgentOrchestrator:
                         print(f"[{self.instance_id}] $ {cmd[:80]}")
                         exit_code, raw_out = self.sandbox.exec_cmd(cmd)
 
-                        # Truncate raw logs over 10k chars to prevent runaway payloads
                         if len(raw_out) > 10000:
                             raw_out = raw_out[:10000] + "\n...[truncated output]..."
 
@@ -133,7 +137,6 @@ class AgentOrchestrator:
                             raw_output=raw_out
                         )
 
-                        # Inject urgency reminder on the final 4 turns
                         if turns_taken >= CONFIG.MAX_AGENT_TURNS - 4:
                             remaining = CONFIG.MAX_AGENT_TURNS - turns_taken
                             obs["content"] += (
@@ -145,7 +148,6 @@ class AgentOrchestrator:
                         messages.append(obs)
 
                     else:
-                        # Guard against hallucinated tool names so tool_call_id stays paired
                         obs = self.harness.format_observation(
                             tool_id=tool_id,
                             tool_name=fn_name,
@@ -164,12 +166,17 @@ class AgentOrchestrator:
             print("=" * 100)
             print("\n\n")
 
+        wall_time_sec = round(time.time() - start_time, 2)
+
         return {
             "instance_id": self.instance_id,
             "condition": self.harness.condition_name,
             "turns_taken": turns_taken,
             "finished_by_tool": finished,
+            "empty_action_retries": empty_action_retries,
+            "wall_time_sec": wall_time_sec,
+            "usage_metrics": self.llm.tracker.to_dict(),
+            "usage_summary": self.llm.tracker.summary(),
             "model_patch": final_patch,
             "trajectory": trajectory,
-            "usage_metrics": self.llm.tracker.to_dict()
         }

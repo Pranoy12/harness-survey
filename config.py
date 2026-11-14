@@ -5,7 +5,7 @@ from pydantic import BaseModel
 class Config(BaseModel):
     # LLM Provider Configuration
     PROVIDER: str = os.getenv("LLM_PROVIDER", "deepseek")
-    API_KEY: str = os.getenv("LLM_API_KEY", "sk-a07c8debc0e24b4788afc24f9e4064ff")
+    API_KEY: str = os.getenv("LLM_API_KEY", "")
     
     # Must be None for Google AI Studio / Gemini; set only for custom OpenAI-compatible endpoints
     BASE_URL: Optional[str] = os.getenv("LLM_BASE_URL", None)
