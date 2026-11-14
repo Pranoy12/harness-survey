@@ -1,0 +1,169 @@
+{
+  "instance_id": "psf__requests-1963",
+  "condition": "condition_a",
+  "turns_taken": 19,
+  "finished_by_tool": true,
+  "model_patch": "diff --git a/requests/sessions.py b/requests/sessions.py\nindex 425db22..9c8aac8 100755\n--- a/requests/sessions.py\n+++ b/requests/sessions.py\n@@ -137,6 +137,9 @@ class SessionRedirectMixin(object):\n \n             prepared_request.method = method\n \n+            # Override the original request.\n+            req = prepared_request\n+\n             # https://github.com/kennethreitz/requests/issues/1084\n             if resp.status_code not in (codes.temporary, codes.resume):\n                 if 'Content-Length' in prepared_request.headers:\n",
+  "trajectory": [
+    {
+      "turn": 1,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && git log --oneline -5 && sed -n '1,260p' requests/sessions.py"
+      }
+    },
+    {
+      "turn": 1,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && grep -rn \"resolve_redirects\" . --include=*.py"
+      }
+    },
+    {
+      "turn": 2,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '430,540p' requests/sessions.py && grep -rn \"redirect\" tests/test_requests.py | head -50"
+      }
+    },
+    {
+      "turn": 2,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && ls tests && grep -rn \"303\\|307\\|see_other\\|temporary\" tests --include=*.py | head -80"
+      }
+    },
+    {
+      "turn": 3,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && ls -la && find . -maxdepth 2 -iname '*test*' -type f | head -50"
+      }
+    },
+    {
+      "turn": 4,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && grep -n \"def test.*redirect\\|resolve_redirects\\|TooManyRedirects\\|303\\|307\\|history\" test_requests.py | head -100"
+      }
+    },
+    {
+      "turn": 4,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && grep -n \"redirect\" test_requests.py | head -120"
+      }
+    },
+    {
+      "turn": 5,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '1,240p' test_requests.py"
+      }
+    },
+    {
+      "turn": 6,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && grep -n \"def copy\\|class PreparedRequest\\|def prepare_cookies\\|_cookies\" requests/models.py | head -40 && sed -n '250,380p' requests/models.py"
+      }
+    },
+    {
+      "turn": 6,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && git log --all --oneline | head -30 && git branch -a"
+      }
+    },
+    {
+      "turn": 7,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python - <<'PY'\nfrom pathlib import Path\np = Path('requests/sessions.py')\ntext = p.read_text()\nold = \"\"\"            prepared_request.method = method\n\n            # https://github.com/kennethreitz/requests/issues/1084\n\"\"\"\nnew = \"\"\"            prepared_request.method = method\n\n            # Override the original request.\n            req = prepared_request\n\n            # https://github.com/kennethreitz/requests/issues/1084\n\"\"\"\nassert old in text\np.write_text(text.replace(old, new))\nPY\ngit diff -- requests/sessions.py"
+      }
+    },
+    {
+      "turn": 8,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && grep -n \"def extract_cookies_to_jar\\|def close\\|def content\" -A30 requests/cookies.py requests/models.py | head -120"
+      }
+    },
+    {
+      "turn": 9,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python - <<'PY'\nimport threading\ntry:\n    from http.server import BaseHTTPRequestHandler, HTTPServer\nexcept ImportError:\n    from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer\n\nseen = []\n\nclass Handler(BaseHTTPRequestHandler):\n    def log_message(self, *args):\n        pass\n    def _handle(self):\n        seen.append((self.command, self.path))\n        if self.path == '/start':\n            self.send_response(303)\n            self.send_header('Location', '/intermediate')\n        elif self.path == '/intermediate':\n            self.send_response(307)\n            self.send_header('Location', '/final')\n        elif self.path == '/final':\n            self.send_response(200)\n        else:\n            self.send_response(404)\n        self.end_headers()\n    do_GET = _handle\n    do_POST = _handle\n\nserver = HTTPServer(('127.0.0.1', 0), Handler)\nport = server.server_port\nth = threading.Thread(target=server.serve_forever)\nth.daemon = True\nth.start()\n\nimport requests\nurl = 'http://127.0.0.1:%s/start' % port\nr = requests.post(url, data={'foo': 'bar'})\nprint('status', r.status_code)\nprint('seen', seen)\nassert seen == [('POST', '/start'), ('GET', '/intermediate'), ('GET', '/final')], seen\nserver.shutdown()\nPY"
+      }
+    },
+    {
+      "turn": 10,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python -m pytest -q test_requests.py -k \"redirect or history\" --disable-warnings --maxfail=1"
+      }
+    },
+    {
+      "turn": 11,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python - <<'PY'\nimport threading\ntry:\n    from http.server import BaseHTTPRequestHandler, HTTPServer\nexcept ImportError:\n    from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer\n\nclass Handler(BaseHTTPRequestHandler):\n    def log_message(self, *args):\n        pass\n    def _handle(self):\n        data = self.rfile.read(int(self.headers.get('Content-Length', 0)))\n        seen.append((self.command, self.path, data))\n        first_status = int(self.path.strip('/').split('_')[0])\n        if self.path.startswith(('302_', '303_', '301_', '307_')):\n            self.send_response(first_status)\n            self.send_header('Location', '/307_mid' if not self.path.endswith('mid') else '/200_final')\n            self.send_header('Content-Length', '0')\n        else:\n            self.send_response(200)\n            self.send_header('Content-Length', '0')\n        self.end_headers()\n    do_GET = _handle\n    do_POST = _handle\n\nserver = HTTPServer(('127.0.0.1', 0), Handler)\nport = server.server_port\nth = threading.Thread(target=server.serve_forever)\nth.daemon = True\nth.start()\nimport requests\n\nfor start, expected in [('303_start', 'GET'), ('302_start', 'GET'),\n                        ('301_start', 'GET'), ('307_start', 'POST')]:\n    seen = []\n    r = requests.post('http://127.0.0.1:%s/%s' % (port, start),\n                      data=b'hello')\n    methods = [x[0] for x in seen]\n    print(start, seen)\n    assert methods == ['POST', expected, expected], (start, seen)\n    if start == '307_start':\n        assert seen[-1][2] == b'hello'\n\nserver.shutdown()\nPY\npython -m py_compile requests/sessions.py\ngit diff --check && git status --short"
+      }
+    },
+    {
+      "turn": 12,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && grep -n \"def is_redirect\\|REDIRECT_STATI\" -A15 requests/models.py && python - <<'PY'\nimport threading\ntry:\n    from http.server import BaseHTTPRequestHandler, HTTPServer\nexcept ImportError:\n    from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer\n\nclass Handler(BaseHTTPRequestHandler):\n    def log_message(self, *args): pass\n    def _handle(self):\n        print('SERVER GOT', self.command, self.path)\n        data = self.rfile.read(int(self.headers.get('Content-Length', 0)))\n        self.send_response(303)\n        self.send_header('Location', '/307_mid')\n        self.send_header('Content-Length', '0')\n        self.end_headers()\n    do_GET = _handle\n    do_POST = _handle\n\nserver = HTTPServer(('127.0.0.1', 0), Handler)\nport = server.server_port\nth = threading.Thread(target=server.serve_forever); th.daemon = True; th.start()\nimport requests\ns = requests.Session()\ns.trust_env = False\nr = s.post('http://127.0.0.1:%s/303_start' % port, data=b'hello')\nprint('RESP', r.status_code, r.url, r.headers, r.is_redirect, r.history)\nserver.shutdown()\nPY"
+      }
+    },
+    {
+      "turn": 13,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python - <<'PY'\nimport threading\ntry:\n    from http.server import BaseHTTPRequestHandler, HTTPServer\nexcept ImportError:\n    from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer\n\nclass Handler(BaseHTTPRequestHandler):\n    def log_message(self, *args): pass\n    def _handle(self):\n        data = self.rfile.read(int(self.headers.get('Content-Length', 0)))\n        seen.append((self.command, self.path, data))\n        print('SERVER', self.command, self.path)\n        first_status = int(self.path.strip('/').split('_')[0])\n        if self.path.startswith(('302_', '303_', '301_', '307_')):\n            self.send_response(first_status)\n            self.send_header('Location', '/307_mid' if not self.path.endswith('mid') else '/200_final')\n            self.send_header('Content-Length', '0')\n        else:\n            self.send_response(200)\n            self.send_header('Content-Length', '0')\n        self.end_headers()\n    do_GET = _handle\n    do_POST = _handle\n\nserver = HTTPServer(('127.0.0.1', 0), Handler)\nport = server.server_port\nth = threading.Thread(target=server.serve_forever); th.daemon = True; th.start()\nimport requests\n\nfor start, expected in [('303_start', 'GET'), ('302_start', 'GET'),\n                        ('301_start', 'GET'), ('307_start', 'POST')]:\n    seen = []\n    s = requests.Session(); s.trust_env = False\n    r = s.post('http://127.0.0.1:%s/%s' % (port, start), data=b'hello')\n    methods = [x[0] for x in seen]\n    print(start, r.status_code, r.url, seen)\n    assert methods == ['POST', expected, expected], (start, seen)\n    if start == '307_start':\n        assert seen[-1][2] == b'hello'\n\nserver.shutdown()\nPY"
+      }
+    },
+    {
+      "turn": 14,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python - <<'PY'\nimport threading\ntry:\n    from http.server import BaseHTTPRequestHandler, HTTPServer\nexcept ImportError:\n    from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer\n\nclass Handler(BaseHTTPRequestHandler):\n    def log_message(self, *args): pass\n    def _handle(self):\n        print('SERVER', self.command, self.path)\n        data = self.rfile.read(int(self.headers.get('Content-Length', 0)))\n        first_status = int(self.path.strip('/').split('_')[0])\n        if self.path.startswith(('302_', '303_', '301_', '307_')):\n            self.send_response(first_status)\n            self.send_header('Location', '/307_mid' if not self.path.endswith('mid') else '/200_final')\n            self.send_header('Content-Length', '0')\n        else:\n            self.send_response(200)\n            self.send_header('Content-Length', '0')\n        self.end_headers()\n    do_GET = _handle\n    do_POST = _handle\n\nserver = HTTPServer(('127.0.0.1', 0), Handler)\nport = server.server_port\nth = threading.Thread(target=server.serve_forever); th.daemon = True; th.start()\nimport http.client\nc = http.client.HTTPConnection('127.0.0.1', port)\nc.request('POST', '/303_start', body=b'hello')\nr = c.getresponse()\nprint('http.client', r.status, r.getheaders())\nprint(r.read())\nserver.shutdown()\nPY"
+      }
+    },
+    {
+      "turn": 15,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python - <<'PY'\nimport threading\ntry:\n    from http.server import BaseHTTPRequestHandler, HTTPServer\nexcept ImportError:\n    from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer\n\nclass Handler(BaseHTTPRequestHandler):\n    def log_message(self, *args): pass\n    def _handle(self):\n        data = self.rfile.read(int(self.headers.get('Content-Length', 0)))\n        first_status = int(self.path.strip('/').split('_')[0])\n        cond = self.path.startswith(('302_', '303_', '301_', '307_'))\n        print('path', repr(self.path), 'first', first_status, 'cond', cond)\n        if cond:\n            self.send_response(first_status)\n            self.send_header('Location', '/307_mid')\n            self.send_header('Content-Length', '0')\n        else:\n            self.send_response(200)\n            self.send_header('Content-Length', '0')\n        self.end_headers()\n    do_GET = _handle\n    do_POST = _handle\n\nserver = HTTPServer(('127.0.0.1', 0), Handler)\nport = server.server_port\nth = threading.Thread(target=server.serve_forever); th.daemon = True; th.start()\nimport http.client\nc = http.client.HTTPConnection('127.0.0.1', port)\nc.request('POST', '/303_start', body=b'hello')\nr = c.getresponse()\nprint('http.client', r.status, r.getheaders(), r.read())\nserver.shutdown()\nPY"
+      }
+    },
+    {
+      "turn": 16,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python - <<'PY'\nimport threading\ntry:\n    from http.server import BaseHTTPRequestHandler, HTTPServer\nexcept ImportError:\n    from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer\n\nclass Handler(BaseHTTPRequestHandler):\n    def log_message(self, *args): pass\n    def _handle(self):\n        data = self.rfile.read(int(self.headers.get('Content-Length', 0)))\n        seen.append((self.command, self.path, data))\n        path = self.path.lstrip('/')\n        first_status = int(path.split('_')[0])\n        if path.startswith(('302_', '303_', '301_', '307_')):\n            self.send_response(first_status)\n            self.send_header('Location', '/307_mid' if not path.endswith('mid') else '/200_final')\n            self.send_header('Content-Length', '0')\n        else:\n            self.send_response(200)\n            self.send_header('Content-Length', '0')\n        self.end_headers()\n    do_GET = _handle\n    do_POST = _handle\n\nserver = HTTPServer(('127.0.0.1', 0), Handler)\nport = server.server_port\nth = threading.Thread(target=server.serve_forever); th.daemon = True; th.start()\nimport requests\n\nfor start, expected in [('303_start', 'GET'), ('302_start', 'GET'),\n                        ('301_start', 'GET'), ('307_start', 'POST')]:\n    seen = []\n    s = requests.Session(); s.trust_env = False\n    r = s.post('http://127.0.0.1:%s/%s' % (port, start), data=b'hello')\n    methods = [x[0] for x in seen]\n    print(start, r.status_code, seen)\n    assert methods == ['POST', expected, expected], (start, seen)\n    if start == '307_start':\n        assert seen[-1][2] == b'hello'\n\nserver.shutdown()\nPY"
+      }
+    },
+    {
+      "turn": 17,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && git diff > /tmp/requests_fix.patch && git checkout -- requests/sessions.py && python - <<'PY'\nimport threading\ntry:\n    from http.server import BaseHTTPRequestHandler, HTTPServer\nexcept ImportError:\n    from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer\nseen = []\nclass Handler(BaseHTTPRequestHandler):\n    def log_message(self, *args): pass\n    def _handle(self):\n        self.rfile.read(int(self.headers.get('Content-Length', 0)))\n        seen.append((self.command, self.path))\n        if self.path == '/start':\n            self.send_response(303); self.send_header('Location', '/intermediate')\n        elif self.path == '/intermediate':\n            self.send_response(307); self.send_header('Location', '/final')\n        else:\n            self.send_response(200)\n        self.send_header('Content-Length', '0'); self.end_headers()\n    do_GET = _handle\n    do_POST = _handle\nserver = HTTPServer(('127.0.0.1', 0), Handler)\nth = threading.Thread(target=server.serve_forever); th.daemon = True; th.start()\nimport requests\ns = requests.Session(); s.trust_env = False\nr = s.post('http://127.0.0.1:%s/start' % server.server_port, data=b'data')\nprint('WITHOUT FIX:', seen)\nassert seen[-1][0] == 'POST', seen\nserver.shutdown()\nPY\ngit apply /tmp/requests_fix.patch && git diff --check && git diff -- requests/sessions.py"
+      }
+    },
+    {
+      "turn": 18,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python - <<'PY'\nimport threading\ntry:\n    from http.server import BaseHTTPRequestHandler, HTTPServer\nexcept ImportError:\n    from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer\nseen = []\nclass Handler(BaseHTTPRequestHandler):\n    def log_message(self, *args): pass\n    def _handle(self):\n        self.rfile.read(int(self.headers.get('Content-Length', 0)))\n        seen.append((self.command, self.path))\n        if self.path == '/start':\n            self.send_response(303); self.send_header('Location', '/intermediate')\n        elif self.path == '/intermediate':\n            self.send_response(307); self.send_header('Location', '/final')\n        else:\n            self.send_response(200)\n        self.send_header('Content-Length', '0'); self.end_headers()\n    do_GET = _handle\n    do_POST = _handle\nserver = HTTPServer(('127.0.0.1', 0), Handler)\nth = threading.Thread(target=server.serve_forever); th.daemon = True; th.start()\nimport requests\ns = requests.Session(); s.trust_env = False\nr = s.post('http://127.0.0.1:%s/start' % server.server_port, data=b'data')\nprint('WITH FIX:', seen)\nassert seen == [('POST', '/start'), ('GET', '/intermediate'), ('GET', '/final')], seen\nassert r.status_code == 200\nserver.shutdown()\nPY\npython -m py_compile requests/sessions.py && git diff --check"
+      }
+    },
+    {
+      "turn": 19,
+      "action": "finish_task",
+      "args": {}
+    }
+  ],
+  "usage_summary": "[Quota Tracker] Calls: 44 | Prompt Tokens: 519,088 | Completion Tokens: 20,651 | Total Tokens: 539,739 | Est. Cost: $0.0185[DEEPSEEK][DeepSeek OFF-PEAK (1x)] Calls: 44 | Cache Hit: 94.1% (488,320/519,088) | Out: 20,651 | Session Spend: $0.01847"
+}

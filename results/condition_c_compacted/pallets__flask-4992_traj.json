@@ -1,0 +1,274 @@
+{
+  "instance_id": "pallets__flask-4992",
+  "condition": "condition_c_compacted",
+  "turns_taken": 25,
+  "finished_by_tool": true,
+  "model_patch": "diff --git a/src/flask/config.py b/src/flask/config.py\nindex d4fc310f..5e48be33 100755\n--- a/src/flask/config.py\n+++ b/src/flask/config.py\n@@ -234,6 +234,7 @@ class Config(dict):\n         filename: str,\n         load: t.Callable[[t.IO[t.Any]], t.Mapping],\n         silent: bool = False,\n+        text: bool = True,\n     ) -> bool:\n         \"\"\"Update the values in the config from a file that is loaded\n         using the ``load`` parameter. The loaded data is passed to the\n@@ -244,8 +245,8 @@ class Config(dict):\n             import json\n             app.config.from_file(\"config.json\", load=json.load)\n \n-            import toml\n-            app.config.from_file(\"config.toml\", load=toml.load)\n+            import tomllib\n+            app.config.from_file(\"config.toml\", load=tomllib.load, text=False)\n \n         :param filename: The path to the data file. This can be an\n             absolute path or relative to the config root path.\n@@ -254,14 +255,18 @@ class Config(dict):\n         :type load: ``Callable[[Reader], Mapping]`` where ``Reader``\n             implements a ``read`` method.\n         :param silent: Ignore the file if it doesn't exist.\n+        :param text: Open the file in text or binary mode.\n         :return: ``True`` if the file was loaded successfully.\n \n+        .. versionchanged:: 2.3\n+            The ``text`` parameter was added.\n+\n         .. versionadded:: 2.0\n         \"\"\"\n         filename = os.path.join(self.root_path, filename)\n \n         try:\n-            with open(filename) as f:\n+            with open(filename, \"r\" if text else \"rb\") as f:\n                 obj = load(f)\n         except OSError as e:\n             if silent and e.errno in (errno.ENOENT, errno.EISDIR):\n",
+  "trajectory": [
+    {
+      "turn": 1,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && git status && git log --oneline -5"
+      }
+    },
+    {
+      "turn": 1,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && grep -rn \"def from_file\" src/flask/"
+      }
+    },
+    {
+      "turn": 2,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '1,320p' src/flask/config.py"
+      }
+    },
+    {
+      "turn": 3,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '225,285p' src/flask/config.py"
+      }
+    },
+    {
+      "turn": 3,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && grep -rn \"from_file\" tests/ docs/ CHANGES.rst | head -80"
+      }
+    },
+    {
+      "turn": 4,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && head -60 CHANGES.rst && grep -rn \"__version__\\|version\" src/flask/__init__.py pyproject.toml setup.cfg | head -30"
+      }
+    },
+    {
+      "turn": 4,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '1,220p' tests/test_config.py && sed -n '395,430p' docs/config.rst"
+      }
+    },
+    {
+      "turn": 5,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && git log --oneline -8 && ls tests/static/"
+      }
+    },
+    {
+      "turn": 5,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python - <<'PY'\nimport sys\nprint(sys.version)\ntry:\n    import tomllib\n    print('tomllib available')\nexcept ImportError as e:\n    print(e)\nPY"
+      }
+    },
+    {
+      "turn": 6,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && grep -n \"def from_file\" -A70 -B10 src/flask/config.py"
+      }
+    },
+    {
+      "turn": 6,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && cat tests/static/config.json && sed -n '1,60p' src/flask/config.py"
+      }
+    },
+    {
+      "turn": 7,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && grep -n \"from_file\" -n tests/test_config.py docs/config.rst CHANGES.rst | head -30 && sed -n '1,30p' CHANGES.rst"
+      }
+    },
+    {
+      "turn": 8,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '1,60p' tests/test_config.py && sed -n '165,195p' tests/test_config.py"
+      }
+    },
+    {
+      "turn": 8,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '390,430p' docs/config.rst && python -V"
+      }
+    },
+    {
+      "turn": 9,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && grep -n \"def from_file\" -B5 -A45 src/flask/config.py && ls tests/static | head"
+      }
+    },
+    {
+      "turn": 10,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '1,50p' CHANGES.rst"
+      }
+    },
+    {
+      "turn": 10,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && cat tests/static/config.json && grep -R \"from_file\" -n docs tests src | head -30"
+      }
+    },
+    {
+      "turn": 11,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '1,65p' tests/test_config.py && sed -n '395,430p' docs/config.rst && grep -n \"python_requires\\|requires-python\" -R pyproject.toml setup.cfg 2>/dev/null"
+      }
+    },
+    {
+      "turn": 12,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '1,70p' tests/test_config.py"
+      }
+    },
+    {
+      "turn": 12,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '400,425p' docs/config.rst"
+      }
+    },
+    {
+      "turn": 12,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '220,285p' src/flask/config.py"
+      }
+    },
+    {
+      "turn": 13,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '1,90p' CHANGES.rst"
+      }
+    },
+    {
+      "turn": 13,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && find tests -name '*.json' -o -name '*.toml' | head -20 && python -V"
+      }
+    },
+    {
+      "turn": 13,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && grep -R \"from_file\" -n docs src tests | head -50"
+      }
+    },
+    {
+      "turn": 14,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && cat tests/static/config.json && git log --oneline -5 && grep -n \"version\" pyproject.toml | head"
+      }
+    },
+    {
+      "turn": 15,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '1,40p' src/flask/config.py && sed -n '220,300p' src/flask/config.py"
+      }
+    },
+    {
+      "turn": 16,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && grep -n \"from_file\\|tomllib\\|TOML\\|2\\.3\" CHANGES.rst | head -30 && git log -1 --format='%ad' --date=iso"
+      }
+    },
+    {
+      "turn": 17,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '1,55p' CHANGES.rst && git log --oneline -5"
+      }
+    },
+    {
+      "turn": 18,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '1,320p' src/flask/config.py"
+      }
+    },
+    {
+      "turn": 18,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && grep -R \"from_file\" -n tests docs src | head -50"
+      }
+    },
+    {
+      "turn": 19,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '225,310p' src/flask/config.py && sed -n '1,60p' tests/test_config.py && sed -n '400,430p' docs/config.rst"
+      }
+    },
+    {
+      "turn": 20,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && git status --short && git log -3 --oneline && grep -n \"Version 2.3\\|Unreleased\\|Version 2.2\" -n CHANGES.rst | head -20"
+      }
+    },
+    {
+      "turn": 20,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python - <<'PY'\nimport sys\nprint(sys.version)\ntry:\n import tomllib\n print('tomllib yes')\nexcept Exception as e: print(e)\nPY"
+      }
+    },
+    {
+      "turn": 21,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '1,40p' CHANGES.rst && grep -R \"from_file\" -n docs src tests | head -50"
+      }
+    },
+    {
+      "turn": 22,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '210,290p' src/flask/config.py && sed -n '25,45p' tests/test_config.py && sed -n '170,195p' tests/test_config.py"
+      }
+    },
+    {
+      "turn": 23,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python - <<'PY'\nfrom pathlib import Path\np = Path('src/flask/config.py')\ns = p.read_text()\nold = '''    def from_file(\n        self,\n        filename: str,\n        load: t.Callable[[t.IO[t.Any]], t.Mapping],\n        silent: bool = False,\n    ) -> bool:\n        \"\"\"Update the values in the config from a file that is loaded\n        using the ``load`` parameter. The loaded data is passed to the\n        :meth:`from_mapping` method.\n\n        .. code-block:: python\n\n            import json\n            app.config.from_file(\"config.json\", load=json.load)\n\n            import toml\n            app.config.from_file(\"config.toml\", load=toml.load)\n\n        :param filename: The path to the data file. This can be an\n            absolute path or relative to the config root path.\n        :param load: A callable that takes a file handle and returns a\n            mapping of loaded data from the file.\n        :type load: ``Callable[[Reader], Mapping]`` where ``Reader``\n            implements a ``read`` method.\n        :param silent: Ignore the file if it doesn't exist.\n        :return: ``True`` if the file was loaded successfully.\n\n        .. versionadded:: 2.0\n        \"\"\"\n        filename = os.path.join(self.root_path, filename)\n\n        try:\n            with open(filename) as f:\n                obj = load(f)\n'''\nnew = '''    def from_file(\n        self,\n        filename: str,\n        load: t.Callable[[t.IO[t.Any]], t.Mapping],\n        silent: bool = False,\n        text: bool = True,\n    ) -> bool:\n        \"\"\"Update the values in the config from a file that is loaded\n        using the ``load`` parameter. The loaded data is passed to the\n        :meth:`from_mapping` method.\n\n        .. code-block:: python\n\n            import json\n            app.config.from_file(\"config.json\", load=json.load)\n\n            import tomllib\n            app.config.from_file(\"config.toml\", load=tomllib.load, text=False)\n\n        :param filename: The path to the data file. This can be an\n            absolute path or relative to the config root path.\n        :param load: A callable that takes a file handle and returns a\n            mapping of loaded data from the file.\n        :type load: ``Callable[[Reader], Mapping]`` where ``Reader``\n            implements a ``read`` method.\n        :param silent: Ignore the file if it doesn't exist.\n        :param text: Open the file in text or binary mode.\n        :return: ``True`` if the file was loaded successfully.\n\n        .. versionchanged:: 2.3\n            The ``text`` parameter was added.\n\n        .. versionadded:: 2.0\n        \"\"\"\n        filename = os.path.join(self.root_path, filename)\n\n        try:\n            with open(filename, \"r\" if text else \"rb\") as f:\n                obj = load(f)\n'''\nassert old in s\np.write_text(s.replace(old, new))\nPY\npython - <<'PY'\nimport json, tempfile, tomllib\nfrom pathlib import Path\nfrom flask import Flask\n\nwith tempfile.TemporaryDirectory() as d:\n    p = Path(d, \"config.toml\")\n    p.write_text('FOO = \"bar\"\\nNUMBER = 42\\n')\n    app = Flask(__name__)\n    app.config.root_path = d\n    assert app.config.from_file(\"config.toml\", tomllib.load, text=False)\n    assert app.config[\"FOO\"] == \"bar\"\n    assert app.config[\"NUMBER\"] == 42\n\n    p2 = Path(d, \"config.json\")\n    p2.write_text(json.dumps({\"FOO\": \"json\"}))\n    assert app.config.from_file(\"config.json\", json.load)\n    assert app.config[\"FOO\"] == \"json\"\nprint(\"ok\")\nPY\ngit diff -- src/flask/config.py"
+      }
+    },
+    {
+      "turn": 24,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && pytest -q tests/test_config.py"
+      }
+    },
+    {
+      "turn": 25,
+      "action": "finish_task",
+      "args": {}
+    }
+  ],
+  "usage_summary": "[Quota Tracker] Calls: 50 | Prompt Tokens: 162,428 | Completion Tokens: 13,162 | Total Tokens: 175,590 | Est. Cost: $0.0281[DEEPSEEK][DeepSeek OFF-PEAK (1x)] Calls: 50 | Cache Hit: 17.6% (28,544/162,428) | Out: 13,162 | Session Spend: $0.02807"
+}

@@ -1,0 +1,141 @@
+{
+  "instance_id": "pallets__flask-4045",
+  "condition": "condition_b_codeblock",
+  "turns_taken": 24,
+  "finished_by_tool": true,
+  "model_patch": "diff --git a/src/flask/blueprints.py b/src/flask/blueprints.py\nindex 5fb84d86..827cad22 100755\n--- a/src/flask/blueprints.py\n+++ b/src/flask/blueprints.py\n@@ -188,6 +188,9 @@ class Blueprint(Scaffold):\n             template_folder=template_folder,\n             root_path=root_path,\n         )\n+        if \".\" in name:\n+            raise ValueError(\"'name' may not contain a dot '.' character.\")\n+\n         self.name = name\n         self.url_prefix = url_prefix\n         self.subdomain = subdomain\ndiff --git a/tests/test_basic.py b/tests/test_basic.py\nindex d6ec3fe4..7bdeba1e 100755\n--- a/tests/test_basic.py\n+++ b/tests/test_basic.py\n@@ -1631,7 +1631,7 @@ def test_url_processors(app, client):\n \n \n def test_inject_blueprint_url_defaults(app):\n-    bp = flask.Blueprint(\"foo.bar.baz\", __name__, template_folder=\"template\")\n+    bp = flask.Blueprint(\"foo\", __name__, template_folder=\"template\")\n \n     @bp.url_defaults\n     def bp_defaults(endpoint, values):\n@@ -1644,12 +1644,12 @@ def test_inject_blueprint_url_defaults(app):\n     app.register_blueprint(bp)\n \n     values = dict()\n-    app.inject_url_defaults(\"foo.bar.baz.view\", values)\n+    app.inject_url_defaults(\"foo.view\", values)\n     expected = dict(page=\"login\")\n     assert values == expected\n \n     with app.test_request_context(\"/somepage\"):\n-        url = flask.url_for(\"foo.bar.baz.view\")\n+        url = flask.url_for(\"foo.view\")\n     expected = \"/login\"\n     assert url == expected\n \ndiff --git a/tests/test_blueprints.py b/tests/test_blueprints.py\nindex b986ca02..aa4ea28b 100755\n--- a/tests/test_blueprints.py\n+++ b/tests/test_blueprints.py\n@@ -253,28 +253,9 @@ def test_templates_list(test_apps):\n     assert templates == [\"admin/index.html\", \"frontend/index.html\"]\n \n \n-def test_dotted_names(app, client):\n-    frontend = flask.Blueprint(\"myapp.frontend\", __name__)\n-    backend = flask.Blueprint(\"myapp.backend\", __name__)\n-\n-    @frontend.route(\"/fe\")\n-    def frontend_index():\n-        return flask.url_for(\"myapp.backend.backend_index\")\n-\n-    @frontend.route(\"/fe2\")\n-    def frontend_page2():\n-        return flask.url_for(\".frontend_index\")\n-\n-    @backend.route(\"/be\")\n-    def backend_index():\n-        return flask.url_for(\"myapp.frontend.frontend_index\")\n-\n-    app.register_blueprint(frontend)\n-    app.register_blueprint(backend)\n-\n-    assert client.get(\"/fe\").data.strip() == b\"/be\"\n-    assert client.get(\"/fe2\").data.strip() == b\"/fe\"\n-    assert client.get(\"/be\").data.strip() == b\"/fe\"\n+def test_blueprint_name_with_dot_raises():\n+    with pytest.raises(ValueError, match=\"may not contain a dot\"):\n+        flask.Blueprint(\"foo.bar\", __name__)\n \n \n def test_dotted_names_from_app(app, client):\n",
+  "trajectory": [
+    {
+      "turn": 1,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && git log --oneline -5 && ls && grep -rn \"Blueprint\" src/flask/app.py | head -40"
+      }
+    },
+    {
+      "turn": 4,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '1,200p' src/flask/blueprints.py"
+      }
+    },
+    {
+      "turn": 5,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && grep -rn \"dot\\|\\.\\.\\.\" tests/test_blueprints.py | grep -i \"name\\|dot\" | head -20; grep -rn \"Blueprint(\" tests/test_blueprints.py | head -20"
+      }
+    },
+    {
+      "turn": 6,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '250,300p' tests/test_blueprints.py</bash>\n</bash>\n</bash>"
+      }
+    },
+    {
+      "turn": 7,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '250,300p' tests/test_blueprints.py"
+      }
+    },
+    {
+      "turn": 8,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && grep -rn \"name_prefix\\|nested\\|register_blueprint\" src/flask/blueprints.py tests/test_blueprints.py | head -40"
+      }
+    },
+    {
+      "turn": 9,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '200,380p' src/flask/blueprints.py"
+      }
+    },
+    {
+      "turn": 10,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && grep -rn 'Blueprint(\"[^\"]*\\.' tests/ examples/ | head -30"
+      }
+    },
+    {
+      "turn": 11,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '1,60p' tests/test_blueprints.py && sed -n '1620,1650p' tests/test_basic.py"
+      }
+    },
+    {
+      "turn": 13,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && grep -rn \"nested\" tests/test_blueprints.py | head -30 && git log --oneline --all | head -5"
+      }
+    },
+    {
+      "turn": 14,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && grep -rnE 'Blueprint\\(\"[^\"]*\\.[^\"]*\"' tests/ | cat"
+      }
+    },
+    {
+      "turn": 15,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '840,960p' tests/test_blueprints.py"
+      }
+    },
+    {
+      "turn": 16,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python - <<'PY'\nfrom pathlib import Path\np = Path(\"src/flask/blueprints.py\")\ns = p.read_text()\nold = '''        self.name = name\n        self.url_prefix = url_prefix\n'''\nnew = '''        if \".\" in name:\n            raise ValueError(\"'name' may not contain a dot '.' character.\")\n\n        self.name = name\n        self.url_prefix = url_prefix\n'''\nassert old in s\np.write_text(s.replace(old, new, 1))\nPY\ngit diff"
+      }
+    },
+    {
+      "turn": 17,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python - <<'PY'\nfrom pathlib import Path\np = Path(\"tests/test_blueprints.py\")\ns = p.read_text()\nold = '''def test_dotted_names(app, client):\n    frontend = flask.Blueprint(\"myapp.frontend\", __name__)\n    backend = flask.Blueprint(\"myapp.backend\", __name__)\n\n    @frontend.route(\"/fe\")\n    def frontend_index():\n        return flask.url_for(\"myapp.backend.backend_index\")\n\n    @frontend.route(\"/fe2\")\n    def frontend_page2():\n        return flask.url_for(\".frontend_index\")\n\n    @backend.route(\"/be\")\n    def backend_index():\n        return flask.url_for(\"myapp.frontend.frontend_index\")\n\n    app.register_blueprint(frontend)\n    app.register_blueprint(backend)\n\n    assert client.get(\"/fe\").data.strip() == b\"/be\"\n    assert client.get(\"/fe2\").data.strip() == b\"/fe\"\n    assert client.get(\"/be\").data.strip() == b\"/fe\"\n\n\n'''\nnew = '''def test_blueprint_name_with_dot_raises():\n    with pytest.raises(ValueError, match=\"may not contain a dot\"):\n        flask.Blueprint(\"foo.bar\", __name__)\n\n\n'''\nassert old in s\np.write_text(s.replace(old, new, 1))\n\np = Path(\"tests/test_basic.py\")\ns = p.read_text()\nold = '    bp = flask.Blueprint(\"foo.bar.baz\", __name__, template_folder=\"template\")'\nnew = '    bp = flask.Blueprint(\"foo\", __name__, template_folder=\"template\")'\nassert old in s\ns = s.replace(old, new, 1)\ns = s.replace('app.inject_url_defaults(\"foo.bar.baz.view\", values)', 'app.inject_url_defaults(\"foo.view\", values)', 1)\np.write_text(s)\nPY\ngit diff --stat"
+      }
+    },
+    {
+      "turn": 19,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '1630,1660p' tests/test_basic.py && grep -rn \"inject_blueprint_url_defaults\\|foo.bar\" tests/test_basic.py"
+      }
+    },
+    {
+      "turn": 20,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python - <<'PY'\nfrom pathlib import Path\np = Path(\"tests/test_basic.py\")\ns = p.read_text()\ns = s.replace('flask.url_for(\"foo.bar.baz.view\")', 'flask.url_for(\"foo.view\")', 1)\np.write_text(s)\nPY\npython -m pytest tests/test_blueprints.py tests/test_basic.py -q 2>&1 | tail -20"
+      }
+    },
+    {
+      "turn": 21,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python -m pytest tests/test_blueprints.py::test_blueprint_name_with_dot_raises tests/test_blueprints.py::test_nested_blueprint -q 2>&1 | tail -20"
+      }
+    },
+    {
+      "turn": 23,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python -m pytest tests/test_blueprints.py::test_blueprint_name_with_dot_raises -q -W ignore::DeprecationWarning 2>&1 | tail -5 && git diff"
+      }
+    },
+    {
+      "turn": 24,
+      "action": "finish_task",
+      "args": {}
+    }
+  ],
+  "usage_summary": "[Quota Tracker] Calls: 24 | Prompt Tokens: 149,635 | Completion Tokens: 9,250 | Total Tokens: 158,885 | Est. Cost: $0.0079[DEEPSEEK][DeepSeek OFF-PEAK (1x)] Calls: 24 | Cache Hit: 91.4% (136,704/149,635) | Out: 9,250 | Session Spend: $0.00790"
+}

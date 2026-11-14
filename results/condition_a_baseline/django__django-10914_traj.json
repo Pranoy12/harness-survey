@@ -1,0 +1,114 @@
+{
+  "instance_id": "django__django-10914",
+  "condition": "condition_a_baseline",
+  "turns_taken": 15,
+  "finished_by_tool": false,
+  "model_patch": "",
+  "trajectory": [
+    {
+      "turn": 1,
+      "action": "run_shell_command",
+      "args": {
+        "command": "git grep FILE_UPLOAD_PERMISSION"
+      }
+    },
+    {
+      "turn": 2,
+      "action": "run_shell_command",
+      "args": {
+        "command": "git status"
+      }
+    },
+    {
+      "turn": 3,
+      "action": "run_shell_command",
+      "args": {
+        "command": "ls docs/releases/"
+      }
+    },
+    {
+      "turn": 4,
+      "action": "run_shell_command",
+      "args": {
+        "command": "git log -n 5 --oneline"
+      }
+    },
+    {
+      "turn": 5,
+      "action": "run_shell_command",
+      "args": {
+        "command": "git grep -n FILE_UPLOAD_PERMISSIONS django/conf/global_settings.py"
+      }
+    },
+    {
+      "turn": 6,
+      "action": "run_shell_command",
+      "args": {
+        "command": "sed -n '300,325p' django/conf/global_settings.py"
+      }
+    },
+    {
+      "turn": 7,
+      "action": "run_shell_command",
+      "args": {
+        "command": "git grep -n -C 10 \"FILE_UPLOAD_PERMISSIONS\" docs/ref/settings.txt"
+      }
+    },
+    {
+      "turn": 8,
+      "action": "run_shell_command",
+      "args": {
+        "command": "sed -n '1480,1530p' docs/ref/settings.txt"
+      }
+    },
+    {
+      "turn": 9,
+      "action": "run_shell_command",
+      "args": {
+        "command": "git grep -n -C 10 \"FILE_UPLOAD_PERMISSIONS\" docs/howto/deployment/checklist.txt"
+      }
+    },
+    {
+      "turn": 10,
+      "action": "run_shell_command",
+      "args": {
+        "command": "./tests/runtests.py file_storage"
+      }
+    },
+    {
+      "turn": 11,
+      "action": "run_shell_command",
+      "args": {
+        "command": "locale"
+      }
+    },
+    {
+      "turn": 12,
+      "action": "run_shell_command",
+      "args": {
+        "command": "LANG=C.UTF-8 ./tests/runtests.py file_storage"
+      }
+    },
+    {
+      "turn": 13,
+      "action": "run_shell_command",
+      "args": {
+        "command": "LANG=C.UTF-8 ./tests/runtests.py file_uploads"
+      }
+    },
+    {
+      "turn": 14,
+      "action": "run_shell_command",
+      "args": {
+        "command": "sed -n '540,555p' tests/file_uploads/tests.py"
+      }
+    },
+    {
+      "turn": 15,
+      "action": "run_shell_command",
+      "args": {
+        "command": "git grep -n \"FILE_UPLOAD_PERMISSIONS\""
+      }
+    }
+  ]
+}
