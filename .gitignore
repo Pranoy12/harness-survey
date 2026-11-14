@@ -5,7 +5,12 @@ build/
 dist/
 wheels/
 *.egg-info
+*.log
 
 # Virtual environments
 .venv
 commands_help
+
+
+# Generated files
+logs/
