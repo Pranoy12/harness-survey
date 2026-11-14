@@ -1,0 +1,194 @@
+{
+  "instance_id": "psf__requests-2148",
+  "condition": "condition_c_compacted",
+  "turns_taken": 25,
+  "finished_by_tool": true,
+  "model_patch": "diff --git a/requests/models.py b/requests/models.py\nindex 0dc5556..ed5bb76 100755\n--- a/requests/models.py\n+++ b/requests/models.py\n@@ -9,6 +9,7 @@ This module contains the primary objects that power Requests.\n \n import collections\n import datetime\n+import socket\n \n from io import BytesIO, UnsupportedOperation\n from .hooks import default_hooks\n@@ -19,10 +20,10 @@ from .cookies import cookiejar_from_dict, get_cookie_header\n from .packages.urllib3.fields import RequestField\n from .packages.urllib3.filepost import encode_multipart_formdata\n from .packages.urllib3.util import parse_url\n-from .packages.urllib3.exceptions import DecodeError\n+from .packages.urllib3.exceptions import DecodeError, ProtocolError\n from .exceptions import (\n     HTTPError, RequestException, MissingSchema, InvalidURL,\n-    ChunkedEncodingError, ContentDecodingError)\n+    ChunkedEncodingError, ContentDecodingError, ConnectionError)\n from .utils import (\n     guess_filename, get_auth_from_url, requote_uri,\n     stream_decode_response_unicode, to_key_val_list, parse_header_links,\n@@ -636,10 +637,12 @@ class Response(object):\n                 try:\n                     for chunk in self.raw.stream(chunk_size, decode_content=True):\n                         yield chunk\n-                except IncompleteRead as e:\n+                except ProtocolError as e:\n                     raise ChunkedEncodingError(e)\n                 except DecodeError as e:\n                     raise ContentDecodingError(e)\n+                except socket.error as e:\n+                    raise ConnectionError(e)\n             except AttributeError:\n                 # Standard file-like object.\n                 while True:\n",
+  "trajectory": [
+    {
+      "turn": 1,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && ls"
+      }
+    },
+    {
+      "turn": 2,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && grep -R \"except.*socket\\|ConnectionError\\|ProtocolError\\|iter_content\\|generate\" -n requests | head -200"
+      }
+    },
+    {
+      "turn": 3,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '1,460p' requests/adapters.py && echo '--- models relevant ---' && sed -n '560,730p' requests/models.py && echo '--- urllib3 response ---' && sed -n '1,280p' requests/packages/urllib3/response.py"
+      }
+    },
+    {
+      "turn": 4,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '300,430p' requests/adapters.py && echo '--- models ---' && sed -n '580,720p' requests/models.py && echo '--- urllib3 response ---' && sed -n '1,260p' requests/packages/urllib3/response.py"
+      }
+    },
+    {
+      "turn": 5,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && grep -n \"def read\\|def stream\\|def _safe_read\\|ProtocolError\\|ReadTimeoutError\\|SocketTimeout\" requests/packages/urllib3/response.py && sed -n '120,290p' requests/packages/urllib3/response.py && echo '--- exceptions.py ---' && sed -n '1,260p' requests/exceptions.py && echo '--- urllib3 exceptions ---' && sed -n '1,240p' requests/packages/urllib3/exceptions.py && echo '--- tests grep ---' && grep -R \"Connection reset\\|socket.error\\|ChunkedEncodingError\\|ProtocolError\\|ReadTimeout\" -n tests | head -80"
+      }
+    },
+    {
+      "turn": 6,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '1,80p' requests/models.py && git log --oneline -8 && git status --short && python --version && python -c \"import requests; print(requests.__version__)\""
+      }
+    },
+    {
+      "turn": 7,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && grep -n \"def iter_content\\|def content\\|def generate\" -B3 -A45 requests/models.py"
+      }
+    },
+    {
+      "turn": 8,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '1,320p' requests/packages/urllib3/response.py"
+      }
+    },
+    {
+      "turn": 9,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '1,80p' requests/models.py && grep -n \"ChunkedEncodingError\\|ContentDecodingError\\|ConnectionError\\|ProtocolError\\|ReadTimeoutError\\|IncompleteRead\\|from .exceptions\" requests/models.py requests/exceptions.py"
+      }
+    },
+    {
+      "turn": 10,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '600,670p' requests/models.py && sed -n '1,130p' requests/exceptions.py && git log --oneline -8 && cat requests/__init__.py | head -30"
+      }
+    },
+    {
+      "turn": 11,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && grep -R \"ConnectionError\\|socket.error\\|ChunkedEncodingError\\|Connection reset\" -n tests requests | head -100"
+      }
+    },
+    {
+      "turn": 12,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && ls -la && sed -n '350,410p' requests/adapters.py && sed -n '1,80p' requests/models.py && git status"
+      }
+    },
+    {
+      "turn": 13,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '1,100p' requests/exceptions.py && sed -n '600,660p' requests/models.py && grep -n \"stream\\|content\\|iter_content\\|generate\" test_requests.py | head -80 && cat requests/__init__.py | head -90 && grep -n \"__version__\" -R requests setup.py | head"
+      }
+    },
+    {
+      "turn": 14,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && grep -n \"Chunked\\|ContentDecoding\\|IncompleteRead\\|DecodeError\\|socket\\|ConnectionError\" test_requests.py && grep -R \"ChunkedEncodingError\\|ContentDecodingError\\|IncompleteRead\\|socket.error\" -n requests | grep -v pyc && git log --oneline -10"
+      }
+    },
+    {
+      "turn": 15,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed; grep -n \"Chunked\\|ContentDecoding\\|IncompleteRead\\|DecodeError\\|socket\\|ConnectionError\" test_requests.py; echo TEST_GREP:$?; grep -R \"ChunkedEncodingError\\|ContentDecodingError\\|IncompleteRead\\|socket.error\" -n requests --exclude='*.pyc'; echo REQ_GREP:$?; git log --oneline -10"
+      }
+    },
+    {
+      "turn": 16,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed; sed -n '1,50p' requests/models.py; sed -n '590,660p' requests/models.py; grep -n \"iter_content\\|stream.*chunk\\|ContentDecodingError\\|broken\" test_requests.py | head -50; ls; find . -maxdepth 2 -type d | head -30"
+      }
+    },
+    {
+      "turn": 17,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed; git log --all --oneline --decorate -30; git status; grep -n \"ChunkedEncodingError\\|ConnectionError\\|ContentDecodingError\" -n HISTORY.rst docs -R | head -40; sed -n '360,410p' requests/adapters.py; sed -n '55,85p' requests/exceptions.py"
+      }
+    },
+    {
+      "turn": 18,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed; grep -n \"class ProtocolError\\|ProtocolError\" requests/packages/urllib3/exceptions.py requests/packages/urllib3/response.py requests/packages/urllib3/connectionpool.py | head -60; sed -n '480,560p' requests/packages/urllib3/response.py; grep -n \"except.*socket\\|ProtocolError\\|ReadTimeoutError\\|SSLError\" requests/packages/urllib3/connectionpool.py | head -60; sed -n '1,80p' requests/packages/urllib3/exceptions.py"
+      }
+    },
+    {
+      "turn": 19,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed; sed -n '165,230p' requests/packages/urllib3/response.py; sed -n '530,565p' requests/packages/urllib3/connectionpool.py; sed -n '550,660p' requests/models.py; grep -n \"from .exceptions\\|urllib3\" requests/models.py | head -40; sed -n '1,60p' requests/models.py"
+      }
+    },
+    {
+      "turn": 20,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed; sed -n '1,220p' requests/exceptions.py; grep -n \"SocketError\\|socket\" requests/compat.py requests/models.py; git log --oneline -8; cat setup.py | grep -n version | head; grep -n \"urllib3\" setup.py requirements.txt 2>/dev/null | head"
+      }
+    },
+    {
+      "turn": 21,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed; grep -R \"SocketError\" -n requests/packages/urllib3 | head -50; sed -n '1,130p' requests/packages/urllib3/exceptions.py; grep -n \"class HTTPConnection\\|def request\\|def getresponse\\|def _make_request\" -n requests/packages/urllib3/connectionpool.py | head; grep -R \"ConnectionError\" -n test* | head -50"
+      }
+    },
+    {
+      "turn": 22,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed; sed -n '540,660p' requests/models.py; sed -n '1,70p' requests/models.py; sed -n '1,100p' requests/compat.py; grep -R \"iter_content\\|ChunkedEncodingError\\|ContentDecodingError\" -n tests | head -80"
+      }
+    },
+    {
+      "turn": 23,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed; ls; git log --oneline -8; grep -n \"ConnectionError\" requests/exceptions.py; sed -n '320,365p' requests/packages/urllib3/connectionpool.py; sed -n '530,565p' requests/packages/urllib3/connectionpool.py; grep -R \"socket.error\\|Connection reset\\|iter_content\" -n test_requests.py tests 2>/dev/null | head -80"
+      }
+    },
+    {
+      "turn": 24,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed; grep -n \"class ProtocolError\\|class ReadTimeoutError\" requests/packages/urllib3/exceptions.py; python - <<'PY'\nimport requests, socket\nr = requests.Response()\nclass Raw:\n    def stream(self, *a, **kw):\n        raise socket.error(104, 'Connection reset by peer')\nr.raw = Raw()\ntry:\n    list(r.iter_content(10))\nexcept Exception as e:\n    print(type(e), repr(e))\nPY\npython - <<'PY'\np='requests/models.py'\ns=open(p).read()\ns=s.replace('import collections\\nimport datetime\\n', 'import collections\\nimport datetime\\nimport socket\\n')\ns=s.replace('from .packages.urllib3.exceptions import DecodeError\\n', 'from .packages.urllib3.exceptions import DecodeError, ProtocolError\\n')\ns=s.replace('    ChunkedEncodingError, ContentDecodingError)\\n', '    ChunkedEncodingError, ContentDecodingError, ConnectionError)\\n')\ns=s.replace('                except IncompleteRead as e:\\n                    raise ChunkedEncodingError(e)\\n                except DecodeError as e:\\n                    raise ContentDecodingError(e)\\n', '                except ProtocolError as e:\\n                    raise ChunkedEncodingError(e)\\n                except DecodeError as e:\\n                    raise ContentDecodingError(e)\\n                except socket.error as e:\\n                    raise ConnectionError(e)\\n')\nopen(p,'w').write(s)\nPY\npython - <<'PY'\nimport requests, socket\nfrom requests.exceptions import ConnectionError, ChunkedEncodingError\nfrom requests.packages.urllib3.exceptions import ProtocolError\nr = requests.Response()\nclass Raw:\n    def stream(self, *a, **kw):\n        raise socket.error(104, 'Connection reset by peer')\nr.raw = Raw()\ntry:\n    list(r.iter_content(10))\nexcept Exception as e:\n    print(type(e), repr(e))\n    assert isinstance(e, ConnectionError)\nr.raw = type('Raw', (), {'stream': lambda self,*a,**kw: (_ for _ in ()).throw(ProtocolError('x'))})()\ntry:\n    list(r.iter_content(10))\nexcept Exception as e:\n    print(type(e), repr(e))\n    assert isinstance(e, ChunkedEncodingError)\nPY\ngit diff -- requests/models.py"
+      }
+    },
+    {
+      "turn": 25,
+      "action": "finish_task",
+      "args": {}
+    }
+  ],
+  "usage_metrics": {
+    "calls": 25,
+    "prompt_tokens": 98495,
+    "cache_hit_tokens": 28928,
+    "cache_miss_tokens": 69567,
+    "cache_hit_rate_pct": 29.37,
+    "completion_tokens": 5748,
+    "total_tokens": 104243,
+    "task_cost_usd": 0.013971,
+    "session_cost_usd": 0.030754
+  },
+  "usage_summary": "[Quota Tracker] Calls: 25 | Prompt Tokens: 98,495 | Completion Tokens: 5,748 | Total Tokens: 104,243 | Est. Cost: $0.0140[DEEPSEEK][DeepSeek OFF-PEAK (1x)] Calls: 25 | Cache Hit: 29.4% (28,928/98,495) | Out: 5,748 | Task Spend: $0.01397 | Total Session Spend: $0.03075"
+}

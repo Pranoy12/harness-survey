@@ -22,6 +22,8 @@ class AgentOrchestrator:
         print(f"Problem Statement: {self.problem_statement}")
         print("=" * 100)
         print("\n\n")
+        
+        self.llm.tracker.reset_task()
 
         # 1. Start Docker container sandbox
         self.sandbox.start()
@@ -168,5 +170,6 @@ class AgentOrchestrator:
             "turns_taken": turns_taken,
             "finished_by_tool": finished,
             "model_patch": final_patch,
-            "trajectory": trajectory
+            "trajectory": trajectory,
+            "usage_metrics": self.llm.tracker.to_dict()
         }

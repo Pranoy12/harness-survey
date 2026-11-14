@@ -1,0 +1,196 @@
+{
+  "instance_id": "psf__requests-863",
+  "condition": "condition_c_compacted",
+  "turns_taken": 25,
+  "finished_by_tool": false,
+  "model_patch": "diff --git a/requests/models.py b/requests/models.py\nindex d845637..b53e658 100755\n--- a/requests/models.py\n+++ b/requests/models.py\n@@ -149,7 +149,11 @@ class Request(object):\n         hooks = hooks or {}\n \n         for (k, v) in list(hooks.items()):\n-            self.register_hook(event=k, hook=v)\n+            if hasattr(v, '__iter__') and not hasattr(v, '__call__'):\n+                for hook in v:\n+                    self.register_hook(event=k, hook=hook)\n+            else:\n+                self.register_hook(event=k, hook=v)\n \n         #: Session.\n         self.session = session\n",
+  "trajectory": [
+    {
+      "turn": 1,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && git status --short && grep -n \"def __init__\" -n requests/models.py | head && grep -n \"hooks\" requests/models.py | head -50"
+      }
+    },
+    {
+      "turn": 2,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '1,180p' requests/models.py && echo '--- hooks.py' && cat requests/hooks.py && echo '--- tests grep' && grep -R \"register_hook\\|hooks=\" -n tests | head -80"
+      }
+    },
+    {
+      "turn": 3,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '440,485p' requests/models.py && sed -n '680,760p' tests/test_requests.py && git log --oneline -5 && cat requests/__init__.py | grep version -n | head"
+      }
+    },
+    {
+      "turn": 4,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python - <<'PY'\nfrom requests.models import Request\nfrom requests.hooks import dispatch_hook\n\ndef a(x): x.append('a')\ndef b(x): x.append('b')\nr = Request(hooks={'args':[a,b]})\nprint(r.hooks)\ntry:\n    print(dispatch_hook('args', r.hooks, []))\nexcept Exception as e:\n    print(type(e).__name__, e)\nPY\npython -m pytest tests/test_requests.py -k \"hook\" -q 2>&1 | tail -40"
+      }
+    },
+    {
+      "turn": 5,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '1,120p' requests/models.py && sed -n '140,230p' requests/models.py && grep -R \"register_hook\\|hooks=\" -n tests requests | head -50 && cat requests/hooks.py"
+      }
+    },
+    {
+      "turn": 6,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '440,480p' requests/models.py && sed -n '680,760p' tests/test_requests.py && git status --short && git log -5 --oneline"
+      }
+    },
+    {
+      "turn": 7,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python -m pytest tests/test_requests.py::TestRequests::test_multiple_hooks -q 2>&1 | tail -80"
+      }
+    },
+    {
+      "turn": 8,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && grep -n \"class .*Test\\|def test_multiple_hooks\\|def register_hook\\|self.hooks\" tests/test_requests.py requests/models.py | head -50 && sed -n '90,145p' requests/models.py"
+      }
+    },
+    {
+      "turn": 9,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '1,90p' requests/models.py && sed -n '135,165p' requests/models.py && sed -n '450,485p' requests/models.py && sed -n '700,735p' tests/test_requests.py"
+      }
+    },
+    {
+      "turn": 10,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '735,790p' tests/test_requests.py && cat requests/hooks.py && grep -rn \"hooks\" requests/sessions.py | head -30"
+      }
+    },
+    {
+      "turn": 11,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '55,90p' requests/sessions.py && sed -n '155,195p' requests/sessions.py && git log --oneline -3 && git status --short"
+      }
+    },
+    {
+      "turn": 12,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && grep -n \"register_hook\\|self.hooks\" -n requests/models.py | head -30 && sed -n '250,340p' requests/models.py"
+      }
+    },
+    {
+      "turn": 13,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '120,160p' requests/models.py && sed -n '455,480p' requests/models.py && grep -R \"register_hook\" -n . --exclude-dir=.git | head -50"
+      }
+    },
+    {
+      "turn": 14,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && grep -R \"hook\" -n tests | head -80 && sed -n '1,30p' requests/models.py"
+      }
+    },
+    {
+      "turn": 15,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '675,760p' tests/test_requests.py && git log --oneline -5 && git status --short"
+      }
+    },
+    {
+      "turn": 16,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && grep -n \"def __init__\\|def register_hook\\|hooks\" requests/models.py | head -60 && sed -n '220,330p' requests/models.py"
+      }
+    },
+    {
+      "turn": 17,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '40,165p' requests/models.py && sed -n '455,480p' requests/models.py && cat requests/hooks.py"
+      }
+    },
+    {
+      "turn": 18,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && grep -rn \"register_hook\\|hooks=\" tests | head -80 && git log --oneline -5 && git status --short"
+      }
+    },
+    {
+      "turn": 19,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '680,760p' tests/test_requests.py && grep -rn \"hooks\" requests | head -50"
+      }
+    },
+    {
+      "turn": 20,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '1,180p' requests/models.py && sed -n '450,480p' requests/models.py && sed -n '1,70p' requests/hooks.py && sed -n '150,195p' requests/sessions.py"
+      }
+    },
+    {
+      "turn": 21,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python -m pytest tests/test_requests.py -k 'single_hook or multiple_hooks' -q 2>&1 | tail -30"
+      }
+    },
+    {
+      "turn": 22,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && grep -n -A50 -B5 'def test_single_hook\\|def test_multiple_hooks' tests/test_requests.py"
+      }
+    },
+    {
+      "turn": 23,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && grep -n -A20 'def register_hook\\|for (k, v) in hooks' requests/models.py"
+      }
+    },
+    {
+      "turn": 24,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && grep -n -B10 -A15 'hooks' requests/models.py | head -80 && grep -n -A12 'def dispatch_hook' requests/hooks.py"
+      }
+    },
+    {
+      "turn": 25,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python - <<'EOF'\nimport re\np='requests/models.py'\ns=open(p).read()\ns=s.replace(\"\"\"        for (k, v) in list(hooks.items()):\n            self.register_hook(event=k, hook=v)\n\"\"\",\"\"\"        for (k, v) in list(hooks.items()):\n            if hasattr(v, '__iter__') and not hasattr(v, '__call__'):\n                for hook in v:\n                    self.register_hook(event=k, hook=hook)\n            else:\n                self.register_hook(event=k, hook=v)\n\"\"\")\nopen(p,'w').write(s)\nEOF\npython - <<'EOF'\nfrom requests import Request\ncalls=[]\ndef a(r): calls.append('a')\ndef b(r): calls.append('b')\nr=Request(hooks={'response':[a,b]})\nassert r.hooks['response']==[a,b]\nr2=Request(hooks={'response':a})\nassert r2.hooks['response']==[a]\n# dispatch works\nfrom requests.hooks import dispatch_hook\ndispatch_hook('response', r.hooks, None)\nassert calls==['a','b']\nprint('ok')\nEOF\ngit diff --stat && git diff"
+      }
+    }
+  ],
+  "usage_metrics": {
+    "calls": 25,
+    "prompt_tokens": 62014,
+    "cache_hit_tokens": 13056,
+    "cache_miss_tokens": 48958,
+    "cache_hit_rate_pct": 21.05,
+    "completion_tokens": 3751,
+    "total_tokens": 65765,
+    "task_cost_usd": 0.009633,
+    "session_cost_usd": 0.0739
+  },
+  "usage_summary": "[Quota Tracker] Calls: 25 | Prompt Tokens: 62,014 | Completion Tokens: 3,751 | Total Tokens: 65,765 | Est. Cost: $0.0096[DEEPSEEK][DeepSeek OFF-PEAK (1x)] Calls: 25 | Cache Hit: 21.1% (13,056/62,014) | Out: 3,751 | Task Spend: $0.00963 | Total Session Spend: $0.07390"
+}

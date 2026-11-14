@@ -1,0 +1,110 @@
+{
+  "instance_id": "psf__requests-2317",
+  "condition": "condition_b_codeblock",
+  "turns_taken": 14,
+  "finished_by_tool": true,
+  "model_patch": "diff --git a/requests/models.py b/requests/models.py\nindex 3f6a4f9..0614264 100755\n--- a/requests/models.py\n+++ b/requests/models.py\n@@ -329,7 +329,7 @@ class PreparedRequest(RequestEncodingMixin, RequestHooksMixin):\n         \"\"\"Prepares the given HTTP method.\"\"\"\n         self.method = method\n         if self.method is not None:\n-            self.method = self.method.upper()\n+            self.method = to_native_string(self.method.upper())\n \n     def prepare_url(self, url, params):\n         \"\"\"Prepares the given HTTP URL.\"\"\"\ndiff --git a/requests/sessions.py b/requests/sessions.py\nindex d701ff2..dfce7cf 100755\n--- a/requests/sessions.py\n+++ b/requests/sessions.py\n@@ -13,7 +13,7 @@ from collections import Mapping\n from datetime import datetime\n \n from .auth import _basic_auth_str\n-from .compat import cookielib, OrderedDict, urljoin, urlparse, builtin_str\n+from .compat import cookielib, OrderedDict, urljoin, urlparse\n from .cookies import (\n     cookiejar_from_dict, extract_cookies_to_jar, RequestsCookieJar, merge_cookies)\n from .models import Request, PreparedRequest, DEFAULT_REDIRECT_LIMIT\n@@ -425,7 +425,7 @@ class Session(SessionRedirectMixin):\n             If Tuple, ('cert', 'key') pair.\n         \"\"\"\n \n-        method = builtin_str(method)\n+        method = to_native_string(method)\n \n         # Create the Request.\n         req = Request(\ndiff --git a/test_requests.py b/test_requests.py\nindex 467c5bc..958f46c 100755\n--- a/test_requests.py\n+++ b/test_requests.py\n@@ -523,6 +523,11 @@ class RequestsTestCase(unittest.TestCase):\n             method=u('POST'), url=httpbin('post'), files=files)\n         assert r.status_code == 200\n \n+    def test_bytes_method_name(self):\n+        p = requests.Request(\n+            method=b'GET', url='http://www.example.com').prepare()\n+        assert p.method == 'GET'\n+\n     def test_custom_content_type(self):\n         r = requests.post(\n             httpbin('post'),\n",
+  "trajectory": [
+    {
+      "turn": 1,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && git status --short && grep -R \"builtin_str(method)\" -n . && grep -R \"def builtin_str\" -n requests"
+      }
+    },
+    {
+      "turn": 2,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '1,60p' requests/sessions.py && sed -n '400,450p' requests/sessions.py && grep -n \"builtin_str\\|builtin\" requests/sessions.py requests/compat.py requests/_internal_utils.py 2>/dev/null || true"
+      }
+    },
+    {
+      "turn": 4,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '70,125p' requests/compat.py && sed -n '1,80p' requests/utils.py | grep -n \"to_native_string\" -A10 -B2 || true && grep -R \"to_native_string\" -n requests | head -30"
+      }
+    },
+    {
+      "turn": 5,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '645,675p' requests/utils.py && python - <<'PY'\nimport requests, inspect\nfrom requests.sessions import PreparedRequest\nprint('version', requests.__version__)\nprint(inspect.getsource(PreparedRequest.prepare_method))\nfrom requests import Request\np = Request(b'GET', 'http://example.com').prepare()\nprint('prepared method:', repr(p.method), type(p.method))\nprint('prepared url:', p.url)\nPY"
+      }
+    },
+    {
+      "turn": 6,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && grep -R \"method\" -n tests/test_requests.py | head -80 && grep -R \"b'GET'\\|b\\\"GET\\\"\\|binary\\|bytes\" -n tests | head -80"
+      }
+    },
+    {
+      "turn": 7,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && ls -la && find . -maxdepth 2 -type f | sort | head -80 && sed -n '280,310p' requests/models.py"
+      }
+    },
+    {
+      "turn": 8,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python - <<'PY'\nfrom pathlib import Path\np = Path('requests/sessions.py')\ns = p.read_text()\ns = s.replace(\n    'from .compat import cookielib, OrderedDict, urljoin, urlparse, builtin_str',\n    'from .compat import cookielib, OrderedDict, urljoin, urlparse'\n)\ns = s.replace('        method = builtin_str(method)\\n',\n              '        method = to_native_string(method)\\n')\np.write_text(s)\n\np = Path('requests/models.py')\ns = p.read_text()\nold = '''    def prepare_method(self, method):\n        \"\"\"Prepares the given HTTP method.\"\"\"\n        self.method = method\n        if self.method is not None:\n            self.method = self.method.upper()\n'''\nnew = '''    def prepare_method(self, method):\n        \"\"\"Prepares the given HTTP method.\"\"\"\n        self.method = method\n        if self.method is not None:\n            self.method = to_native_string(self.method.upper())\n'''\nassert old in s, 'prepare_method block not found'\ns = s.replace(old, new)\np.write_text(s)\nPY\ngit diff -- requests/sessions.py requests/models.py"
+      }
+    },
+    {
+      "turn": 9,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python - <<'PY'\nfrom requests import Request, Session\nfrom requests.adapters import BaseAdapter\n\np = Request(b'GET', 'http://example.com').prepare()\nprint('prepared:', repr(p.method), type(p.method))\nassert p.method == 'GET'\n\nclass DummyAdapter(BaseAdapter):\n    def send(self, request, **kwargs):\n        print('adapter saw:', repr(request.method), type(request.method))\n        assert request.method == 'GET'\n        raise RuntimeError('stop after inspection')\n\n    def close(self):\n        pass\n\ns = Session()\ns.mount('http://', DummyAdapter())\ntry:\n    s.request(b'GET', 'http://example.com')\nexcept RuntimeError:\n    pass\nPY\npython -m pytest test_requests.py -q"
+      }
+    },
+    {
+      "turn": 10,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && grep -n \"class RequestsTestCase\\|def test_.*method\\|prepare_method\\|def test_prepare\\|Request(b\\|Request(\" test_requests.py | head -120"
+      }
+    },
+    {
+      "turn": 11,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '495,535p' test_requests.py && sed -n '1440,1525p' test_requests.py"
+      }
+    },
+    {
+      "turn": 12,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python - <<'PY'\nfrom pathlib import Path\np = Path('test_requests.py')\ns = p.read_text()\nold = '''    def test_unicode_method_name(self):\n        files = {'file': open('test_requests.py', 'rb')}\n        r = requests.request(\n            method=u('POST'), url=httpbin('post'), files=files)\n        assert r.status_code == 200\n\n'''\nnew = '''    def test_unicode_method_name(self):\n        files = {'file': open('test_requests.py', 'rb')}\n        r = requests.request(\n            method=u('POST'), url=httpbin('post'), files=files)\n        assert r.status_code == 200\n\n    def test_bytes_method_name(self):\n        p = requests.Request(\n            method=b'GET', url='http://www.example.com').prepare()\n        assert p.method == 'GET'\n\n'''\nassert old in s, 'test insertion point not found'\ns = s.replace(old, new)\np.write_text(s)\nPY\npython -m pytest test_requests.py -q -k 'bytes_method_name or unicode_method_name or prepare_unicode_url or prepared_request_complete_copy or data_argument_accepts_tuples'\ngit diff --stat && git diff"
+      }
+    },
+    {
+      "turn": 13,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python -m pytest test_requests.py::RequestsTestCase::test_bytes_method_name -q && python -m pytest test_requests.py::test_prepared_request_empty_copy test_requests.py::test_prepared_request_no_cookies_copy test_requests.py::test_prepared_request_complete_copy test_requests.py::test_data_argument_accepts_tuples -q && python - <<'PY'\nfrom requests import Request, Session\nfrom requests.adapters import BaseAdapter\n\nassert Request(b'GET', 'http://example.com').prepare().method == 'GET'\nassert Request(u'POST', 'http://example.com').prepare().method == 'POST'\n\nclass InspectingAdapter(BaseAdapter):\n    def send(self, request, **kwargs):\n        assert request.method == 'GET'\n        assert isinstance(request.method, str)\n        raise RuntimeError('inspected')\n\n    def close(self):\n        pass\n\ns = Session()\ns.mount('http://', InspectingAdapter())\ntry:\n    s.request(b'GET', 'http://example.com')\nexcept RuntimeError:\n    pass\nprint('smoke tests passed')\nPY\ngit diff --stat && git diff"
+      }
+    },
+    {
+      "turn": 14,
+      "action": "finish_task",
+      "args": {}
+    }
+  ],
+  "usage_metrics": {
+    "calls": 14,
+    "prompt_tokens": 118993,
+    "cache_hit_tokens": 99200,
+    "cache_miss_tokens": 19793,
+    "cache_hit_rate_pct": 83.37,
+    "completion_tokens": 9997,
+    "total_tokens": 128990,
+    "task_cost_usd": 0.009265,
+    "session_cost_usd": 0.009265
+  },
+  "usage_summary": "[Quota Tracker] Calls: 14 | Prompt Tokens: 118,993 | Completion Tokens: 9,997 | Total Tokens: 128,990 | Est. Cost: $0.0093[DEEPSEEK][DeepSeek OFF-PEAK (1x)] Calls: 14 | Cache Hit: 83.4% (99,200/118,993) | Out: 9,997 | Task Spend: $0.00926 | Total Session Spend: $0.00926"
+}

@@ -1,0 +1,159 @@
+{
+  "instance_id": "psf__requests-863",
+  "condition": "condition_b_codeblock",
+  "turns_taken": 23,
+  "finished_by_tool": true,
+  "model_patch": "diff --git a/requests/models.py b/requests/models.py\nindex d845637..948a80b 100755\n--- a/requests/models.py\n+++ b/requests/models.py\n@@ -463,7 +463,10 @@ class Request(object):\n     def register_hook(self, event, hook):\n         \"\"\"Properly register a hook.\"\"\"\n \n-        self.hooks[event].append(hook)\n+        if callable(hook):\n+            self.hooks[event].append(hook)\n+        elif hasattr(hook, '__iter__'):\n+            self.hooks[event].extend(h for h in hook if callable(h))\n \n     def deregister_hook(self, event, hook):\n         \"\"\"Deregister a previously registered hook.\n",
+  "trajectory": [
+    {
+      "turn": 1,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && git status --short && ls"
+      }
+    },
+    {
+      "turn": 2,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '220,290p' requests/models.py"
+      }
+    },
+    {
+      "turn": 3,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && grep -n \"class Request\\|def __init__\\|hooks\" requests/models.py | head -80"
+      }
+    },
+    {
+      "turn": 4,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '40,170p' requests/models.py && sed -n '450,480p' requests/models.py && cat requests/hooks.py"
+      }
+    },
+    {
+      "turn": 5,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && grep -R \"hooks\" -n tests requests/sessions.py | head -100 && git log --oneline -5"
+      }
+    },
+    {
+      "turn": 6,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '680,760p' tests/test_requests.py && sed -n '50,100p' requests/sessions.py && sed -n '150,200p' requests/sessions.py && grep -R \"def from_key_val_list\" -n requests"
+      }
+    },
+    {
+      "turn": 8,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '100,140p' requests/utils.py && grep -n \"self.hooks\\|hooks\" requests/sessions.py requests/models.py | head -100"
+      }
+    },
+    {
+      "turn": 9,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && grep -n \"__version__\\|version\" requests/__init__.py setup.py | head && find build -path '*requests/models.py' -print -exec sed -n '135,160p' {} \\;"
+      }
+    },
+    {
+      "turn": 10,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '1,45p' requests/models.py && sed -n '1,35p' requests/sessions.py && grep -R \"Callable\" -n requests tests | head"
+      }
+    },
+    {
+      "turn": 12,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && grep -n \"callable\\|Callable\\|ABCMeta\\|collections\" requests/compat.py requests/models.py | head -50 && sed -n '1,130p' requests/compat.py"
+      }
+    },
+    {
+      "turn": 13,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python - <<'PY'\nimport requests\n\ndef foo(args):\n    return args\n\ndef bar(args):\n    return args\n\nreq = requests.Request(url='http://example.com', hooks={'args': [foo, bar]})\nprint(req.hooks)\nPY"
+      }
+    },
+    {
+      "turn": 14,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python - <<'PY'\nfrom pathlib import Path\np = Path('requests/models.py')\ns = p.read_text()\nold = '''    def register_hook(self, event, hook):\n        \"\"\"Properly register a hook.\"\"\"\n\n        self.hooks[event].append(hook)\n'''\nnew = '''    def register_hook(self, event, hook):\n        \"\"\"Properly register a hook.\"\"\"\n\n        if callable(hook):\n            self.hooks[event].append(hook)\n        elif hasattr(hook, '__iter__'):\n            self.hooks[event].extend(h for h in hook if callable(h))\n'''\nassert old in s\np.write_text(s.replace(old, new))\nPY\ngit diff -- requests/models.py"
+      }
+    },
+    {
+      "turn": 16,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python - <<'PY'\nimport requests\n\ndef foo(args):\n    return args\n\ndef bar(args):\n    return args\n\nreq = requests.Request(url='http://example.com', hooks={'args': [foo, bar]})\nassert req.hooks['args'] == [foo, bar], req.hooks\n\nsingle = requests.Request(url='http://example.com', hooks={'args': foo})\nassert single.hooks['args'] == [foo], single.hooks\n\nreq.register_hook('args', [bar, foo])\nassert req.hooks['args'] == [foo, bar, bar, foo], req.hooks\nprint('ok')\nPY"
+      }
+    },
+    {
+      "turn": 17,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && pytest -q tests/test_requests.py -k 'hook' --disable-warnings --maxfail=1"
+      }
+    },
+    {
+      "turn": 18,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python -c \"import requests; print(requests.__file__)\" && git diff --stat && grep -n \"class .*Test\\|def test_\" tests/test_requests.py | head -60"
+      }
+    },
+    {
+      "turn": 19,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '35,85p' tests/test_requests.py && grep -n \"SERVICES\\|httpbin\" tests/test_requests.py | head -20"
+      }
+    },
+    {
+      "turn": 20,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && git diff --check && python - <<'PY'\nimport requests\nfrom requests.hooks import dispatch_hook\n\ndef first(value):\n    value.append('first')\n    return value\n\ndef second(value):\n    value.append('second')\n    return value\n\n# A list passed in the hooks dictionary must be registered as separate hooks.\nrequest = requests.Request(\n    url='http://example.com',\n    hooks={'args': [first, second]},\n)\nassert request.hooks['args'] == [first, second]\n\n# A single callable must continue to work.\nrequest = requests.Request(url='http://example.com', hooks={'args': first})\nassert request.hooks['args'] == [first]\n\n# Multiple hooks must be dispatched in order.\nresult = dispatch_hook('args', {'args': [first, second]}, [])\nassert result == ['first', 'second']\nprint('hook list behavior verified')\nPY"
+      }
+    },
+    {
+      "turn": 21,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && pytest -q tests/test_requests.py::RequestsTestSuite::test_entry_points tests/test_requests.py::RequestsTestSuite::test_params_are_added_before_fragment tests/test_requests.py::RequestsTestSuite::test_params_accepts_kv_list --disable-warnings"
+      }
+    },
+    {
+      "turn": 22,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && git diff -- requests/models.py && git status --short"
+      }
+    },
+    {
+      "turn": 23,
+      "action": "finish_task",
+      "args": {}
+    }
+  ],
+  "usage_metrics": {
+    "calls": 23,
+    "prompt_tokens": 172135,
+    "cache_hit_tokens": 156160,
+    "cache_miss_tokens": 15975,
+    "cache_hit_rate_pct": 90.72,
+    "completion_tokens": 11037,
+    "total_tokens": 183172,
+    "task_cost_usd": 0.009487,
+    "session_cost_usd": 0.035197
+  },
+  "usage_summary": "[Quota Tracker] Calls: 23 | Prompt Tokens: 172,135 | Completion Tokens: 11,037 | Total Tokens: 183,172 | Est. Cost: $0.0095[DEEPSEEK][DeepSeek OFF-PEAK (1x)] Calls: 23 | Cache Hit: 90.7% (156,160/172,135) | Out: 11,037 | Task Spend: $0.00949 | Total Session Spend: $0.03520"
+}

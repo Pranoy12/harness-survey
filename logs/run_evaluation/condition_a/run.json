@@ -1,0 +1,6 @@
+{
+  "dataset": "princeton-nlp/SWE-bench_Lite",
+  "split": "test",
+  "task_repo": null,
+  "created_at": "2026-11-14T10:39:38+00:00"
+}

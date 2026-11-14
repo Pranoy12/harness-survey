@@ -1,0 +1,194 @@
+{
+  "instance_id": "psf__requests-3362",
+  "condition": "condition_c_compacted",
+  "turns_taken": 25,
+  "finished_by_tool": true,
+  "model_patch": "diff --git a/requests/utils.py b/requests/utils.py\nindex 8d17b6b2..74339da6 100755\n--- a/requests/utils.py\n+++ b/requests/utils.py\n@@ -355,6 +355,11 @@ def get_encoding_from_headers(headers):\n     if 'text' in content_type:\n         return 'ISO-8859-1'\n \n+    if 'application/json' in content_type:\n+        # Assume UTF-8 based on RFC 4627: https://www.ietf.org/rfc/rfc4627.txt\n+        # since the charset was unset\n+        return 'utf-8'\n+\n \n def stream_decode_response_unicode(iterator, r):\n     \"\"\"Stream decodes a iterator.\"\"\"\ndiff --git a/tests/test_utils.py b/tests/test_utils.py\nindex 17149d26..14bb5b85 100755\n--- a/tests/test_utils.py\n+++ b/tests/test_utils.py\n@@ -368,6 +368,10 @@ def test_parse_dict_header(value, expected):\n             CaseInsensitiveDict({'content-type': 'text/plain'}),\n             'ISO-8859-1'\n         ),\n+        (\n+            CaseInsensitiveDict({'content-type': 'application/json'}),\n+            'utf-8'\n+        ),\n     ))\n def test_get_encoding_from_headers(value, expected):\n     assert get_encoding_from_headers(value) == expected\n",
+  "trajectory": [
+    {
+      "turn": 1,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && git status --short && git log -1 --oneline && ls"
+      }
+    },
+    {
+      "turn": 2,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && grep -R \"def iter_content\" -n requests tests | head -20 && grep -R \"decode_unicode\" -n requests tests | head -100"
+      }
+    },
+    {
+      "turn": 3,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '560,735p' requests/models.py && sed -n '930,1000p' tests/test_requests.py"
+      }
+    },
+    {
+      "turn": 4,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && grep -R \"def stream_decode_response_unicode\\|def iter_slices\" -n requests && sed -n '620,690p' requests/utils.py && git log --oneline -8 && git status --short"
+      }
+    },
+    {
+      "turn": 5,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '340,410p' requests/utils.py && grep -n \"encoding\" -n requests/models.py | head -30 && sed -n '740,830p' requests/models.py"
+      }
+    },
+    {
+      "turn": 6,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && grep -n \"def iter_content\" -A55 requests/models.py && grep -R \"stream_decode_response_unicode\\|decode_unicode\" -n tests | head -50"
+      }
+    },
+    {
+      "turn": 7,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '940,1000p' tests/test_requests.py && git log --oneline -5 && git status --short"
+      }
+    },
+    {
+      "turn": 8,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && grep -n \"def stream_decode_response_unicode\" -A30 requests/utils.py && grep -n \"def text\\|def apparent_encoding\\|def encoding\" -A45 requests/models.py | head -140"
+      }
+    },
+    {
+      "turn": 9,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '686,705p' requests/models.py && git branch --show-current && ls"
+      }
+    },
+    {
+      "turn": 10,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && grep -R \"stream_decode_response_unicode\\|decode_unicode\" -n tests | head -60 && git log --oneline -8"
+      }
+    },
+    {
+      "turn": 11,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '950,990p' tests/test_requests.py && grep -R \"def stream_decode_response_unicode\" -n requests"
+      }
+    },
+    {
+      "turn": 12,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '1,60p' requests/utils.py && sed -n '345,385p' requests/utils.py && grep -n \"def iter_content\" -A75 requests/models.py"
+      }
+    },
+    {
+      "turn": 13,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '780,870p' requests/models.py && grep -n \"apparent_encoding\\|def text\" -A20 requests/models.py | head -80 && git log --oneline -5"
+      }
+    },
+    {
+      "turn": 14,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '1,100p' HISTORY.rst && git log --all --oneline | head -30 && git branch -a"
+      }
+    },
+    {
+      "turn": 15,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python - <<'PY'\nimport requests, inspect, requests.models, requests.utils\nprint(requests.__version__)\nprint(requests.__file__)\nprint(inspect.getsource(requests.utils.stream_decode_response_unicode))\nPY\npip show requests 2>/dev/null | head -5"
+      }
+    },
+    {
+      "turn": 16,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && grep -R \"decode_unicode\" -n . | head -50 && grep -R \"apparent_encoding\" -n requests tests | head -50"
+      }
+    },
+    {
+      "turn": 17,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '620,725p' requests/models.py && echo '--- TEXT ---' && sed -n '730,800p' requests/models.py && echo '--- TESTS ---' && sed -n '930,995p' tests/test_requests.py && echo '--- HISTORY ---' && sed -n '370,395p' HISTORY.rst"
+      }
+    },
+    {
+      "turn": 18,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python -m pytest tests/test_requests.py::TestRequests::test_response_decode_unicode -q"
+      }
+    },
+    {
+      "turn": 19,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && git log --oneline -8 && git status --short && grep -R \"def stream_decode_response_unicode\" -n requests && sed -n '1,90p' requests/utils.py | tail -40 && grep -n \"stream_decode_response_unicode\" -A25 requests/utils.py"
+      }
+    },
+    {
+      "turn": 20,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && grep -n \"def iter_content\\|def iter_lines\\|def text\\|def content\\|def apparent_encoding\\|encoding\" -n requests/models.py | sed -n '1,120p' && sed -n '660,840p' requests/models.py && grep -n \"test_response_decode_unicode\" -B5 -A50 tests/test_requests.py"
+      }
+    },
+    {
+      "turn": 21,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && grep -R \"def get_encoding_from_headers\" -n requests && sed -n '360,405p' requests/utils.py && grep -R \"get_encoding_from_headers\" -n tests | head -30 && grep -n \"3133\\|application/json\\|iter_content\" HISTORY.rst | head -30"
+      }
+    },
+    {
+      "turn": 22,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '330,372p' requests/utils.py && sed -n '350,380p' tests/test_utils.py && git log --oneline -8 && git status --short"
+      }
+    },
+    {
+      "turn": 23,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python - <<'PY'\nfrom requests.utils import get_encoding_from_headers\nfrom requests.structures import CaseInsensitiveDict\nh = CaseInsensitiveDict({'content-type': 'application/json'})\nprint(repr(get_encoding_from_headers(h)))\nPY"
+      }
+    },
+    {
+      "turn": 24,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python - <<'PY'\nfrom pathlib import Path\np = Path('requests/utils.py')\ns = p.read_text()\nold = \"\"\"    if 'text' in content_type:\n        return 'ISO-8859-1'\n\"\"\"\nnew = \"\"\"    if 'text' in content_type:\n        return 'ISO-8859-1'\n\n    if 'application/json' in content_type:\n        # Assume UTF-8 based on RFC 4627: https://www.ietf.org/rfc/rfc4627.txt\n        # since the charset was unset\n        return 'utf-8'\n\"\"\"\nassert old in s\np.write_text(s.replace(old, new))\n\np = Path('tests/test_utils.py')\ns = p.read_text()\nold = \"\"\"        (\n            CaseInsensitiveDict({'content-type': 'text/plain'}),\n            'ISO-8859-1'\n        ),\n\"\"\"\nnew = \"\"\"        (\n            CaseInsensitiveDict({'content-type': 'text/plain'}),\n            'ISO-8859-1'\n        ),\n        (\n            CaseInsensitiveDict({'content-type': 'application/json'}),\n            'utf-8'\n        ),\n\"\"\"\nassert old in s\np.write_text(s.replace(old, new))\nPY\npython -m pytest tests/test_utils.py::test_get_encoding_from_headers -q\ngit diff -- requests/utils.py tests/test_utils.py"
+      }
+    },
+    {
+      "turn": 25,
+      "action": "finish_task",
+      "args": {}
+    }
+  ],
+  "usage_metrics": {
+    "calls": 25,
+    "prompt_tokens": 64220,
+    "cache_hit_tokens": 12800,
+    "cache_miss_tokens": 51420,
+    "cache_hit_rate_pct": 19.93,
+    "completion_tokens": 5844,
+    "total_tokens": 70064,
+    "task_cost_usd": 0.011258,
+    "session_cost_usd": 0.064267
+  },
+  "usage_summary": "[Quota Tracker] Calls: 25 | Prompt Tokens: 64,220 | Completion Tokens: 5,844 | Total Tokens: 70,064 | Est. Cost: $0.0113[DEEPSEEK][DeepSeek OFF-PEAK (1x)] Calls: 25 | Cache Hit: 19.9% (12,800/64,220) | Out: 5,844 | Task Spend: $0.01126 | Total Session Spend: $0.06427"
+}

@@ -1,0 +1,166 @@
+{
+  "instance_id": "psf__requests-2317",
+  "condition": "condition_a",
+  "turns_taken": 18,
+  "finished_by_tool": true,
+  "model_patch": "diff --git a/requests/models.py b/requests/models.py\nindex 3f6a4f9..0614264 100755\n--- a/requests/models.py\n+++ b/requests/models.py\n@@ -329,7 +329,7 @@ class PreparedRequest(RequestEncodingMixin, RequestHooksMixin):\n         \"\"\"Prepares the given HTTP method.\"\"\"\n         self.method = method\n         if self.method is not None:\n-            self.method = self.method.upper()\n+            self.method = to_native_string(self.method.upper())\n \n     def prepare_url(self, url, params):\n         \"\"\"Prepares the given HTTP URL.\"\"\"\ndiff --git a/requests/sessions.py b/requests/sessions.py\nindex d701ff2..f7a2593 100755\n--- a/requests/sessions.py\n+++ b/requests/sessions.py\n@@ -13,7 +13,7 @@ from collections import Mapping\n from datetime import datetime\n \n from .auth import _basic_auth_str\n-from .compat import cookielib, OrderedDict, urljoin, urlparse, builtin_str\n+from .compat import cookielib, OrderedDict, urljoin, urlparse\n from .cookies import (\n     cookiejar_from_dict, extract_cookies_to_jar, RequestsCookieJar, merge_cookies)\n from .models import Request, PreparedRequest, DEFAULT_REDIRECT_LIMIT\n@@ -425,8 +425,6 @@ class Session(SessionRedirectMixin):\n             If Tuple, ('cert', 'key') pair.\n         \"\"\"\n \n-        method = builtin_str(method)\n-\n         # Create the Request.\n         req = Request(\n             method = method.upper(),\n",
+  "trajectory": [
+    {
+      "turn": 1,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && git status --short && grep -R \"builtin_str(method)\" -n . && grep -R \"builtin_str\" -n requests | head -50"
+      }
+    },
+    {
+      "turn": 2,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '1,180p' requests/compat.py && sed -n '380,500p' requests/sessions.py"
+      }
+    },
+    {
+      "turn": 2,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && grep -R \"method\" -n tests/test_requests.py tests/test_sessions.py 2>/dev/null | head -100; ls tests | head -50; git log --oneline -5"
+      }
+    },
+    {
+      "turn": 3,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && ls -la && find . -maxdepth 2 -type d | sort | head -50 && python --version && python -c \"import requests; print(requests.__version__)\""
+      }
+    },
+    {
+      "turn": 4,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '1,120p' requests/models.py && sed -n '180,320p' requests/models.py && grep -n \"method\" requests/models.py requests/sessions.py requests/adapters.py | head -100"
+      }
+    },
+    {
+      "turn": 4,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && grep -n \"method\" test_requests.py | head -100 && grep -n \"b'GET\\|bytes\\|binary\\|unicode\" test_requests.py | head -100"
+      }
+    },
+    {
+      "turn": 5,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '315,350p' requests/models.py && sed -n '500,535p' test_requests.py && sed -n '630,680p' requests/utils.py && grep -R \"to_native_string\" -n requests test_requests.py"
+      }
+    },
+    {
+      "turn": 6,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python - <<'PY'\nimport requests\nfrom requests.models import Request, PreparedRequest\ns = requests.Session()\nr = Request(method=b'GET', url='http://httpbin.org/get')\np = r.prepare()\nprint(repr(p.method))\ntry:\n    s.request(b'GET', 'http://example.com')\nexcept Exception as e:\n    print(type(e).__name__, e)\nPY"
+      }
+    },
+    {
+      "turn": 7,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && git log --all --oneline --decorate -- requests/models.py | head -30 && git tag | tail -20"
+      }
+    },
+    {
+      "turn": 7,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '1,40p' requests/sessions.py && sed -n '115,170p' requests/sessions.py && grep -n \"builtin_str\\|to_native_string\" requests/sessions.py"
+      }
+    },
+    {
+      "turn": 8,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python - <<'PY'\nfrom pathlib import Path\n\np = Path('requests/sessions.py')\ns = p.read_text()\ns = s.replace('from .compat import cookielib, OrderedDict, urljoin, urlparse, builtin_str',\n              'from .compat import cookielib, OrderedDict, urljoin, urlparse')\ns = s.replace('\\n        method = builtin_str(method)\\n', '\\n')\np.write_text(s)\n\np = Path('requests/models.py')\ns = p.read_text()\ns = s.replace('''    def prepare_method(self, method):\n        \"\"\"Prepares the given HTTP method.\"\"\"\n        self.method = method\n        if self.method is not None:\n            self.method = self.method.upper()\n''', '''    def prepare_method(self, method):\n        \"\"\"Prepares the given HTTP method.\"\"\"\n        self.method = method\n        if self.method is not None:\n            self.method = to_native_string(self.method.upper())\n''')\np.write_text(s)\nPY\ngit diff -- requests/sessions.py requests/models.py"
+      }
+    },
+    {
+      "turn": 9,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '418,435p' requests/sessions.py && python - <<'PY'\nimport requests\nfrom requests.models import Request, PreparedRequest\nmethods = [b'GET', b'POST', 'GET', u'POST', b'get']\nfor m in methods:\n    p = Request(method=m, url='http://example.com').prepare()\n    print(repr(m), '=>', repr(p.method))\n    p2 = PreparedRequest()\n    p2.prepare_method(m)\n    print('direct =>', repr(p2.method))\nPY"
+      }
+    },
+    {
+      "turn": 10,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python - <<'PY'\nfrom pathlib import Path\np = Path('requests/sessions.py')\ns = p.read_text()\ns = s.replace('''        \"\"\"\n\n\n        # Create the Request.\n''', '''        \"\"\"\n\n        # Create the Request.\n''')\np.write_text(s)\nPY\ngit diff --check && git diff --stat\npython -m pytest test_requests.py::TestRequests::test_unicode_method_name -q 2>&1 | tail -30"
+      }
+    },
+    {
+      "turn": 11,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python -m pytest test_requests.py::TestRequests::test_unicode_method_name -q 2>&1 | head -80; echo PIPESTATUS:${PIPESTATUS[*]}"
+      }
+    },
+    {
+      "turn": 12,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && grep -n '^class ' test_requests.py | head -20 && grep -n \"test_unicode_method_name\" -B2 -A2 test_requests.py"
+      }
+    },
+    {
+      "turn": 13,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python -m pytest test_requests.py::RequestsTestCase::test_unicode_method_name -q 2>&1 | head -100; echo PIPESTATUS:${PIPESTATUS[*]}"
+      }
+    },
+    {
+      "turn": 14,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python - <<'PY'\nimport threading\nfrom http.server import BaseHTTPRequestHandler, HTTPServer\nimport requests\n\nseen = []\nclass Handler(BaseHTTPRequestHandler):\n    def do_GET(self):\n        seen.append(('GET', self.path))\n        self.send_response(200)\n        self.end_headers()\n        self.wfile.write(b'ok')\n    def do_POST(self):\n        seen.append(('POST', self.path))\n        self.send_response(200)\n        self.end_headers()\n        self.wfile.write(b'ok')\n    def log_message(self, *args):\n        pass\n\nserver = HTTPServer(('127.0.0.1', 0), Handler)\nthread = threading.Thread(target=server.serve_forever)\nthread.daemon = True\nthread.start()\nurl = 'http://127.0.0.1:%d/test' % server.server_port\ntry:\n    r = requests.request(b'GET', url)\n    print('GET response', r.status_code, repr(r.request.method))\n    r = requests.Session().request(b'POST', url)\n    print('POST response', r.status_code, repr(r.request.method))\n    print('seen:', seen)\n    assert seen == [('GET', '/test'), ('POST', '/test')]\n    assert r.request.method == 'POST'\nfinally:\n    server.shutdown()\n    server.server_close()\nPY"
+      }
+    },
+    {
+      "turn": 15,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '580,610p' test_requests.py && sed -n '890,920p' test_requests.py && sed -n '1470,1520p' test_requests.py"
+      }
+    },
+    {
+      "turn": 16,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python -m pytest test_requests.py::RequestsTestCase::test_prepare_request_with_bytestring_url test_requests.py::RequestsTestCase::test_header_keys_are_native test_requests.py::TestContentEncodingDetection test_requests.py::TestCaseInsensitiveDict test_requests.py::UtilsTestCase test_requests.py::test_prepared_request_empty_copy test_requests.py::test_prepared_request_no_cookies_copy test_requests.py::test_prepared_request_complete_copy test_requests.py::test_prepare_unicode_url -q 2>&1 | tail -40"
+      }
+    },
+    {
+      "turn": 17,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && git diff --check && git diff && git status --short"
+      }
+    },
+    {
+      "turn": 18,
+      "action": "finish_task",
+      "args": {}
+    }
+  ],
+  "usage_metrics": {
+    "calls": 18,
+    "prompt_tokens": 188704,
+    "cache_hit_tokens": 173952,
+    "cache_miss_tokens": 14752,
+    "cache_hit_rate_pct": 92.18,
+    "completion_tokens": 3858,
+    "total_tokens": 192562,
+    "task_cost_usd": 0.005049,
+    "session_cost_usd": 0.014506
+  },
+  "usage_summary": "[Quota Tracker] Calls: 18 | Prompt Tokens: 188,704 | Completion Tokens: 3,858 | Total Tokens: 192,562 | Est. Cost: $0.0050[DEEPSEEK][DeepSeek OFF-PEAK (1x)] Calls: 18 | Cache Hit: 92.2% (173,952/188,704) | Out: 3,858 | Task Spend: $0.00505 | Total Session Spend: $0.01451"
+}

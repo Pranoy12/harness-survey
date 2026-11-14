@@ -1,0 +1,173 @@
+{
+  "instance_id": "psf__requests-1963",
+  "condition": "condition_b_codeblock",
+  "turns_taken": 25,
+  "finished_by_tool": true,
+  "model_patch": "diff --git a/requests/sessions.py b/requests/sessions.py\nindex 425db22..a0676a2 100755\n--- a/requests/sessions.py\n+++ b/requests/sessions.py\n@@ -180,6 +180,12 @@ class SessionRedirectMixin(object):\n \n             extract_cookies_to_jar(self.cookies, prepared_request, resp.raw)\n \n+            # https://github.com/kennethreitz/requests/issues/1905\n+            # The next request should be based on the request we just sent,\n+            # not the original request, to ensure that method changes are\n+            # preserved across multiple redirects.\n+            req = prepared_request\n+\n             i += 1\n             yield resp\n \ndiff --git a/test_requests.py b/test_requests.py\nindex 17de849..af1b67a 100755\n--- a/test_requests.py\n+++ b/test_requests.py\n@@ -11,7 +11,7 @@ import unittest\n \n import requests\n import pytest\n-from requests.adapters import HTTPAdapter\n+from requests.adapters import BaseAdapter, HTTPAdapter\n from requests.auth import HTTPDigestAuth\n from requests.compat import (\n     Morsel, cookielib, getproxies, str, urljoin, urlparse)\n@@ -211,6 +211,59 @@ class RequestsTestCase(unittest.TestCase):\n         req_urls = [r.request.url for r in resp.history]\n         assert urls == req_urls\n \n+    def test_redirect_method_is_preserved_from_previous_redirect(self):\n+        class RedirectAdapter(BaseAdapter):\n+            def __init__(self, responses):\n+                self.responses = responses\n+                self.calls = []\n+\n+            def send(self, request, **kwargs):\n+                self.calls.append((request.method, request.url))\n+                resp = self.responses.pop(0)\n+                resp.request = request\n+                return resp\n+\n+            def close(self):\n+                pass\n+\n+        class FakeRaw(object):\n+            def release_conn(self):\n+                pass\n+\n+        def make_response(url, status_code, location=None):\n+            resp = requests.Response()\n+            resp.status_code = status_code\n+            resp.url = url\n+            resp.headers = CaseInsensitiveDict()\n+            if location is not None:\n+                resp.headers['location'] = location\n+            resp._content = b''\n+            resp._content_consumed = True\n+            resp.raw = FakeRaw()\n+            return resp\n+\n+        adapter = RedirectAdapter([\n+            make_response('http://example.com/do_something', 303, '/new_thing'),\n+            make_response('http://example.com/new_thing', 307,\n+                          'http://other.example.com/new_thing'),\n+            make_response('http://other.example.com/new_thing', 200),\n+        ])\n+\n+        s = requests.Session()\n+        s.trust_env = False\n+        s.mount('http://', adapter)\n+\n+        resp = s.post('http://example.com/do_something')\n+\n+        # The intermediate 303 turns the POST into a GET, and the subsequent\n+        # 307 must preserve that GET rather than reverting to the POST.\n+        assert adapter.calls == [\n+            ('POST', 'http://example.com/do_something'),\n+            ('GET', 'http://example.com/new_thing'),\n+            ('GET', 'http://other.example.com/new_thing'),\n+        ]\n+        assert [r.request.method for r in resp.history] == ['POST', 'GET']\n+\n     def test_headers_on_session_with_None_are_not_sent(self):\n         \"\"\"Do not send headers in Session.headers with None values.\"\"\"\n         ses = requests.Session()\n",
+  "trajectory": [
+    {
+      "turn": 1,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && git status --short && ls"
+      }
+    },
+    {
+      "turn": 3,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && grep -n \"resolve_redirects\" requests/sessions.py && sed -n '100,260p' requests/sessions.py"
+      }
+    },
+    {
+      "turn": 4,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '75,140p' requests/sessions.py"
+      }
+    },
+    {
+      "turn": 5,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && grep -n \"__version__\" requests/__init__.py && grep -n \"redirect\" test_requests.py | head -80"
+      }
+    },
+    {
+      "turn": 6,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && git log --oneline -15"
+      }
+    },
+    {
+      "turn": 7,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python - <<'PY'\nfrom pathlib import Path\np = Path('requests/sessions.py')\ns = p.read_text()\nold = \"\"\"            extract_cookies_to_jar(self.cookies, prepared_request, resp.raw)\n\n            i += 1\n            yield resp\n\"\"\"\nnew = \"\"\"            extract_cookies_to_jar(self.cookies, prepared_request, resp.raw)\n\n            # https://github.com/kennethreitz/requests/issues/1905\n            # The next request should be based on the request we just sent,\n            # not the original request, to ensure that method changes are\n            # preserved across multiple redirects.\n            req = prepared_request\n\n            i += 1\n            yield resp\n\"\"\"\nassert old in s\np.write_text(s.replace(old, new))\nPY\ngit diff"
+      }
+    },
+    {
+      "turn": 9,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '1,60p' test_requests.py && grep -n \"class TestSession\\|def test_\" test_requests.py | sed -n '1,70p'"
+      }
+    },
+    {
+      "turn": 10,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '205,214p' test_requests.py && grep -n \"resolve_redirects\\|expect_response\\|_urllib3\" test_requests.py"
+      }
+    },
+    {
+      "turn": 11,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python - <<'PY'\nimport threading\nfrom http.server import BaseHTTPRequestHandler, HTTPServer\nimport requests\n\nclass H(BaseHTTPRequestHandler):\n    def log_message(self, *a): pass\n    def do_POST(self):\n        if self.path == '/do_something':\n            self.send_response(303)\n            self.send_header('Location', '/new_thing')\n            self.end_headers()\n        else:\n            self.send_response(500); self.end_headers()\n    def do_GET(self):\n        if self.path == '/new_thing':\n            self.send_response(307)\n            self.send_header('Location', '/final')\n            self.end_headers()\n        elif self.path == '/final':\n            body = self.command.encode()\n            self.send_response(200)\n            self.send_header('Content-Length', str(len(body)))\n            self.end_headers()\n            self.wfile.write(body)\n        else:\n            self.send_response(500); self.end_headers()\n\nsrv = HTTPServer(('127.0.0.1', 0), H)\nthreading.Thread(target=srv.serve_forever, daemon=True).start()\nurl = 'http://127.0.0.1:%d/do_something' % srv.server_port\nr = requests.post(url)\nprint('final status', r.status_code, 'method body', r.text)\nassert r.text == 'GET', r.text\nprint('methods in history:', [h.request.method for h in r.history])\nsrv.shutdown()\nPY"
+      }
+    },
+    {
+      "turn": 12,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && ls tests 2>/dev/null; grep -n \"monkeypatch\\|HTTPAdapter\\|MockAdapter\\|class .*Adapter\" test_requests.py"
+      }
+    },
+    {
+      "turn": 13,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && grep -n \"^class \\|^def \" test_requests.py | tail -30 && wc -l test_requests.py"
+      }
+    },
+    {
+      "turn": 14,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && grep -n \"def extract_cookies_to_jar\" -A30 requests/cookies.py"
+      }
+    },
+    {
+      "turn": 15,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python - <<'PY'\nimport requests\nfrom requests.structures import CaseInsensitiveDict\n\ndef fake_response(url, status, location=None):\n    r = requests.Response()\n    r.status_code = status\n    r.url = url\n    r.headers = CaseInsensitiveDict()\n    if location is not None:\n        r.headers['location'] = location\n    r._content = b''\n    r._content_consumed = True\n    return r\n\nsession = requests.Session()\nsession.trust_env = False\nresponses = [\n    fake_response('http://example.com/do_something', 303, '/new_thing'),\n    fake_response('http://example.com/new_thing', 307, 'http://other.example.com/new_thing'),\n    fake_response('http://other.example.com/new_thing', 200),\n]\ncalls = []\ndef fake_send(request, **kwargs):\n    calls.append((request.method, request.url))\n    r = responses.pop(0)\n    r.request = request\n    return r\nsession.send = fake_send\nr = session.post('http://example.com/do_something')\nprint(calls)\nassert calls == [('POST', 'http://example.com/do_something'),\n                 ('GET', 'http://example.com/new_thing'),\n                 ('GET', 'http://other.example.com/new_thing')], calls\nassert r.history[0].request.method == 'POST'\nassert r.history[1].request.method == 'GET'\nprint('ok')\nPY"
+      }
+    },
+    {
+      "turn": 17,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && grep -n \"def is_redirect\" -A15 requests/models.py"
+      }
+    },
+    {
+      "turn": 18,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python - <<'PY'\nimport requests\nfrom requests.adapters import BaseAdapter\nfrom requests.structures import CaseInsensitiveDict\n\ndef fake_response(url, status, location=None):\n    r = requests.Response()\n    r.status_code = status\n    r.url = url\n    r.headers = CaseInsensitiveDict()\n    if location is not None:\n        r.headers['location'] = location\n    r._content = b''\n    r._content_consumed = True\n    return r\n\nclass FakeAdapter(BaseAdapter):\n    def __init__(self, responses):\n        self.responses = responses\n        self.calls = []\n    def send(self, request, **kwargs):\n        self.calls.append((request.method, request.url))\n        r = self.responses.pop(0)\n        r.request = request\n        r.connection = None\n        return r\n    def close(self):\n        pass\n\nsession = requests.Session()\nsession.trust_env = False\nadapter = FakeAdapter([\n    fake_response('http://example.com/do_something', 303, '/new_thing'),\n    fake_response('http://example.com/new_thing', 307, 'http://other.example.com/new_thing'),\n    fake_response('http://other.example.com/new_thing', 200),\n])\nsession.mount('http://', adapter)\nr = session.post('http://example.com/do_something')\nprint(adapter.calls)\nassert adapter.calls == [('POST', 'http://example.com/do_something'),\n                         ('GET', 'http://example.com/new_thing'),\n                         ('GET', 'http://other.example.com/new_thing')], adapter.calls\nassert r.history[0].request.method == 'POST'\nassert r.history[1].request.method == 'GET'\nprint('ok')\nPY"
+      }
+    },
+    {
+      "turn": 19,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python - <<'PY'\nimport requests\nfrom requests.adapters import BaseAdapter\nfrom requests.structures import CaseInsensitiveDict\n\nclass Raw(object):\n    def release_conn(self):\n        pass\n\ndef fake_response(url, status, location=None):\n    r = requests.Response()\n    r.status_code = status\n    r.url = url\n    r.headers = CaseInsensitiveDict()\n    if location is not None:\n        r.headers['location'] = location\n    r._content = b''\n    r._content_consumed = True\n    r.raw = Raw()\n    return r\n\nclass FakeAdapter(BaseAdapter):\n    def __init__(self, responses):\n        self.responses = responses\n        self.calls = []\n    def send(self, request, **kwargs):\n        self.calls.append((request.method, request.url))\n        r = self.responses.pop(0)\n        r.request = request\n        return r\n    def close(self):\n        pass\n\nsession = requests.Session()\nsession.trust_env = False\nadapter = FakeAdapter([\n    fake_response('http://example.com/do_something', 303, '/new_thing'),\n    fake_response('http://example.com/new_thing', 307, 'http://other.example.com/new_thing'),\n    fake_response('http://other.example.com/new_thing', 200),\n])\nsession.mount('http://', adapter)\nr = session.post('http://example.com/do_something')\nprint(adapter.calls)\nassert adapter.calls == [('POST', 'http://example.com/do_something'),\n                         ('GET', 'http://example.com/new_thing'),\n                         ('GET', 'http://other.example.com/new_thing')], adapter.calls\nassert r.history[0].request.method == 'POST'\nassert r.history[1].request.method == 'GET'\nprint('ok')\nPY"
+      }
+    },
+    {
+      "turn": 20,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python - <<'PY'\nfrom pathlib import Path\np = Path('test_requests.py')\ns = p.read_text()\n\ns = s.replace(\n    \"from requests.adapters import HTTPAdapter\\n\",\n    \"from requests.adapters import BaseAdapter, HTTPAdapter\\n\",\n)\n\nanchor = \"\"\"    def test_requests_in_history_are_not_overridden(self):\n        resp = requests.get(httpbin('redirect/3'))\n        urls = [r.url for r in resp.history]\n        req_urls = [r.request.url for r in resp.history]\n        assert urls == req_urls\n\"\"\"\nnew_test = anchor + '''\n    def test_redirect_method_is_preserved_from_previous_redirect(self):\n        class RedirectAdapter(BaseAdapter):\n            def __init__(self, responses):\n                self.responses = responses\n                self.calls = []\n\n            def send(self, request, **kwargs):\n                self.calls.append((request.method, request.url))\n                resp = self.responses.pop(0)\n                resp.request = request\n                return resp\n\n            def close(self):\n                pass\n\n        class FakeRaw(object):\n            def release_conn(self):\n                pass\n\n        def make_response(url, status_code, location=None):\n            resp = requests.Response()\n            resp.status_code = status_code\n            resp.url = url\n            resp.headers = CaseInsensitiveDict()\n            if location is not None:\n                resp.headers['location'] = location\n            resp._content = b''\n            resp._content_consumed = True\n            resp.raw = FakeRaw()\n            return resp\n\n        adapter = RedirectAdapter([\n            make_response('http://example.com/do_something', 303, '/new_thing'),\n            make_response('http://example.com/new_thing', 307,\n                          'http://other.example.com/new_thing'),\n            make_response('http://other.example.com/new_thing', 200),\n        ])\n\n        s = requests.Session()\n        s.trust_env = False\n        s.mount('http://', adapter)\n\n        resp = s.post('http://example.com/do_something')\n\n        # The intermediate 303 turns the POST into a GET, and the subsequent\n        # 307 must preserve that GET rather than reverting to the POST.\n        assert adapter.calls == [\n            ('POST', 'http://example.com/do_something'),\n            ('GET', 'http://example.com/new_thing'),\n            ('GET', 'http://other.example.com/new_thing'),\n        ]\n        assert [r.request.method for r in resp.history] == ['POST', 'GET']\n'''\nassert anchor in s\ns = s.replace(anchor, new_test)\np.write_text(s)\nPY\ngit diff --stat"
+      }
+    },
+    {
+      "turn": 21,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python -m pytest test_requests.py -k \"redirect_method_is_preserved or requests_in_history_are_not_overridden\" -q"
+      }
+    },
+    {
+      "turn": 22,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python -m pytest test_requests.py -k \"redirect_method_is_preserved\" -q 2>&1 | tail -5"
+      }
+    },
+    {
+      "turn": 23,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && git stash -- requests/sessions.py && python -m pytest test_requests.py -k \"redirect_method_is_preserved\" -q 2>&1 | tail -3; git stash pop"
+      }
+    },
+    {
+      "turn": 24,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && git diff"
+      }
+    },
+    {
+      "turn": 25,
+      "action": "finish_task",
+      "args": {}
+    }
+  ],
+  "usage_metrics": {
+    "calls": 25,
+    "prompt_tokens": 148718,
+    "cache_hit_tokens": 134656,
+    "cache_miss_tokens": 14062,
+    "cache_hit_rate_pct": 90.54,
+    "completion_tokens": 9919,
+    "total_tokens": 158637,
+    "task_cost_usd": 0.008465,
+    "session_cost_usd": 0.008465
+  },
+  "usage_summary": "[Quota Tracker] Calls: 25 | Prompt Tokens: 148,718 | Completion Tokens: 9,919 | Total Tokens: 158,637 | Est. Cost: $0.0085[DEEPSEEK][DeepSeek OFF-PEAK (1x)] Calls: 25 | Cache Hit: 90.5% (134,656/148,718) | Out: 9,919 | Task Spend: $0.00846 | Total Session Spend: $0.00846"
+}
