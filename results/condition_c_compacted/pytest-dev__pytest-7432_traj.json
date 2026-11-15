@@ -1,0 +1,473 @@
+{
+  "instance_id": "pytest-dev__pytest-7432",
+  "condition": "condition_c_compacted",
+  "turns_taken": 25,
+  "finished_by_tool": false,
+  "empty_action_retries": 0,
+  "wall_time_sec": 50.22,
+  "usage_metrics": {
+    "calls": 25,
+    "prompt_tokens": 57918,
+    "cache_hit_tokens": 18176,
+    "cache_miss_tokens": 39742,
+    "cache_hit_rate_pct": 31.38,
+    "completion_tokens": 5139,
+    "total_tokens": 63057,
+    "task_cost_usd": 0.009099,
+    "session_cost_usd": 0.02156
+  },
+  "usage_summary": "[Quota Tracker] Calls: 25 | Prompt Tokens: 57,918 | Completion Tokens: 5,139 | Total Tokens: 63,057 | Est. Cost: $0.0091[DEEPSEEK][DeepSeek OFF-PEAK (1x)] Calls: 25 | Cache Hit: 31.4% (18,176/57,918) | Out: 5,139 | Task Spend: $0.00910 | Total Session Spend: $0.02156",
+  "model_patch": "diff --git a/src/_pytest/skipping.py b/src/_pytest/skipping.py\nindex 7bd975e5a..4b657af14 100755\n--- a/src/_pytest/skipping.py\n+++ b/src/_pytest/skipping.py\n@@ -270,6 +270,18 @@ def pytest_runtest_makereport(item: Item, call: CallInfo[None]):\n         else:\n             rep.longrepr = \"Unexpected success\"\n         rep.outcome = \"failed\"\n+    elif (\n+        item._store.get(skipped_by_mark_key, True)\n+        and rep.skipped\n+        and type(rep.longrepr) is tuple\n+    ):\n+        # skipped by mark.skipif; change the location of the failure\n+        # to point to the item definition, otherwise it will display\n+        # the location of where the skip exception was raised within pytest\n+        _, _, reason = rep.longrepr\n+        filename, line = item.reportinfo()[:2]\n+        assert line is not None\n+        rep.longrepr = str(filename), line + 1, reason\n     elif item.config.option.runxfail:\n         pass  # don't interfere\n     elif call.excinfo and isinstance(call.excinfo.value, xfail.Exception):\n@@ -291,18 +303,6 @@ def pytest_runtest_makereport(item: Item, call: CallInfo[None]):\n             else:\n                 rep.outcome = \"passed\"\n                 rep.wasxfail = xfailed.reason\n-    elif (\n-        item._store.get(skipped_by_mark_key, True)\n-        and rep.skipped\n-        and type(rep.longrepr) is tuple\n-    ):\n-        # skipped by mark.skipif; change the location of the failure\n-        # to point to the item definition, otherwise it will display\n-        # the location of where the skip exception was raised within pytest\n-        _, _, reason = rep.longrepr\n-        filename, line = item.reportinfo()[:2]\n-        assert line is not None\n-        rep.longrepr = str(filename), line + 1, reason\n \n \n def pytest_report_teststatus(report: BaseReport) -> Optional[Tuple[str, str, str]]:\n",
+  "trajectory": [
+    {
+      "turn": 1,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && git status && sed -n '1,320p' src/_pytest/skipping.py"
+      },
+      "metrics_snapshot": {
+        "calls": 1,
+        "prompt_tokens": 686,
+        "cache_hit_tokens": 256,
+        "cache_miss_tokens": 430,
+        "cache_hit_rate_pct": 37.32,
+        "completion_tokens": 76,
+        "total_tokens": 762,
+        "task_cost_usd": 0.000111,
+        "session_cost_usd": 0.012572
+      }
+    },
+    {
+      "turn": 2,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '300,400p' src/_pytest/skipping.py && grep -rn \"skipped_by_mark_key\" src/_pytest"
+      },
+      "metrics_snapshot": {
+        "calls": 2,
+        "prompt_tokens": 3911,
+        "cache_hit_tokens": 896,
+        "cache_miss_tokens": 3015,
+        "cache_hit_rate_pct": 22.91,
+        "completion_tokens": 159,
+        "total_tokens": 4070,
+        "task_cost_usd": 0.00055,
+        "session_cost_usd": 0.013011
+      }
+    },
+    {
+      "turn": 3,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '280,315p' src/_pytest/skipping.py"
+      },
+      "metrics_snapshot": {
+        "calls": 3,
+        "prompt_tokens": 7541,
+        "cache_hit_tokens": 4096,
+        "cache_miss_tokens": 3445,
+        "cache_hit_rate_pct": 54.32,
+        "completion_tokens": 220,
+        "total_tokens": 7761,
+        "task_cost_usd": 0.000661,
+        "session_cost_usd": 0.013122
+      }
+    },
+    {
+      "turn": 4,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '220,300p' src/_pytest/skipping.py"
+      },
+      "metrics_snapshot": {
+        "calls": 4,
+        "prompt_tokens": 9050,
+        "cache_hit_tokens": 4736,
+        "cache_miss_tokens": 4314,
+        "cache_hit_rate_pct": 52.33,
+        "completion_tokens": 288,
+        "total_tokens": 9338,
+        "task_cost_usd": 0.000834,
+        "session_cost_usd": 0.013295
+      }
+    },
+    {
+      "turn": 5,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && grep -n \"ReprFileLocation\\|longrepr = \\|skipped\" src/_pytest/runner.py | head -50"
+      },
+      "metrics_snapshot": {
+        "calls": 5,
+        "prompt_tokens": 10984,
+        "cache_hit_tokens": 5376,
+        "cache_miss_tokens": 5608,
+        "cache_hit_rate_pct": 48.94,
+        "completion_tokens": 776,
+        "total_tokens": 11760,
+        "task_cost_usd": 0.001323,
+        "session_cost_usd": 0.013784
+      }
+    },
+    {
+      "turn": 6,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '300,345p' src/_pytest/runner.py && sed -n '300,320p' src/_pytest/skipping.py"
+      },
+      "metrics_snapshot": {
+        "calls": 6,
+        "prompt_tokens": 13109,
+        "cache_hit_tokens": 6016,
+        "cache_miss_tokens": 7093,
+        "cache_hit_rate_pct": 45.89,
+        "completion_tokens": 862,
+        "total_tokens": 13971,
+        "task_cost_usd": 0.001599,
+        "session_cost_usd": 0.01406
+      }
+    },
+    {
+      "turn": 7,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '220,310p' src/_pytest/skipping.py"
+      },
+      "metrics_snapshot": {
+        "calls": 7,
+        "prompt_tokens": 15135,
+        "cache_hit_tokens": 6656,
+        "cache_miss_tokens": 8479,
+        "cache_hit_rate_pct": 43.98,
+        "completion_tokens": 930,
+        "total_tokens": 16065,
+        "task_cost_usd": 0.00185,
+        "session_cost_usd": 0.014311
+      }
+    },
+    {
+      "turn": 8,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && grep -rn \"runxfail\\|skipped_by_mark_key\\|unconditional skip\" testing/test_skipping.py testing | head -80"
+      },
+      "metrics_snapshot": {
+        "calls": 8,
+        "prompt_tokens": 17483,
+        "cache_hit_tokens": 7296,
+        "cache_miss_tokens": 10187,
+        "cache_hit_rate_pct": 41.73,
+        "completion_tokens": 1063,
+        "total_tokens": 18546,
+        "task_cost_usd": 0.002188,
+        "session_cost_usd": 0.014649
+      }
+    },
+    {
+      "turn": 9,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '580,670p' testing/test_skipping.py && sed -n '1180,1220p' testing/test_skipping.py && git log --oneline -5"
+      },
+      "metrics_snapshot": {
+        "calls": 9,
+        "prompt_tokens": 19598,
+        "cache_hit_tokens": 7936,
+        "cache_miss_tokens": 11662,
+        "cache_hit_rate_pct": 40.49,
+        "completion_tokens": 1157,
+        "total_tokens": 20755,
+        "task_cost_usd": 0.002467,
+        "session_cost_usd": 0.014928
+      }
+    },
+    {
+      "turn": 10,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && grep -n \"pytest_runtest_makereport\\|runxfail\\|skipped_by_mark_key\" -n -C 15 src/_pytest/skipping.py"
+      },
+      "metrics_snapshot": {
+        "calls": 10,
+        "prompt_tokens": 21814,
+        "cache_hit_tokens": 8576,
+        "cache_miss_tokens": 13238,
+        "cache_hit_rate_pct": 39.31,
+        "completion_tokens": 1245,
+        "total_tokens": 23059,
+        "task_cost_usd": 0.002758,
+        "session_cost_usd": 0.015219
+      }
+    },
+    {
+      "turn": 11,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && cat > /tmp/test_skip_location.py <<'EOF'\nimport pytest\n@pytest.mark.skip\ndef test_skip_location() -> None:\n    assert 0\nEOF\npython -m pytest -rs --runxfail /tmp/test_skip_location.py || true\npython -m pytest -rs /tmp/test_skip_location.py || true"
+      },
+      "metrics_snapshot": {
+        "calls": 11,
+        "prompt_tokens": 25164,
+        "cache_hit_tokens": 9216,
+        "cache_miss_tokens": 15948,
+        "cache_hit_rate_pct": 36.62,
+        "completion_tokens": 1737,
+        "total_tokens": 26901,
+        "task_cost_usd": 0.003462,
+        "session_cost_usd": 0.015923
+      }
+    },
+    {
+      "turn": 12,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && grep -Rni \"runxfail\" testing | head -50 && grep -n \"skipped_by_mark_key\\|unconditional skip\\|skipif\" testing/test_skipping.py | head -80"
+      },
+      "metrics_snapshot": {
+        "calls": 12,
+        "prompt_tokens": 28251,
+        "cache_hit_tokens": 9856,
+        "cache_miss_tokens": 18395,
+        "cache_hit_rate_pct": 34.89,
+        "completion_tokens": 1855,
+        "total_tokens": 30106,
+        "task_cost_usd": 0.003902,
+        "session_cost_usd": 0.016363
+      }
+    },
+    {
+      "turn": 13,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '200,370p' testing/test_skipping.py && sed -n '180,270p' src/_pytest/skipping.py"
+      },
+      "metrics_snapshot": {
+        "calls": 13,
+        "prompt_tokens": 30643,
+        "cache_hit_tokens": 10496,
+        "cache_miss_tokens": 20147,
+        "cache_hit_rate_pct": 34.25,
+        "completion_tokens": 1932,
+        "total_tokens": 32575,
+        "task_cost_usd": 0.004213,
+        "session_cost_usd": 0.016674
+      }
+    },
+    {
+      "turn": 14,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '270,330p' src/_pytest/skipping.py && sed -n '1180,1220p' testing/test_skipping.py"
+      },
+      "metrics_snapshot": {
+        "calls": 14,
+        "prompt_tokens": 34376,
+        "cache_hit_tokens": 11136,
+        "cache_miss_tokens": 23240,
+        "cache_hit_rate_pct": 32.39,
+        "completion_tokens": 2011,
+        "total_tokens": 36387,
+        "task_cost_usd": 0.004726,
+        "session_cost_usd": 0.017187
+      }
+    },
+    {
+      "turn": 15,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && git log --oneline -3 && git status --short"
+      },
+      "metrics_snapshot": {
+        "calls": 15,
+        "prompt_tokens": 37909,
+        "cache_hit_tokens": 11776,
+        "cache_miss_tokens": 26133,
+        "cache_hit_rate_pct": 31.06,
+        "completion_tokens": 3476,
+        "total_tokens": 41385,
+        "task_cost_usd": 0.006041,
+        "session_cost_usd": 0.018502
+      }
+    },
+    {
+      "turn": 16,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && cat > /tmp/test_it.py <<'EOF'\nimport pytest\n\n@pytest.mark.skip\ndef test_skip_location() -> None:\n    assert 0\n\n@pytest.mark.skipif(True, reason=\"because\")\ndef test_skipif_location() -> None:\n    assert 0\nEOF\npython -m pytest /tmp/test_it.py -rs --runxfail -p no:cacheprovider 2>&1 | tail -10"
+      },
+      "metrics_snapshot": {
+        "calls": 16,
+        "prompt_tokens": 40869,
+        "cache_hit_tokens": 12416,
+        "cache_miss_tokens": 28453,
+        "cache_hit_rate_pct": 30.38,
+        "completion_tokens": 3616,
+        "total_tokens": 44485,
+        "task_cost_usd": 0.006475,
+        "session_cost_usd": 0.018936
+      }
+    },
+    {
+      "turn": 17,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '190,260p' src/_pytest/skipping.py"
+      },
+      "metrics_snapshot": {
+        "calls": 17,
+        "prompt_tokens": 43388,
+        "cache_hit_tokens": 13056,
+        "cache_miss_tokens": 30332,
+        "cache_hit_rate_pct": 30.09,
+        "completion_tokens": 3677,
+        "total_tokens": 47065,
+        "task_cost_usd": 0.006795,
+        "session_cost_usd": 0.019256
+      }
+    },
+    {
+      "turn": 18,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '260,340p' src/_pytest/skipping.py"
+      },
+      "metrics_snapshot": {
+        "calls": 18,
+        "prompt_tokens": 45040,
+        "cache_hit_tokens": 13696,
+        "cache_miss_tokens": 31344,
+        "cache_hit_rate_pct": 30.41,
+        "completion_tokens": 3738,
+        "total_tokens": 48778,
+        "task_cost_usd": 0.006985,
+        "session_cost_usd": 0.019446
+      }
+    },
+    {
+      "turn": 19,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && grep -rn \"runxfail\" testing/test_skipping.py | head -50"
+      },
+      "metrics_snapshot": {
+        "calls": 19,
+        "prompt_tokens": 47043,
+        "cache_hit_tokens": 14336,
+        "cache_miss_tokens": 32707,
+        "cache_hit_rate_pct": 30.47,
+        "completion_tokens": 3916,
+        "total_tokens": 50959,
+        "task_cost_usd": 0.007299,
+        "session_cost_usd": 0.019759
+      }
+    },
+    {
+      "turn": 20,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && cat > /tmp/test_skip_location.py <<'EOF'\nimport pytest\n\n@pytest.mark.skip\ndef test_skip_location() -> None:\n    assert 0\nEOF\npython -m pytest -rs --runxfail /tmp/test_skip_location.py; python -m pytest -rs /tmp/test_skip_location.py"
+      },
+      "metrics_snapshot": {
+        "calls": 20,
+        "prompt_tokens": 48624,
+        "cache_hit_tokens": 14976,
+        "cache_miss_tokens": 33648,
+        "cache_hit_rate_pct": 30.8,
+        "completion_tokens": 4032,
+        "total_tokens": 52656,
+        "task_cost_usd": 0.007511,
+        "session_cost_usd": 0.019972
+      }
+    },
+    {
+      "turn": 21,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '210,280p' src/_pytest/skipping.py"
+      },
+      "metrics_snapshot": {
+        "calls": 21,
+        "prompt_tokens": 49951,
+        "cache_hit_tokens": 15616,
+        "cache_miss_tokens": 34335,
+        "cache_hit_rate_pct": 31.26,
+        "completion_tokens": 4093,
+        "total_tokens": 54044,
+        "task_cost_usd": 0.007653,
+        "session_cost_usd": 0.020114
+      }
+    },
+    {
+      "turn": 22,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '280,330p' src/_pytest/skipping.py && grep -R \"skipped_by_mark_key\" -n src/_pytest tests | head -30"
+      },
+      "metrics_snapshot": {
+        "calls": 22,
+        "prompt_tokens": 51763,
+        "cache_hit_tokens": 16256,
+        "cache_miss_tokens": 35507,
+        "cache_hit_rate_pct": 31.4,
+        "completion_tokens": 4181,
+        "total_tokens": 55944,
+        "task_cost_usd": 0.007883,
+        "session_cost_usd": 0.020344
+      }
+    },
+    {
+      "turn": 23,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && ls && grep -R \"skipped by mark\\|skip_location\\|runxfail\" -n testing | head -40"
+      },
+      "metrics_snapshot": {
+        "calls": 23,
+        "prompt_tokens": 53875,
+        "cache_hit_tokens": 16896,
+        "cache_miss_tokens": 36979,
+        "cache_hit_rate_pct": 31.36,
+        "completion_tokens": 4460,
+        "total_tokens": 58335,
+        "task_cost_usd": 0.008274,
+        "session_cost_usd": 0.020734
+      }
+    },
+    {
+      "turn": 24,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '222,312p' src/_pytest/skipping.py"
+      },
+      "metrics_snapshot": {
+        "calls": 24,
+        "prompt_tokens": 55751,
+        "cache_hit_tokens": 17536,
+        "cache_miss_tokens": 38215,
+        "cache_hit_rate_pct": 31.45,
+        "completion_tokens": 4541,
+        "total_tokens": 60292,
+        "task_cost_usd": 0.008509,
+        "session_cost_usd": 0.02097
+      }
+    },
+    {
+      "turn": 25,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python - <<'PY'\nfrom pathlib import Path\np = Path('src/_pytest/skipping.py')\ns = p.read_text()\nold = '''    elif item.config.option.runxfail:\n        pass  # don't interfere\n    elif call.excinfo and isinstance(call.excinfo.value, xfail.Exception):\n'''\nnew = '''    elif (\n        item._store.get(skipped_by_mark_key, True)\n        and rep.skipped\n        and type(rep.longrepr) is tuple\n    ):\n        # skipped by mark.skipif; change the location of the failure\n        # to point to the item definition, otherwise it will display\n        # the location of where the skip exception was raised within pytest\n        _, _, reason = rep.longrepr\n        filename, line = item.reportinfo()[:2]\n        assert line is not None\n        rep.longrepr = str(filename), line + 1, reason\n    elif item.config.option.runxfail:\n        pass  # don't interfere\n    elif call.excinfo and isinstance(call.excinfo.value, xfail.Exception):\n'''\nassert old in s\ns = s.replace(old, new)\nold2 = '''    elif (\n        item._store.get(skipped_by_mark_key, True)\n        and rep.skipped\n        and type(rep.longrepr) is tuple\n    ):\n        # skipped by mark.skipif; change the location of the failure\n        # to point to the item definition, otherwise it will display\n        # the location of where the skip exception was raised within pytest\n        _, _, reason = rep.longrepr\n        filename, line = item.reportinfo()[:2]\n        assert line is not None\n        rep.longrepr = str(filename), line + 1, reason\n\n\ndef pytest_report_teststatus'''\nassert old2 in s\ns = s.replace(old2, '\\n\\ndef pytest_report_teststatus')\np.write_text(s)\nPY\nmkdir -p /tmp/repro && cat > /tmp/repro/test_it.py <<'EOF'\nimport pytest\n@pytest.mark.skip\ndef test_skip_location() -> None:\n    assert 0\nEOF\nPYTHONPATH=src python -m pytest -rs --runxfail /tmp/repro/test_it.py; git diff -- src/_pytest/skipping.py"
+      },
+      "metrics_snapshot": {
+        "calls": 25,
+        "prompt_tokens": 57918,
+        "cache_hit_tokens": 18176,
+        "cache_miss_tokens": 39742,
+        "cache_hit_rate_pct": 31.38,
+        "completion_tokens": 5139,
+        "total_tokens": 63057,
+        "task_cost_usd": 0.009099,
+        "session_cost_usd": 0.02156
+      }
+    }
+  ]
+}

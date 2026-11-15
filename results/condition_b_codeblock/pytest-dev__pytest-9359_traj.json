@@ -1,0 +1,273 @@
+{
+  "instance_id": "pytest-dev__pytest-9359",
+  "condition": "condition_b_codeblock",
+  "turns_taken": 25,
+  "finished_by_tool": true,
+  "empty_action_retries": 11,
+  "wall_time_sec": 151.93,
+  "usage_metrics": {
+    "calls": 25,
+    "prompt_tokens": 235223,
+    "cache_hit_tokens": 219776,
+    "cache_miss_tokens": 15447,
+    "cache_hit_rate_pct": 93.43,
+    "completion_tokens": 22746,
+    "total_tokens": 257969,
+    "task_cost_usd": 0.016624,
+    "session_cost_usd": 0.070947
+  },
+  "usage_summary": "[Quota Tracker] Calls: 25 | Prompt Tokens: 235,223 | Completion Tokens: 22,746 | Total Tokens: 257,969 | Est. Cost: $0.0166[DEEPSEEK][DeepSeek OFF-PEAK (1x)] Calls: 25 | Cache Hit: 93.4% (219,776/235,223) | Out: 22,746 | Task Spend: $0.01662 | Total Session Spend: $0.07095",
+  "model_patch": "diff --git a/src/_pytest/_code/source.py b/src/_pytest/_code/source.py\nindex 6f54057c0..535f98d02 100755\n--- a/src/_pytest/_code/source.py\n+++ b/src/_pytest/_code/source.py\n@@ -155,6 +155,9 @@ def get_statement_startend2(lineno: int, node: ast.AST) -> Tuple[int, Optional[i\n                 if val:\n                     # Treat the finally/orelse part as its own statement.\n                     values.append(val[0].lineno - 1 - 1)\n+            if isinstance(x, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):\n+                # Decorators are part of the statement they decorate.\n+                values.extend(decorator.lineno - 1 for decorator in x.decorator_list)\n     values.sort()\n     insert_index = bisect_right(values, lineno)\n     start = values[insert_index - 1]\n",
+  "trajectory": [
+    {
+      "turn": 1,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && git status --short && git log -1 --oneline && ls"
+      },
+      "metrics_snapshot": {
+        "calls": 1,
+        "prompt_tokens": 1325,
+        "cache_hit_tokens": 0,
+        "cache_miss_tokens": 1325,
+        "cache_hit_rate_pct": 0.0,
+        "completion_tokens": 244,
+        "total_tokens": 1569,
+        "task_cost_usd": 0.000345,
+        "session_cost_usd": 0.054668
+      }
+    },
+    {
+      "turn": 2,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '1,320p' src/_pytest/_code/source.py"
+      },
+      "metrics_snapshot": {
+        "calls": 2,
+        "prompt_tokens": 3008,
+        "cache_hit_tokens": 1280,
+        "cache_miss_tokens": 1728,
+        "cache_hit_rate_pct": 42.55,
+        "completion_tokens": 436,
+        "total_tokens": 3444,
+        "task_cost_usd": 0.000525,
+        "session_cost_usd": 0.054847
+      }
+    },
+    {
+      "turn": 4,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python --version && grep -R \"getstatementrange\\|get_statement_startend2\\|getstatement\" -n testing | head -100"
+      },
+      "metrics_snapshot": {
+        "calls": 4,
+        "prompt_tokens": 10238,
+        "cache_hit_tokens": 6400,
+        "cache_miss_tokens": 3838,
+        "cache_hit_rate_pct": 62.51,
+        "completion_tokens": 681,
+        "total_tokens": 10919,
+        "task_cost_usd": 0.001003,
+        "session_cost_usd": 0.055326
+      }
+    },
+    {
+      "turn": 6,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '100,230p' testing/code/test_source.py && sed -n '380,650p' testing/code/test_source.py"
+      },
+      "metrics_snapshot": {
+        "calls": 6,
+        "prompt_tokens": 20594,
+        "cache_hit_tokens": 14976,
+        "cache_miss_tokens": 5618,
+        "cache_hit_rate_pct": 72.72,
+        "completion_tokens": 992,
+        "total_tokens": 21586,
+        "task_cost_usd": 0.001483,
+        "session_cost_usd": 0.055805
+      }
+    },
+    {
+      "turn": 7,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && cat > /tmp/test_issue.py <<'PY'\nfrom pytest import fixture\n\n\ndef t(foo):\n    return foo\n\n\n@fixture\ndef foo():\n    return 1\n\n\ndef test_right_statement(foo):\n    assert foo == (3 + 2) * (6 + 9)\n\n    @t\n    def inner():\n        return 2\n\n    assert 2 == inner\n\n\n@t\ndef outer():\n    return 2\nPY\npython -m pytest /tmp/test_issue.py -vv --tb=long 2>&1 | sed -n '1,120p'"
+      },
+      "metrics_snapshot": {
+        "calls": 7,
+        "prompt_tokens": 28663,
+        "cache_hit_tokens": 20224,
+        "cache_miss_tokens": 8439,
+        "cache_hit_rate_pct": 70.56,
+        "completion_tokens": 1372,
+        "total_tokens": 30035,
+        "task_cost_usd": 0.00215,
+        "session_cost_usd": 0.056472
+      }
+    },
+    {
+      "turn": 8,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python - <<'PY'\nimport ast\nfrom _pytest._code.source import Source, getstatementrange_ast, get_statement_startend2\np='/tmp/test_issue.py'\ns=Source(open(p).read())\nprint('len',len(s))\nfor i,l in enumerate(s.lines): print(i,repr(l))\nlineno=13\nastn=ast.parse(str(s),p,'exec')\nprint('startend2',get_statement_startend2(lineno,astn))\nprint(getstatementrange_ast(lineno,s))\nprint(str(s.getstatement(lineno)))\nPY"
+      },
+      "metrics_snapshot": {
+        "calls": 8,
+        "prompt_tokens": 37313,
+        "cache_hit_tokens": 28288,
+        "cache_miss_tokens": 9025,
+        "cache_hit_rate_pct": 75.81,
+        "completion_tokens": 1779,
+        "total_tokens": 39092,
+        "task_cost_usd": 0.002506,
+        "session_cost_usd": 0.056829
+      }
+    },
+    {
+      "turn": 11,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && grep -n \"python_requires\\|Programming Language :: Python\" setup.cfg | head -30 && grep -R \"decorator\" -n testing/code/test_source.py | head -50 && git log --oneline -5"
+      },
+      "metrics_snapshot": {
+        "calls": 11,
+        "prompt_tokens": 65435,
+        "cache_hit_tokens": 55168,
+        "cache_miss_tokens": 10267,
+        "cache_hit_rate_pct": 84.31,
+        "completion_tokens": 5040,
+        "total_tokens": 70475,
+        "task_cost_usd": 0.00473,
+        "session_cost_usd": 0.059052
+      }
+    },
+    {
+      "turn": 12,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python - <<'PY'\nimport ast\np='/tmp/test_issue.py'\nt=ast.parse(open(p).read())\nfor n in ast.walk(t):\n    if isinstance(n,(ast.stmt,ast.ExceptHandler)):\n        print(type(n).__name__, 'lineno', getattr(n,'lineno',None), 'end_lineno', getattr(n,'end_lineno',None), 'col', getattr(n,'col_offset',None))\n        if hasattr(n,'decorator_list'):\n            print(' decorators:', [(d.lineno,d.end_lineno) for d in n.decorator_list])\nPY"
+      },
+      "metrics_snapshot": {
+        "calls": 12,
+        "prompt_tokens": 75564,
+        "cache_hit_tokens": 64768,
+        "cache_miss_tokens": 10796,
+        "cache_hit_rate_pct": 85.71,
+        "completion_tokens": 5897,
+        "total_tokens": 81461,
+        "task_cost_usd": 0.005352,
+        "session_cost_usd": 0.059675
+      }
+    },
+    {
+      "turn": 16,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python - <<'PY'\nfrom pathlib import Path\np = Path('src/_pytest/_code/source.py')\ns = p.read_text()\nold = '''            for name in (\"finalbody\", \"orelse\"):\n                val: Optional[List[ast.stmt]] = getattr(x, name, None)\n                if val:\n                    # Treat the finally/orelse part as its own statement.\n                    values.append(val[0].lineno - 1 - 1)\n    values.sort()\n'''\nnew = '''            for name in (\"finalbody\", \"orelse\"):\n                val: Optional[List[ast.stmt]] = getattr(x, name, None)\n                if val:\n                    # Treat the finally/orelse part as its own statement.\n                    values.append(val[0].lineno - 1 - 1)\n            if isinstance(x, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):\n                # Decorators are part of the statement they decorate.\n                values.extend(decorator.lineno - 1 for decorator in x.decorator_list)\n    values.sort()\n'''\nassert old in s\np.write_text(s.replace(old, new))\nPY\npython - <<'PY'\nfrom _pytest._code.source import Source\np='/tmp/test_issue.py'\ns=Source(open(p).read())\nprint(repr(str(s.getstatement(13))))\nPY"
+      },
+      "metrics_snapshot": {
+        "calls": 16,
+        "prompt_tokens": 119012,
+        "cache_hit_tokens": 107136,
+        "cache_miss_tokens": 11876,
+        "cache_hit_rate_pct": 90.02,
+        "completion_tokens": 13707,
+        "total_tokens": 132719,
+        "task_cost_usd": 0.010327,
+        "session_cost_usd": 0.06465
+      }
+    },
+    {
+      "turn": 17,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && git diff -- src/_pytest/_code/source.py"
+      },
+      "metrics_snapshot": {
+        "calls": 17,
+        "prompt_tokens": 130454,
+        "cache_hit_tokens": 118144,
+        "cache_miss_tokens": 12310,
+        "cache_hit_rate_pct": 90.56,
+        "completion_tokens": 15169,
+        "total_tokens": 145623,
+        "task_cost_usd": 0.011302,
+        "session_cost_usd": 0.065625
+      }
+    },
+    {
+      "turn": 19,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python -m pytest testing/code/test_source.py testing/code/test_excinfo.py testing/code/test_code.py -q 2>&1 | tail -40"
+      },
+      "metrics_snapshot": {
+        "calls": 19,
+        "prompt_tokens": 154827,
+        "cache_hit_tokens": 141312,
+        "cache_miss_tokens": 13515,
+        "cache_hit_rate_pct": 91.27,
+        "completion_tokens": 17322,
+        "total_tokens": 172149,
+        "task_cost_usd": 0.012844,
+        "session_cost_usd": 0.067167
+      }
+    },
+    {
+      "turn": 22,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python -m pytest testing/code/test_source.py -q 2>&1 | tail -20"
+      },
+      "metrics_snapshot": {
+        "calls": 22,
+        "prompt_tokens": 193736,
+        "cache_hit_tokens": 179328,
+        "cache_miss_tokens": 14408,
+        "cache_hit_rate_pct": 92.56,
+        "completion_tokens": 20895,
+        "total_tokens": 214631,
+        "task_cost_usd": 0.015236,
+        "session_cost_usd": 0.069559
+      }
+    },
+    {
+      "turn": 24,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python - <<'PY'\nfrom _pytest._code.source import Source\nsrc = Source('''\\\n@decorator1\n@decorator2\ndef foo():\n    pass\n''')\nfor i in range(len(src)):\n    print(i, repr(str(src.getstatement(i))))\nsrc2 = Source('''\\\ndef test():\n    assert False\n\n    @decorator\n    def inner():\n        pass\n''')\nfor i in range(len(src2)):\n    print('t', i, repr(str(src2.getstatement(i))))\nPY"
+      },
+      "metrics_snapshot": {
+        "calls": 24,
+        "prompt_tokens": 221099,
+        "cache_hit_tokens": 205952,
+        "cache_miss_tokens": 15147,
+        "cache_hit_rate_pct": 93.15,
+        "completion_tokens": 22357,
+        "total_tokens": 243456,
+        "task_cost_usd": 0.016304,
+        "session_cost_usd": 0.070627
+      }
+    },
+    {
+      "turn": 25,
+      "action": "finish_task",
+      "args": {},
+      "metrics_snapshot": {
+        "calls": 25,
+        "prompt_tokens": 235223,
+        "cache_hit_tokens": 219776,
+        "cache_miss_tokens": 15447,
+        "cache_hit_rate_pct": 93.43,
+        "completion_tokens": 22746,
+        "total_tokens": 257969,
+        "task_cost_usd": 0.016624,
+        "session_cost_usd": 0.070947
+      }
+    }
+  ]
+}

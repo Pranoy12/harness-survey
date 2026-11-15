@@ -1,0 +1,201 @@
+{
+  "instance_id": "pytest-dev__pytest-7168",
+  "condition": "condition_a",
+  "turns_taken": 9,
+  "finished_by_tool": true,
+  "empty_action_retries": 0,
+  "wall_time_sec": 24.12,
+  "usage_metrics": {
+    "calls": 9,
+    "prompt_tokens": 76301,
+    "cache_hit_tokens": 66304,
+    "cache_miss_tokens": 9997,
+    "cache_hit_rate_pct": 86.9,
+    "completion_tokens": 2947,
+    "total_tokens": 79248,
+    "task_cost_usd": 0.003467,
+    "session_cost_usd": 0.026101
+  },
+  "usage_summary": "[Quota Tracker] Calls: 9 | Prompt Tokens: 76,301 | Completion Tokens: 2,947 | Total Tokens: 79,248 | Est. Cost: $0.0035[DEEPSEEK][DeepSeek OFF-PEAK (1x)] Calls: 9 | Cache Hit: 86.9% (66,304/76,301) | Out: 2,947 | Task Spend: $0.00347 | Total Session Spend: $0.02610",
+  "model_patch": "diff --git a/src/_pytest/_io/saferepr.py b/src/_pytest/_io/saferepr.py\nindex 23af4d0bb..47a00de60 100755\n--- a/src/_pytest/_io/saferepr.py\n+++ b/src/_pytest/_io/saferepr.py\n@@ -20,7 +20,7 @@ def _format_repr_exception(exc: BaseException, obj: Any) -> str:\n     except BaseException as exc:\n         exc_info = \"unpresentable exception ({})\".format(_try_repr_or_str(exc))\n     return \"<[{} raised in repr()] {} object at 0x{:x}>\".format(\n-        exc_info, obj.__class__.__name__, id(obj)\n+        exc_info, type(obj).__name__, id(obj)\n     )\n \n \ndiff --git a/testing/io/test_saferepr.py b/testing/io/test_saferepr.py\nindex 06084202e..3c91bad77 100755\n--- a/testing/io/test_saferepr.py\n+++ b/testing/io/test_saferepr.py\n@@ -154,3 +154,16 @@ def test_pformat_dispatch():\n     assert _pformat_dispatch(\"a\") == \"'a'\"\n     assert _pformat_dispatch(\"a\" * 10, width=5) == \"'aaaaaaaaaa'\"\n     assert _pformat_dispatch(\"foo bar\", width=5) == \"('foo '\\n 'bar')\"\n+\n+\n+def test_broken_getattribute():\n+    class SomeClass:\n+        def __getattribute__(self, attr):\n+            raise\n+\n+        def __repr__(self):\n+            raise\n+\n+    s = saferepr(SomeClass())\n+    assert \"RuntimeError\" in s\n+    assert \"SomeClass\" in s\n",
+  "trajectory": [
+    {
+      "turn": 1,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && git status --short && sed -n '1,200p' src/_pytest/_io/saferepr.py"
+      },
+      "metrics_snapshot": {
+        "calls": 1,
+        "prompt_tokens": 3209,
+        "cache_hit_tokens": 256,
+        "cache_miss_tokens": 2953,
+        "cache_hit_rate_pct": 7.98,
+        "completion_tokens": 81,
+        "total_tokens": 3290,
+        "task_cost_usd": 0.000492,
+        "session_cost_usd": 0.023127
+      }
+    },
+    {
+      "turn": 2,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && grep -R \"saferepr\\|_format_repr_exception\\|SafeRepr\" -n testing | head -100"
+      },
+      "metrics_snapshot": {
+        "calls": 2,
+        "prompt_tokens": 7378,
+        "cache_hit_tokens": 3456,
+        "cache_miss_tokens": 3922,
+        "cache_hit_rate_pct": 46.84,
+        "completion_tokens": 462,
+        "total_tokens": 7840,
+        "task_cost_usd": 0.000876,
+        "session_cost_usd": 0.023511
+      }
+    },
+    {
+      "turn": 2,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && git log --oneline -5 && grep -R \"__class__.__name__\" -n src/_pytest | head -50"
+      },
+      "metrics_snapshot": {
+        "calls": 2,
+        "prompt_tokens": 7378,
+        "cache_hit_tokens": 3456,
+        "cache_miss_tokens": 3922,
+        "cache_hit_rate_pct": 46.84,
+        "completion_tokens": 462,
+        "total_tokens": 7840,
+        "task_cost_usd": 0.000876,
+        "session_cost_usd": 0.023511
+      }
+    },
+    {
+      "turn": 3,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '1,190p' testing/io/test_saferepr.py"
+      },
+      "metrics_snapshot": {
+        "calls": 3,
+        "prompt_tokens": 12964,
+        "cache_hit_tokens": 7936,
+        "cache_miss_tokens": 5028,
+        "cache_hit_rate_pct": 61.22,
+        "completion_tokens": 527,
+        "total_tokens": 13491,
+        "task_cost_usd": 0.001094,
+        "session_cost_usd": 0.023729
+      }
+    },
+    {
+      "turn": 4,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && cat > /tmp/test_broken_repr.py <<'EOF'\nclass SomeClass:\n    def __getattribute__(self, attr):\n        raise\n    def __repr__(self):\n        raise\n\ndef test():\n    SomeClass().attr\nEOF\npython -m pytest /tmp/test_broken_repr.py -q; echo EXIT:$?"
+      },
+      "metrics_snapshot": {
+        "calls": 4,
+        "prompt_tokens": 19846,
+        "cache_hit_tokens": 13568,
+        "cache_miss_tokens": 6278,
+        "cache_hit_rate_pct": 68.37,
+        "completion_tokens": 1144,
+        "total_tokens": 20990,
+        "task_cost_usd": 0.001669,
+        "session_cost_usd": 0.024303
+      }
+    },
+    {
+      "turn": 5,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python - <<'PY'\nfrom pathlib import Path\np = Path('src/_pytest/_io/saferepr.py')\ns = p.read_text()\ns = s.replace('        exc_info, obj.__class__.__name__, id(obj)\\n', '        exc_info, type(obj).__name__, id(obj)\\n')\np.write_text(s)\nPY\npython -m pytest /tmp/test_broken_repr.py -q; echo EXIT:$?\npython -m pytest testing/io/test_saferepr.py -q; echo EXIT:$?"
+      },
+      "metrics_snapshot": {
+        "calls": 5,
+        "prompt_tokens": 29656,
+        "cache_hit_tokens": 20992,
+        "cache_miss_tokens": 8664,
+        "cache_hit_rate_pct": 70.79,
+        "completion_tokens": 1940,
+        "total_tokens": 31596,
+        "task_cost_usd": 0.002527,
+        "session_cost_usd": 0.025161
+      }
+    },
+    {
+      "turn": 6,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python - <<'PY'\nfrom _pytest._io.saferepr import saferepr\nclass BrokenGetattribute:\n    def __getattribute__(self, attr):\n        raise RuntimeError(\"boom\")\nprint(saferepr(BrokenGetattribute()))\n\nclass SomeClass:\n    def __getattribute__(self, attr):\n        raise\n    def __repr__(self):\n        raise\nprint(saferepr(SomeClass()))\nPY"
+      },
+      "metrics_snapshot": {
+        "calls": 6,
+        "prompt_tokens": 40515,
+        "cache_hit_tokens": 31488,
+        "cache_miss_tokens": 9027,
+        "cache_hit_rate_pct": 77.72,
+        "completion_tokens": 2267,
+        "total_tokens": 42782,
+        "task_cost_usd": 0.002809,
+        "session_cost_usd": 0.025443
+      }
+    },
+    {
+      "turn": 7,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && cat >> testing/io/test_saferepr.py <<'EOF'\n\n\ndef test_broken_getattribute():\n    class SomeClass:\n        def __getattribute__(self, attr):\n            raise\n\n        def __repr__(self):\n            raise\n\n    s = saferepr(SomeClass())\n    assert \"RuntimeError\" in s\n    assert \"SomeClass\" in s\nEOF\npython -m pytest testing/io/test_saferepr.py -q && git diff -- src/_pytest/_io/saferepr.py testing/io/test_saferepr.py"
+      },
+      "metrics_snapshot": {
+        "calls": 7,
+        "prompt_tokens": 51777,
+        "cache_hit_tokens": 42496,
+        "cache_miss_tokens": 9281,
+        "cache_hit_rate_pct": 82.08,
+        "completion_tokens": 2682,
+        "total_tokens": 54459,
+        "task_cost_usd": 0.003129,
+        "session_cost_usd": 0.025764
+      }
+    },
+    {
+      "turn": 8,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python -m pytest testing/io -q"
+      },
+      "metrics_snapshot": {
+        "calls": 8,
+        "prompt_tokens": 63902,
+        "cache_hit_tokens": 54144,
+        "cache_miss_tokens": 9758,
+        "cache_hit_rate_pct": 84.73,
+        "completion_tokens": 2919,
+        "total_tokens": 66821,
+        "task_cost_usd": 0.003378,
+        "session_cost_usd": 0.026012
+      }
+    },
+    {
+      "turn": 9,
+      "action": "finish_task",
+      "args": {},
+      "metrics_snapshot": {
+        "calls": 9,
+        "prompt_tokens": 76301,
+        "cache_hit_tokens": 66304,
+        "cache_miss_tokens": 9997,
+        "cache_hit_rate_pct": 86.9,
+        "completion_tokens": 2947,
+        "total_tokens": 79248,
+        "task_cost_usd": 0.003467,
+        "session_cost_usd": 0.026101
+      }
+    }
+  ]
+}

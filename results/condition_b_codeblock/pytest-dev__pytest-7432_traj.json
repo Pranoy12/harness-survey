@@ -1,0 +1,309 @@
+{
+  "instance_id": "pytest-dev__pytest-7432",
+  "condition": "condition_b_codeblock",
+  "turns_taken": 16,
+  "finished_by_tool": true,
+  "empty_action_retries": 0,
+  "wall_time_sec": 60.89,
+  "usage_metrics": {
+    "calls": 16,
+    "prompt_tokens": 133917,
+    "cache_hit_tokens": 121600,
+    "cache_miss_tokens": 12317,
+    "cache_hit_rate_pct": 90.8,
+    "completion_tokens": 8301,
+    "total_tokens": 142218,
+    "task_cost_usd": 0.007193,
+    "session_cost_usd": 0.016356
+  },
+  "usage_summary": "[Quota Tracker] Calls: 16 | Prompt Tokens: 133,917 | Completion Tokens: 8,301 | Total Tokens: 142,218 | Est. Cost: $0.0072[DEEPSEEK][DeepSeek OFF-PEAK (1x)] Calls: 16 | Cache Hit: 90.8% (121,600/133,917) | Out: 8,301 | Task Spend: $0.00719 | Total Session Spend: $0.01636",
+  "model_patch": "diff --git a/src/_pytest/skipping.py b/src/_pytest/skipping.py\nindex 7bd975e5a..591a65df9 100755\n--- a/src/_pytest/skipping.py\n+++ b/src/_pytest/skipping.py\n@@ -291,7 +291,8 @@ def pytest_runtest_makereport(item: Item, call: CallInfo[None]):\n             else:\n                 rep.outcome = \"passed\"\n                 rep.wasxfail = xfailed.reason\n-    elif (\n+\n+    if (\n         item._store.get(skipped_by_mark_key, True)\n         and rep.skipped\n         and type(rep.longrepr) is tuple\ndiff --git a/testing/test_skipping.py b/testing/test_skipping.py\nindex 0b1c0b49b..c6d5f89e7 100755\n--- a/testing/test_skipping.py\n+++ b/testing/test_skipping.py\n@@ -1205,3 +1205,18 @@ def test_relpath_rootdir(testdir):\n     result.stdout.fnmatch_lines(\n         [\"SKIPPED [[]1[]] tests/test_1.py:2: unconditional skip\"]\n     )\n+\n+\n+def test_skip_not_affected_by_runxfail(testdir) -> None:\n+    \"\"\"--runxfail should not affect skip location reporting (#7070).\"\"\"\n+    testdir.makepyfile(\n+        \"\"\"\n+        import pytest\n+\n+        @pytest.mark.skip\n+        def test_skip_location():\n+            assert 0\n+        \"\"\"\n+    )\n+    result = testdir.runpytest(\"-rs\", \"--runxfail\")\n+    result.stdout.fnmatch_lines([\"SKIPPED [[]1[]] *:3: unconditional skip\"])\n",
+  "trajectory": [
+    {
+      "turn": 1,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '200,280p' src/_pytest/skipping.py"
+      },
+      "metrics_snapshot": {
+        "calls": 1,
+        "prompt_tokens": 527,
+        "cache_hit_tokens": 0,
+        "cache_miss_tokens": 527,
+        "cache_hit_rate_pct": 0.0,
+        "completion_tokens": 1639,
+        "total_tokens": 2166,
+        "task_cost_usd": 0.001062,
+        "session_cost_usd": 0.010225
+      }
+    },
+    {
+      "turn": 2,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '280,340p' src/_pytest/skipping.py"
+      },
+      "metrics_snapshot": {
+        "calls": 2,
+        "prompt_tokens": 3387,
+        "cache_hit_tokens": 512,
+        "cache_miss_tokens": 2875,
+        "cache_hit_rate_pct": 15.12,
+        "completion_tokens": 3687,
+        "total_tokens": 7074,
+        "task_cost_usd": 0.002645,
+        "session_cost_usd": 0.011808
+      }
+    },
+    {
+      "turn": 3,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python - <<'PY'\nlines=open('src/_pytest/skipping.py').read().splitlines()\nfor i,l in enumerate(lines,1):\n    if i>=258 and i<=315:\n        print(i,':',l)\nPY"
+      },
+      "metrics_snapshot": {
+        "calls": 3,
+        "prompt_tokens": 8617,
+        "cache_hit_tokens": 3328,
+        "cache_miss_tokens": 5289,
+        "cache_hit_rate_pct": 38.62,
+        "completion_tokens": 5735,
+        "total_tokens": 14352,
+        "task_cost_usd": 0.004244,
+        "session_cost_usd": 0.013407
+      }
+    },
+    {
+      "turn": 4,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python - <<'PY'\nfn='src/_pytest/skipping.py'\nsrc=open(fn).read()\nold='''    elif (\n        item._store.get(skipped_by_mark_key, True)\n        and rep.skipped\n        and type(rep.longrepr) is tuple\n    ):\n        # skipped by mark.skipif; change the location of the failure\n        # to point to the item definition, otherwise it will display\n        # the location of where the skip exception was raised within pytest\n        _, _, reason = rep.longrepr\n        filename, line = item.reportinfo()[:2]\n        assert line is not None\n        rep.longrepr = str(filename), line + 1, reason\n'''\nnew='''\n    if (\n        item._store.get(skipped_by_mark_key, True)\n        and rep.skipped\n        and type(rep.longrepr) is tuple\n    ):\n        # skipped by mark.skipif; change the location of the failure\n        # to point to the item definition, otherwise it will display\n        # the location of where the skip exception was raised within pytest\n        _, _, reason = rep.longrepr\n        filename, line = item.reportinfo()[:2]\n        assert line is not None\n        rep.longrepr = str(filename), line + 1, reason\n'''\nassert old in src, \"pattern not found\"\nsrc=src.replace(old,new)\nopen(fn,'w').write(src)\nprint(\"patched\")\nPY"
+      },
+      "metrics_snapshot": {
+        "calls": 4,
+        "prompt_tokens": 16351,
+        "cache_hit_tokens": 8448,
+        "cache_miss_tokens": 7903,
+        "cache_hit_rate_pct": 51.67,
+        "completion_tokens": 6554,
+        "total_tokens": 22905,
+        "task_cost_usd": 0.005143,
+        "session_cost_usd": 0.014306
+      }
+    },
+    {
+      "turn": 5,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python -m pytest /tmp/repro/test_it.py -rs -q 2>&1 | head -8\necho \"=== runxfail ===\"\npython -m pytest /tmp/repro/test_it.py -rs --runxfail -q 2>&1 | head -8"
+      },
+      "metrics_snapshot": {
+        "calls": 5,
+        "prompt_tokens": 24845,
+        "cache_hit_tokens": 16128,
+        "cache_miss_tokens": 8717,
+        "cache_hit_rate_pct": 64.91,
+        "completion_tokens": 6712,
+        "total_tokens": 31557,
+        "task_cost_usd": 0.005383,
+        "session_cost_usd": 0.014546
+      }
+    },
+    {
+      "turn": 6,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && mkdir -p /tmp/repro && cat > /tmp/repro/test_it.py <<'PY'\nimport pytest\n\n@pytest.mark.skip\ndef test_skip_location() -> None:\n    assert 0\nPY\npython -m pytest /tmp/repro/test_it.py -rs -q 2>&1 | head -8\necho \"=== runxfail ===\"\npython -m pytest /tmp/repro/test_it.py -rs --runxfail -q 2>&1 | head -8"
+      },
+      "metrics_snapshot": {
+        "calls": 6,
+        "prompt_tokens": 33477,
+        "cache_hit_tokens": 24576,
+        "cache_miss_tokens": 8901,
+        "cache_hit_rate_pct": 73.41,
+        "completion_tokens": 6857,
+        "total_tokens": 40334,
+        "task_cost_usd": 0.005523,
+        "session_cost_usd": 0.014686
+      }
+    },
+    {
+      "turn": 7,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python - <<'PY'\nfn='testing/test_skipping.py'\nsrc=open(fn).read()\ntest='''\n\ndef test_skip_not_affected_by_runxfail(pytester: Pytester) -> None:\n    \"\"\"--runxfail should not affect skip location reporting (#7070).\"\"\"\n    pytester.makepyfile(\n        \"\"\"\n        import pytest\n\n        @pytest.mark.skip\n        def test_skip_location():\n            assert 0\n        \"\"\"\n    )\n    result = pytester.runpytest(\"-rs\", \"--runxfail\")\n    result.stdout.fnmatch_lines([\"SKIPPED [[]1[]] *:3: unconditional skip\"])\n'''\nif 'test_skip_not_affected_by_runxfail' not in src:\n    src = src.rstrip('\\n') + test\n    open(fn,'w').write(src)\n    print(\"added\")\nelse:\n    print(\"already present\")\nPY"
+      },
+      "metrics_snapshot": {
+        "calls": 7,
+        "prompt_tokens": 42335,
+        "cache_hit_tokens": 33152,
+        "cache_miss_tokens": 9183,
+        "cache_hit_rate_pct": 78.31,
+        "completion_tokens": 7149,
+        "total_tokens": 49484,
+        "task_cost_usd": 0.005766,
+        "session_cost_usd": 0.014929
+      }
+    },
+    {
+      "turn": 8,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python -m pytest testing/test_skipping.py::test_skip_not_affected_by_runxfail -q 2>&1 | tail -15"
+      },
+      "metrics_snapshot": {
+        "calls": 8,
+        "prompt_tokens": 51499,
+        "cache_hit_tokens": 41984,
+        "cache_miss_tokens": 9515,
+        "cache_hit_rate_pct": 81.52,
+        "completion_tokens": 7222,
+        "total_tokens": 58721,
+        "task_cost_usd": 0.005886,
+        "session_cost_usd": 0.015049
+      }
+    },
+    {
+      "turn": 9,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '1,25p' testing/test_skipping.py"
+      },
+      "metrics_snapshot": {
+        "calls": 9,
+        "prompt_tokens": 60926,
+        "cache_hit_tokens": 51072,
+        "cache_miss_tokens": 9854,
+        "cache_hit_rate_pct": 83.83,
+        "completion_tokens": 7264,
+        "total_tokens": 68190,
+        "task_cost_usd": 0.00599,
+        "session_cost_usd": 0.015153
+      }
+    },
+    {
+      "turn": 10,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python - <<'PY'\nfn='testing/test_skipping.py'\nsrc=open(fn).read()\nold='''\n\ndef test_skip_not_affected_by_runxfail(pytester: Pytester) -> None:\n    \"\"\"--runxfail should not affect skip location reporting (#7070).\"\"\"\n    pytester.makepyfile(\n        \"\"\"\n        import pytest\n\n        @pytest.mark.skip\n        def test_skip_location():\n            assert 0\n        \"\"\"\n    )\n    result = pytester.runpytest(\"-rs\", \"--runxfail\")\n    result.stdout.fnmatch_lines([\"SKIPPED [[]1[]] *:3: unconditional skip\"])\n'''\nnew='''\n\ndef test_skip_not_affected_by_runxfail(testdir) -> None:\n    \"\"\"--runxfail should not affect skip location reporting (#7070).\"\"\"\n    testdir.makepyfile(\n        \"\"\"\n        import pytest\n\n        @pytest.mark.skip\n        def test_skip_location():\n            assert 0\n        \"\"\"\n    )\n    result = testdir.runpytest(\"-rs\", \"--runxfail\")\n    result.stdout.fnmatch_lines([\"SKIPPED [[]1[]] *:3: unconditional skip\"])\n'''\nassert old in src\nsrc=src.replace(old,new)\nopen(fn,'w').write(src)\nprint(\"updated\")\nPY"
+      },
+      "metrics_snapshot": {
+        "calls": 10,
+        "prompt_tokens": 70555,
+        "cache_hit_tokens": 60416,
+        "cache_miss_tokens": 10139,
+        "cache_hit_rate_pct": 85.63,
+        "completion_tokens": 7671,
+        "total_tokens": 78226,
+        "task_cost_usd": 0.006305,
+        "session_cost_usd": 0.015468
+      }
+    },
+    {
+      "turn": 11,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python -m pytest testing/test_skipping.py::test_skip_not_affected_by_runxfail -q 2>&1 | tail -15"
+      },
+      "metrics_snapshot": {
+        "calls": 11,
+        "prompt_tokens": 80578,
+        "cache_hit_tokens": 70016,
+        "cache_miss_tokens": 10562,
+        "cache_hit_rate_pct": 86.89,
+        "completion_tokens": 7756,
+        "total_tokens": 88334,
+        "task_cost_usd": 0.006448,
+        "session_cost_usd": 0.015611
+      }
+    },
+    {
+      "turn": 12,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python -m pytest testing/test_skipping.py -q 2>&1 | tail -15"
+      },
+      "metrics_snapshot": {
+        "calls": 12,
+        "prompt_tokens": 90714,
+        "cache_hit_tokens": 80000,
+        "cache_miss_tokens": 10714,
+        "cache_hit_rate_pct": 88.19,
+        "completion_tokens": 7814,
+        "total_tokens": 98528,
+        "task_cost_usd": 0.006536,
+        "session_cost_usd": 0.015698
+      }
+    },
+    {
+      "turn": 13,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && git diff"
+      },
+      "metrics_snapshot": {
+        "calls": 13,
+        "prompt_tokens": 100929,
+        "cache_hit_tokens": 89984,
+        "cache_miss_tokens": 10945,
+        "cache_hit_rate_pct": 89.16,
+        "completion_tokens": 7874,
+        "total_tokens": 108803,
+        "task_cost_usd": 0.006636,
+        "session_cost_usd": 0.015799
+      }
+    },
+    {
+      "turn": 14,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python - <<'PY'\nfn='testing/test_skipping.py'\nsrc=open(fn).read()\nold='''\n\ndef test_skip_not_affected_by_runxfail(testdir) -> None:'''\nnew='''\n\n\ndef test_skip_not_affected_by_runxfail(testdir) -> None:'''\n# only replace the one right before our test\nidx=src.rfind(old)\nassert idx!=-1\nsrc=src[:idx]+new+src[idx+len(old):]\nopen(fn,'w').write(src)\nprint(\"fixed spacing\")\nPY"
+      },
+      "metrics_snapshot": {
+        "calls": 14,
+        "prompt_tokens": 111597,
+        "cache_hit_tokens": 100096,
+        "cache_miss_tokens": 11501,
+        "cache_hit_rate_pct": 89.69,
+        "completion_tokens": 8172,
+        "total_tokens": 119769,
+        "task_cost_usd": 0.006929,
+        "session_cost_usd": 0.016092
+      }
+    },
+    {
+      "turn": 15,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && git diff && python -m pytest testing/test_skipping.py -q 2>&1 | tail -3"
+      },
+      "metrics_snapshot": {
+        "calls": 15,
+        "prompt_tokens": 122507,
+        "cache_hit_tokens": 110720,
+        "cache_miss_tokens": 11787,
+        "cache_hit_rate_pct": 90.38,
+        "completion_tokens": 8242,
+        "total_tokens": 130749,
+        "task_cost_usd": 0.007045,
+        "session_cost_usd": 0.016208
+      }
+    },
+    {
+      "turn": 16,
+      "action": "finish_task",
+      "args": {},
+      "metrics_snapshot": {
+        "calls": 16,
+        "prompt_tokens": 133917,
+        "cache_hit_tokens": 121600,
+        "cache_miss_tokens": 12317,
+        "cache_hit_rate_pct": 90.8,
+        "completion_tokens": 8301,
+        "total_tokens": 142218,
+        "task_cost_usd": 0.007193,
+        "session_cost_usd": 0.016356
+      }
+    }
+  ]
+}

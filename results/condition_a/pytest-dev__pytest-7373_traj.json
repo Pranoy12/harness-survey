@@ -1,0 +1,219 @@
+{
+  "instance_id": "pytest-dev__pytest-7373",
+  "condition": "condition_a",
+  "turns_taken": 11,
+  "finished_by_tool": true,
+  "empty_action_retries": 0,
+  "wall_time_sec": 352.23,
+  "usage_metrics": {
+    "calls": 11,
+    "prompt_tokens": 58986,
+    "cache_hit_tokens": 51712,
+    "cache_miss_tokens": 7274,
+    "cache_hit_rate_pct": 87.67,
+    "completion_tokens": 2396,
+    "total_tokens": 61382,
+    "task_cost_usd": 0.002684,
+    "session_cost_usd": 0.002684
+  },
+  "usage_summary": "[Quota Tracker] Calls: 11 | Prompt Tokens: 58,986 | Completion Tokens: 2,396 | Total Tokens: 61,382 | Est. Cost: $0.0027[DEEPSEEK][DeepSeek OFF-PEAK (1x)] Calls: 11 | Cache Hit: 87.7% (51,712/58,986) | Out: 2,396 | Task Spend: $0.00268 | Total Session Spend: $0.00268",
+  "model_patch": "diff --git a/src/_pytest/mark/evaluate.py b/src/_pytest/mark/evaluate.py\nindex 759191668..fa8dbc89f 100755\n--- a/src/_pytest/mark/evaluate.py\n+++ b/src/_pytest/mark/evaluate.py\n@@ -2,7 +2,6 @@ import os\n import platform\n import sys\n import traceback\n-from typing import Any\n from typing import Dict\n from typing import List\n from typing import Optional\n@@ -10,25 +9,7 @@ from typing import Optional\n from ..outcomes import fail\n from ..outcomes import TEST_OUTCOME\n from .structures import Mark\n-from _pytest.config import Config\n from _pytest.nodes import Item\n-from _pytest.store import StoreKey\n-\n-\n-evalcache_key = StoreKey[Dict[str, Any]]()\n-\n-\n-def cached_eval(config: Config, expr: str, d: Dict[str, object]) -> Any:\n-    default = {}  # type: Dict[str, object]\n-    evalcache = config._store.setdefault(evalcache_key, default)\n-    try:\n-        return evalcache[expr]\n-    except KeyError:\n-        import _pytest._code\n-\n-        exprcode = _pytest._code.compile(expr, mode=\"eval\")\n-        evalcache[expr] = x = eval(exprcode, d)\n-        return x\n \n \n class MarkEvaluator:\n@@ -98,7 +79,7 @@ class MarkEvaluator:\n                     self.expr = expr\n                     if isinstance(expr, str):\n                         d = self._getglobals()\n-                        result = cached_eval(self.item.config, expr, d)\n+                        result = eval(expr, d)\n                     else:\n                         if \"reason\" not in mark.kwargs:\n                             # XXX better be checked at collection time\ndiff --git a/testing/test_skipping.py b/testing/test_skipping.py\nindex a6f1a9c09..9d4678b6f 100755\n--- a/testing/test_skipping.py\n+++ b/testing/test_skipping.py\n@@ -924,6 +924,31 @@ def test_xfail_skipif_with_globals(testdir):\n     result.stdout.fnmatch_lines([\"*SKIP*x == 3*\", \"*XFAIL*test_boolean*\", \"*x == 3*\"])\n \n \n+def test_skipif_with_globals_multiple_modules(testdir):\n+    testdir.makepyfile(\n+        test_module_1=\"\"\"\n+            import pytest\n+\n+            skip = True\n+\n+            @pytest.mark.skipif(\"skip\")\n+            def test_should_skip():\n+                pass\n+        \"\"\",\n+        test_module_2=\"\"\"\n+            import pytest\n+\n+            skip = False\n+\n+            @pytest.mark.skipif(\"skip\")\n+            def test_should_not_skip():\n+                pass\n+        \"\"\",\n+    )\n+    result = testdir.runpytest()\n+    result.assert_outcomes(skipped=1, passed=1)\n+\n+\n def test_direct_gives_error(testdir):\n     testdir.makepyfile(\n         \"\"\"\n",
+  "trajectory": [
+    {
+      "turn": 1,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && git status && sed -n '1,260p' src/_pytest/mark/evaluate.py"
+      },
+      "metrics_snapshot": {
+        "calls": 1,
+        "prompt_tokens": 779,
+        "cache_hit_tokens": 256,
+        "cache_miss_tokens": 523,
+        "cache_hit_rate_pct": 32.86,
+        "completion_tokens": 73,
+        "total_tokens": 852,
+        "task_cost_usd": 0.000123,
+        "session_cost_usd": 0.000123
+      }
+    },
+    {
+      "turn": 2,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && grep -R \"cached_eval\\|evalcache\\|_istrue\" -n src tests | head -100"
+      },
+      "metrics_snapshot": {
+        "calls": 2,
+        "prompt_tokens": 2702,
+        "cache_hit_tokens": 1024,
+        "cache_miss_tokens": 1678,
+        "cache_hit_rate_pct": 37.9,
+        "completion_tokens": 151,
+        "total_tokens": 2853,
+        "task_cost_usd": 0.000345,
+        "session_cost_usd": 0.000345
+      }
+    },
+    {
+      "turn": 3,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && ls && find . -maxdepth 2 -type d | head -60 && grep -R \"skipif\\|evalcache\\|cached_eval\" -n testing 2>/dev/null | grep -i eval | head -50"
+      },
+      "metrics_snapshot": {
+        "calls": 3,
+        "prompt_tokens": 4938,
+        "cache_hit_tokens": 2944,
+        "cache_miss_tokens": 1994,
+        "cache_hit_rate_pct": 59.62,
+        "completion_tokens": 251,
+        "total_tokens": 5189,
+        "task_cost_usd": 0.000459,
+        "session_cost_usd": 0.000459
+      }
+    },
+    {
+      "turn": 4,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '1,180p' testing/test_skipping.py && sed -n '860,930p' testing/test_skipping.py"
+      },
+      "metrics_snapshot": {
+        "calls": 4,
+        "prompt_tokens": 7688,
+        "cache_hit_tokens": 5248,
+        "cache_miss_tokens": 2440,
+        "cache_hit_rate_pct": 68.26,
+        "completion_tokens": 682,
+        "total_tokens": 8370,
+        "task_cost_usd": 0.000791,
+        "session_cost_usd": 0.000791
+      }
+    },
+    {
+      "turn": 5,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python - <<'PY'\nfrom pathlib import Path\np = Path('src/_pytest/mark/evaluate.py')\ns = p.read_text()\ns = s.replace('''import traceback\nfrom typing import Any\nfrom typing import Dict\nfrom typing import List\nfrom typing import Optional\n\nfrom ..outcomes import fail\nfrom ..outcomes import TEST_OUTCOME\nfrom .structures import Mark\nfrom _pytest.config import Config\nfrom _pytest.nodes import Item\nfrom _pytest.store import StoreKey\n\n\nevalcache_key = StoreKey[Dict[str, Any]]()\n\n\ndef cached_eval(config: Config, expr: str, d: Dict[str, object]) -> Any:\n    default = {}  # type: Dict[str, object]\n    evalcache = config._store.setdefault(evalcache_key, default)\n    try:\n        return evalcache[expr]\n    except KeyError:\n        import _pytest._code\n\n        exprcode = _pytest._code.compile(expr, mode=\"eval\")\n        evalcache[expr] = x = eval(exprcode, d)\n        return x\n\n\n''', '''import traceback\nfrom typing import Dict\nfrom typing import List\nfrom typing import Optional\n\nfrom ..outcomes import fail\nfrom ..outcomes import TEST_OUTCOME\nfrom .structures import Mark\nfrom _pytest.nodes import Item\n\n\n''')\ns = s.replace('''                    if isinstance(expr, str):\n                        d = self._getglobals()\n                        result = cached_eval(self.item.config, expr, d)\n''', '''                    if isinstance(expr, str):\n                        d = self._getglobals()\n                        result = eval(expr, d)\n''')\np.write_text(s)\nPY\nsed -n '1,125p' src/_pytest/mark/evaluate.py && git diff --check && git diff"
+      },
+      "metrics_snapshot": {
+        "calls": 5,
+        "prompt_tokens": 12664,
+        "cache_hit_tokens": 8320,
+        "cache_miss_tokens": 4344,
+        "cache_hit_rate_pct": 65.7,
+        "completion_tokens": 1145,
+        "total_tokens": 13809,
+        "task_cost_usd": 0.001364,
+        "session_cost_usd": 0.001364
+      }
+    },
+    {
+      "turn": 6,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && tmp=$(mktemp -d) && cat > \"$tmp/test_module_1.py\" <<'EOF'\nimport pytest\n\nskip = True\n\n@pytest.mark.skipif(\"skip\")\ndef test_should_skip():\n    assert False\nEOF\ncat > \"$tmp/test_module_2.py\" <<'EOF'\nimport pytest\n\nskip = False\n\n@pytest.mark.skipif(\"skip\")\ndef test_should_not_skip():\n    assert False\nEOF\npython -m pytest \"$tmp/test_module_1.py\" \"$tmp/test_module_2.py\" -q; status=$?; rm -rf \"$tmp\"; exit $status"
+      },
+      "metrics_snapshot": {
+        "calls": 6,
+        "prompt_tokens": 19413,
+        "cache_hit_tokens": 13696,
+        "cache_miss_tokens": 5717,
+        "cache_hit_rate_pct": 70.55,
+        "completion_tokens": 1334,
+        "total_tokens": 20747,
+        "task_cost_usd": 0.001699,
+        "session_cost_usd": 0.001699
+      }
+    },
+    {
+      "turn": 7,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python -m pytest testing/test_skipping.py -q"
+      },
+      "metrics_snapshot": {
+        "calls": 7,
+        "prompt_tokens": 26502,
+        "cache_hit_tokens": 20608,
+        "cache_miss_tokens": 5894,
+        "cache_hit_rate_pct": 77.76,
+        "completion_tokens": 1418,
+        "total_tokens": 27920,
+        "task_cost_usd": 0.001797,
+        "session_cost_usd": 0.001797
+      }
+    },
+    {
+      "turn": 8,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python - <<'PY'\nfrom pathlib import Path\np = Path('testing/test_skipping.py')\ns = p.read_text()\nneedle = '''def test_direct_gives_error(testdir):\n'''\naddition = '''def test_skipif_with_globals_multiple_modules(testdir):\n    testdir.makepyfile(\n        test_module_1=\"\"\"\n            import pytest\n\n            skip = True\n\n            @pytest.mark.skipif(\"skip\")\n            def test_should_skip():\n                pass\n        \"\"\",\n        test_module_2=\"\"\"\n            import pytest\n\n            skip = False\n\n            @pytest.mark.skipif(\"skip\")\n            def test_should_not_skip():\n                pass\n        \"\"\",\n    )\n    result = testdir.runpytest()\n    result.assert_outcomes(skipped=1, passed=1)\n\n\n'''\nassert needle in s\ns = s.replace(needle, addition + needle, 1)\np.write_text(s)\nPY\npython -m pytest testing/test_skipping.py -q && git diff --check && git diff --stat"
+      },
+      "metrics_snapshot": {
+        "calls": 8,
+        "prompt_tokens": 33718,
+        "cache_hit_tokens": 27648,
+        "cache_miss_tokens": 6070,
+        "cache_hit_rate_pct": 82.0,
+        "completion_tokens": 2142,
+        "total_tokens": 35860,
+        "task_cost_usd": 0.002279,
+        "session_cost_usd": 0.002279
+      }
+    },
+    {
+      "turn": 9,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python -m pytest testing/test_mark.py testing/test_skipping.py -q"
+      },
+      "metrics_snapshot": {
+        "calls": 9,
+        "prompt_tokens": 41747,
+        "cache_hit_tokens": 35456,
+        "cache_miss_tokens": 6291,
+        "cache_hit_rate_pct": 84.93,
+        "completion_tokens": 2269,
+        "total_tokens": 44016,
+        "task_cost_usd": 0.002411,
+        "session_cost_usd": 0.002411
+      }
+    },
+    {
+      "turn": 10,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && grep -R \"evalcache_key\\|cached_eval\" -n src testing || true && git diff"
+      },
+      "metrics_snapshot": {
+        "calls": 10,
+        "prompt_tokens": 49959,
+        "cache_hit_tokens": 43520,
+        "cache_miss_tokens": 6439,
+        "cache_hit_rate_pct": 87.11,
+        "completion_tokens": 2364,
+        "total_tokens": 52323,
+        "task_cost_usd": 0.002515,
+        "session_cost_usd": 0.002515
+      }
+    },
+    {
+      "turn": 11,
+      "action": "finish_task",
+      "args": {},
+      "metrics_snapshot": {
+        "calls": 11,
+        "prompt_tokens": 58986,
+        "cache_hit_tokens": 51712,
+        "cache_miss_tokens": 7274,
+        "cache_hit_rate_pct": 87.67,
+        "completion_tokens": 2396,
+        "total_tokens": 61382,
+        "task_cost_usd": 0.002684,
+        "session_cost_usd": 0.002684
+      }
+    }
+  ]
+}

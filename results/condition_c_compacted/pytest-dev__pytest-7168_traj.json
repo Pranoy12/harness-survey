@@ -1,0 +1,473 @@
+{
+  "instance_id": "pytest-dev__pytest-7168",
+  "condition": "condition_c_compacted",
+  "turns_taken": 25,
+  "finished_by_tool": false,
+  "empty_action_retries": 0,
+  "wall_time_sec": 82.78,
+  "usage_metrics": {
+    "calls": 25,
+    "prompt_tokens": 126951,
+    "cache_hit_tokens": 74368,
+    "cache_miss_tokens": 52583,
+    "cache_hit_rate_pct": 58.58,
+    "completion_tokens": 5987,
+    "total_tokens": 132938,
+    "task_cost_usd": 0.011703,
+    "session_cost_usd": 0.049377
+  },
+  "usage_summary": "[Quota Tracker] Calls: 25 | Prompt Tokens: 126,951 | Completion Tokens: 5,987 | Total Tokens: 132,938 | Est. Cost: $0.0117[DEEPSEEK][DeepSeek OFF-PEAK (1x)] Calls: 25 | Cache Hit: 58.6% (74,368/126,951) | Out: 5,987 | Task Spend: $0.01170 | Total Session Spend: $0.04938",
+  "model_patch": "diff --git a/src/_pytest/_io/saferepr.py b/src/_pytest/_io/saferepr.py\nindex 23af4d0bb..47a00de60 100755\n--- a/src/_pytest/_io/saferepr.py\n+++ b/src/_pytest/_io/saferepr.py\n@@ -20,7 +20,7 @@ def _format_repr_exception(exc: BaseException, obj: Any) -> str:\n     except BaseException as exc:\n         exc_info = \"unpresentable exception ({})\".format(_try_repr_or_str(exc))\n     return \"<[{} raised in repr()] {} object at 0x{:x}>\".format(\n-        exc_info, obj.__class__.__name__, id(obj)\n+        exc_info, type(obj).__name__, id(obj)\n     )\n \n \n",
+  "trajectory": [
+    {
+      "turn": 1,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && git status --short && ls"
+      },
+      "metrics_snapshot": {
+        "calls": 1,
+        "prompt_tokens": 3186,
+        "cache_hit_tokens": 256,
+        "cache_miss_tokens": 2930,
+        "cache_hit_rate_pct": 8.04,
+        "completion_tokens": 65,
+        "total_tokens": 3251,
+        "task_cost_usd": 0.000479,
+        "session_cost_usd": 0.038154
+      }
+    },
+    {
+      "turn": 2,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '1,180p' src/_pytest/_io/saferepr.py && grep -R \"saferepr\" -n testing | head -40"
+      },
+      "metrics_snapshot": {
+        "calls": 2,
+        "prompt_tokens": 6550,
+        "cache_hit_tokens": 3456,
+        "cache_miss_tokens": 3094,
+        "cache_hit_rate_pct": 52.76,
+        "completion_tokens": 152,
+        "total_tokens": 6702,
+        "task_cost_usd": 0.000566,
+        "session_cost_usd": 0.03824
+      }
+    },
+    {
+      "turn": 3,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '1,190p' testing/io/test_saferepr.py && git log -5 --oneline && python - <<'PY'\nclass SomeClass:\n    def __getattribute__(self, attr):\n        raise\n    def __repr__(self):\n        raise\nx=SomeClass()\nfor desc, fn in [('class', lambda: x.__class__), ('type', lambda: type(x)), ('type name', lambda: type(x).__name__), ('id', lambda: id(x)), ('object getattr', lambda: object.__getattribute__(x, '__class__'))]:\n    try:\n        print(desc, fn())\n    except BaseException as e:\n        print(desc, 'ERR', type(e), repr(e))\nPY"
+      },
+      "metrics_snapshot": {
+        "calls": 3,
+        "prompt_tokens": 11552,
+        "cache_hit_tokens": 6784,
+        "cache_miss_tokens": 4768,
+        "cache_hit_rate_pct": 58.73,
+        "completion_tokens": 673,
+        "total_tokens": 12225,
+        "task_cost_usd": 0.001139,
+        "session_cost_usd": 0.038814
+      }
+    },
+    {
+      "turn": 4,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python - <<'PY'\nfrom _pytest._io.saferepr import saferepr\nclass SomeClass:\n    def __getattribute__(self, attr):\n        raise\n    def __repr__(self):\n        raise\nx=SomeClass()\ntry:\n    print(saferepr(x))\nexcept BaseException as e:\n    import traceback; traceback.print_exc()\nPY"
+      },
+      "metrics_snapshot": {
+        "calls": 4,
+        "prompt_tokens": 18271,
+        "cache_hit_tokens": 9856,
+        "cache_miss_tokens": 8415,
+        "cache_hit_rate_pct": 53.94,
+        "completion_tokens": 1901,
+        "total_tokens": 20172,
+        "task_cost_usd": 0.002432,
+        "session_cost_usd": 0.040107
+      }
+    },
+    {
+      "turn": 5,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && cat src/_pytest/_io/saferepr.py"
+      },
+      "metrics_snapshot": {
+        "calls": 5,
+        "prompt_tokens": 24993,
+        "cache_hit_tokens": 12928,
+        "cache_miss_tokens": 12065,
+        "cache_hit_rate_pct": 51.73,
+        "completion_tokens": 2147,
+        "total_tokens": 27140,
+        "task_cost_usd": 0.003137,
+        "session_cost_usd": 0.040811
+      }
+    },
+    {
+      "turn": 6,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python - <<'PY'\nfrom pathlib import Path\np = Path('src/_pytest/_io/saferepr.py')\ns = p.read_text()\ns = s.replace('        exc_info, obj.__class__.__name__, id(obj)\\n', '        exc_info, type(obj).__name__, id(obj)\\n')\np.write_text(s)\nPY\npython - <<'PY'\nfrom _pytest._io.saferepr import saferepr, safeformat\nclass SomeClass:\n    def __getattribute__(self, attr):\n        raise\n    def __repr__(self):\n        raise\nx=SomeClass()\nprint(saferepr(x))\nprint(safeformat(x))\nPY"
+      },
+      "metrics_snapshot": {
+        "calls": 6,
+        "prompt_tokens": 30945,
+        "cache_hit_tokens": 16000,
+        "cache_miss_tokens": 14945,
+        "cache_hit_rate_pct": 51.7,
+        "completion_tokens": 2343,
+        "total_tokens": 33288,
+        "task_cost_usd": 0.003696,
+        "session_cost_usd": 0.04137
+      }
+    },
+    {
+      "turn": 7,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && grep -n \"saferepr\\|_format_repr_exception\\|repr_instance\\|__class__\" testing/test_io_saferepr.py | head -80 && sed -n '1,240p' testing/test_io_saferepr.py"
+      },
+      "metrics_snapshot": {
+        "calls": 7,
+        "prompt_tokens": 35542,
+        "cache_hit_tokens": 19072,
+        "cache_miss_tokens": 16470,
+        "cache_hit_rate_pct": 53.66,
+        "completion_tokens": 2450,
+        "total_tokens": 37992,
+        "task_cost_usd": 0.003998,
+        "session_cost_usd": 0.041672
+      }
+    },
+    {
+      "turn": 8,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && find testing -iname '*saferepr*' -o -iname '*io*' | head && git log -1 --oneline"
+      },
+      "metrics_snapshot": {
+        "calls": 8,
+        "prompt_tokens": 39192,
+        "cache_hit_tokens": 22144,
+        "cache_miss_tokens": 17048,
+        "cache_hit_rate_pct": 56.5,
+        "completion_tokens": 2525,
+        "total_tokens": 41717,
+        "task_cost_usd": 0.004139,
+        "session_cost_usd": 0.041813
+      }
+    },
+    {
+      "turn": 9,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && cat src/_pytest/_io/saferepr.py && echo '--- tests ---' && cat testing/io/test_saferepr.py"
+      },
+      "metrics_snapshot": {
+        "calls": 9,
+        "prompt_tokens": 42749,
+        "cache_hit_tokens": 25216,
+        "cache_miss_tokens": 17533,
+        "cache_hit_rate_pct": 58.99,
+        "completion_tokens": 2599,
+        "total_tokens": 45348,
+        "task_cost_usd": 0.004265,
+        "session_cost_usd": 0.041939
+      }
+    },
+    {
+      "turn": 10,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && cat > /tmp/repro.py <<'EOF'\nimport sys\nsys.path.insert(0, 'src')\nfrom _pytest._io.saferepr import saferepr\n\nclass SomeClass:\n    def __getattribute__(self, attr):\n        raise\n    def __repr__(self):\n        raise\n\ntry:\n    print(saferepr(SomeClass()))\nexcept Exception:\n    import traceback; traceback.print_exc()\nEOF\npython /tmp/repro.py"
+      },
+      "metrics_snapshot": {
+        "calls": 10,
+        "prompt_tokens": 48295,
+        "cache_hit_tokens": 28288,
+        "cache_miss_tokens": 20007,
+        "cache_hit_rate_pct": 58.57,
+        "completion_tokens": 3873,
+        "total_tokens": 52168,
+        "task_cost_usd": 0.00541,
+        "session_cost_usd": 0.043084
+      }
+    },
+    {
+      "turn": 11,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python - <<'EOF'\nclass SomeClass:\n    def __getattribute__(self, attr):\n        print(\"GET\", attr)\n        raise\n    def __repr__(self):\n        raise\n\nx = SomeClass()\ntry:\n    x.__class__\nexcept BaseException as e:\n    print(\"class err\", type(e).__name__, e)\ntry:\n    type(x).__name__\nexcept BaseException as e:\n    print(\"type err\", type(e).__name__, e)\nprint(repr(x.__class__) if False else \"done\")\nEOF"
+      },
+      "metrics_snapshot": {
+        "calls": 11,
+        "prompt_tokens": 54975,
+        "cache_hit_tokens": 31360,
+        "cache_miss_tokens": 23615,
+        "cache_hit_rate_pct": 57.04,
+        "completion_tokens": 4315,
+        "total_tokens": 59290,
+        "task_cost_usd": 0.006225,
+        "session_cost_usd": 0.0439
+      }
+    },
+    {
+      "turn": 12,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '1,140p' src/_pytest/_io/saferepr.py && git status --short && git log -5 --oneline"
+      },
+      "metrics_snapshot": {
+        "calls": 12,
+        "prompt_tokens": 59968,
+        "cache_hit_tokens": 34432,
+        "cache_miss_tokens": 25536,
+        "cache_hit_rate_pct": 57.42,
+        "completion_tokens": 4413,
+        "total_tokens": 64381,
+        "task_cost_usd": 0.006581,
+        "session_cost_usd": 0.044256
+      }
+    },
+    {
+      "turn": 13,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && git diff -- src/_pytest/_io/saferepr.py && git show HEAD:src/_pytest/_io/saferepr.py | sed -n '1,110p'"
+      },
+      "metrics_snapshot": {
+        "calls": 13,
+        "prompt_tokens": 64714,
+        "cache_hit_tokens": 37504,
+        "cache_miss_tokens": 27210,
+        "cache_hit_rate_pct": 57.95,
+        "completion_tokens": 4517,
+        "total_tokens": 69231,
+        "task_cost_usd": 0.006904,
+        "session_cost_usd": 0.044579
+      }
+    },
+    {
+      "turn": 14,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && grep -R \"saferepr\\|SafeRepr\\|raised in repr\" -n testing | head -100 && ls testing/io"
+      },
+      "metrics_snapshot": {
+        "calls": 14,
+        "prompt_tokens": 70151,
+        "cache_hit_tokens": 40576,
+        "cache_miss_tokens": 29575,
+        "cache_hit_rate_pct": 57.84,
+        "completion_tokens": 4694,
+        "total_tokens": 74845,
+        "task_cost_usd": 0.007374,
+        "session_cost_usd": 0.045049
+      }
+    },
+    {
+      "turn": 15,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '1,180p' testing/io/test_saferepr.py && sed -n '520,575p' testing/code/test_excinfo.py"
+      },
+      "metrics_snapshot": {
+        "calls": 15,
+        "prompt_tokens": 75668,
+        "cache_hit_tokens": 43648,
+        "cache_miss_tokens": 32020,
+        "cache_hit_rate_pct": 57.68,
+        "completion_tokens": 4779,
+        "total_tokens": 80447,
+        "task_cost_usd": 0.007801,
+        "session_cost_usd": 0.045476
+      }
+    },
+    {
+      "turn": 16,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && git status --short && git log --oneline -8 && git diff"
+      },
+      "metrics_snapshot": {
+        "calls": 16,
+        "prompt_tokens": 82029,
+        "cache_hit_tokens": 46720,
+        "cache_miss_tokens": 35309,
+        "cache_hit_rate_pct": 56.96,
+        "completion_tokens": 4864,
+        "total_tokens": 86893,
+        "task_cost_usd": 0.008355,
+        "session_cost_usd": 0.046029
+      }
+    },
+    {
+      "turn": 17,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && cat src/_pytest/_io/saferepr.py && git show HEAD:src/_pytest/_io/saferepr.py | sed -n '1,130p'"
+      },
+      "metrics_snapshot": {
+        "calls": 17,
+        "prompt_tokens": 87682,
+        "cache_hit_tokens": 49792,
+        "cache_miss_tokens": 37890,
+        "cache_hit_rate_pct": 56.79,
+        "completion_tokens": 4974,
+        "total_tokens": 92656,
+        "task_cost_usd": 0.008817,
+        "session_cost_usd": 0.046492
+      }
+    },
+    {
+      "turn": 18,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && grep -R \"getattribute\\|__class__\\|exception_in\\|repr_exception\\|_format_repr_exception\" -n testing/test_saferepr.py testing 2>/dev/null | head -80 && sed -n '1,260p' testing/test_saferepr.py"
+      },
+      "metrics_snapshot": {
+        "calls": 18,
+        "prompt_tokens": 93167,
+        "cache_hit_tokens": 52864,
+        "cache_miss_tokens": 40303,
+        "cache_hit_rate_pct": 56.74,
+        "completion_tokens": 5163,
+        "total_tokens": 98330,
+        "task_cost_usd": 0.009302,
+        "session_cost_usd": 0.046976
+      }
+    },
+    {
+      "turn": 19,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && find testing -iname '*saferepr*' -o -iname '*repr*' | head && grep -R \"SafeRepr\\|safeformat\\|saferepr\" -n testing | head -100"
+      },
+      "metrics_snapshot": {
+        "calls": 19,
+        "prompt_tokens": 98482,
+        "cache_hit_tokens": 55936,
+        "cache_miss_tokens": 42546,
+        "cache_hit_rate_pct": 56.8,
+        "completion_tokens": 5257,
+        "total_tokens": 103739,
+        "task_cost_usd": 0.009704,
+        "session_cost_usd": 0.047378
+      }
+    },
+    {
+      "turn": 20,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && cat _pytest/_io/saferepr.py && cat testing/io/test_saferepr.py"
+      },
+      "metrics_snapshot": {
+        "calls": 20,
+        "prompt_tokens": 102746,
+        "cache_hit_tokens": 59008,
+        "cache_miss_tokens": 43738,
+        "cache_hit_rate_pct": 57.43,
+        "completion_tokens": 5323,
+        "total_tokens": 108069,
+        "task_cost_usd": 0.009932,
+        "session_cost_usd": 0.047606
+      }
+    },
+    {
+      "turn": 21,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && git status --short && find . -path '*_io/saferepr.py' && cat src/_pytest/_io/saferepr.py && cat testing/io/test_saferepr.py"
+      },
+      "metrics_snapshot": {
+        "calls": 21,
+        "prompt_tokens": 106844,
+        "cache_hit_tokens": 62080,
+        "cache_miss_tokens": 44764,
+        "cache_hit_rate_pct": 58.1,
+        "completion_tokens": 5416,
+        "total_tokens": 112260,
+        "task_cost_usd": 0.01015,
+        "session_cost_usd": 0.047825
+      }
+    },
+    {
+      "turn": 22,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && git diff -- src/_pytest/_io/saferepr.py && git log -3 --oneline"
+      },
+      "metrics_snapshot": {
+        "calls": 22,
+        "prompt_tokens": 112388,
+        "cache_hit_tokens": 65152,
+        "cache_miss_tokens": 47236,
+        "cache_hit_rate_pct": 57.97,
+        "completion_tokens": 5512,
+        "total_tokens": 117900,
+        "task_cost_usd": 0.010588,
+        "session_cost_usd": 0.048263
+      }
+    },
+    {
+      "turn": 23,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && cat > /tmp/test_issue.py <<'EOF'\nclass SomeClass:\n    def __getattribute__(self, attr):\n        raise\n    def __repr__(self):\n        raise\ndef test():\n    SomeClass().attr\nEOF\npython -m pytest -q /tmp/test_issue.py; echo EXIT:$?"
+      },
+      "metrics_snapshot": {
+        "calls": 23,
+        "prompt_tokens": 118210,
+        "cache_hit_tokens": 68224,
+        "cache_miss_tokens": 49986,
+        "cache_hit_rate_pct": 57.71,
+        "completion_tokens": 5695,
+        "total_tokens": 123905,
+        "task_cost_usd": 0.01112,
+        "session_cost_usd": 0.048794
+      }
+    },
+    {
+      "turn": 24,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '1,130p' src/_pytest/_io/saferepr.py && grep -R \"_format_repr_exception\\|repr_instance\" -n testing | head -30"
+      },
+      "metrics_snapshot": {
+        "calls": 24,
+        "prompt_tokens": 122233,
+        "cache_hit_tokens": 71296,
+        "cache_miss_tokens": 50937,
+        "cache_hit_rate_pct": 58.33,
+        "completion_tokens": 5872,
+        "total_tokens": 128105,
+        "task_cost_usd": 0.011378,
+        "session_cost_usd": 0.049052
+      }
+    },
+    {
+      "turn": 25,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && git diff -- src/_pytest/_io/saferepr.py && git status --short && python -m pytest -q testing/test_io.py testing/test_reports.py -q; echo EXIT:$?"
+      },
+      "metrics_snapshot": {
+        "calls": 25,
+        "prompt_tokens": 126951,
+        "cache_hit_tokens": 74368,
+        "cache_miss_tokens": 52583,
+        "cache_hit_rate_pct": 58.58,
+        "completion_tokens": 5987,
+        "total_tokens": 132938,
+        "task_cost_usd": 0.011703,
+        "session_cost_usd": 0.049377
+      }
+    }
+  ]
+}

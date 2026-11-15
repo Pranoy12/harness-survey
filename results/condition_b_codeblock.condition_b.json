@@ -1,10 +1,10 @@
 {
-    "total_instances": 25,
-    "submitted_instances": 25,
-    "completed_instances": 18,
-    "resolved_instances": 5,
-    "unresolved_instances": 13,
-    "empty_patch_instances": 7,
+    "total_instances": 36,
+    "submitted_instances": 36,
+    "completed_instances": 27,
+    "resolved_instances": 9,
+    "unresolved_instances": 18,
+    "empty_patch_instances": 9,
     "error_instances": 0,
     "completed_ids": [
         "mwaskom__seaborn-2848",
@@ -24,7 +24,16 @@
         "pylint-dev__pylint-7228",
         "pylint-dev__pylint-7993",
         "pytest-dev__pytest-11143",
-        "pytest-dev__pytest-5227"
+        "pytest-dev__pytest-5227",
+        "pytest-dev__pytest-5692",
+        "pytest-dev__pytest-6116",
+        "pytest-dev__pytest-7168",
+        "pytest-dev__pytest-7373",
+        "pytest-dev__pytest-7432",
+        "pytest-dev__pytest-7490",
+        "pytest-dev__pytest-8365",
+        "pytest-dev__pytest-8906",
+        "pytest-dev__pytest-9359"
     ],
     "incomplete_ids": [],
     "empty_patch_ids": [
@@ -34,7 +43,9 @@
         "pytest-dev__pytest-11148",
         "pytest-dev__pytest-5103",
         "pytest-dev__pytest-5221",
-        "pytest-dev__pytest-5413"
+        "pytest-dev__pytest-5413",
+        "pytest-dev__pytest-5495",
+        "pytest-dev__pytest-7220"
     ],
     "submitted_ids": [
         "mwaskom__seaborn-2848",
@@ -61,14 +72,29 @@
         "pytest-dev__pytest-5103",
         "pytest-dev__pytest-5221",
         "pytest-dev__pytest-5227",
-        "pytest-dev__pytest-5413"
+        "pytest-dev__pytest-5413",
+        "pytest-dev__pytest-5495",
+        "pytest-dev__pytest-5692",
+        "pytest-dev__pytest-6116",
+        "pytest-dev__pytest-7168",
+        "pytest-dev__pytest-7220",
+        "pytest-dev__pytest-7373",
+        "pytest-dev__pytest-7432",
+        "pytest-dev__pytest-7490",
+        "pytest-dev__pytest-8365",
+        "pytest-dev__pytest-8906",
+        "pytest-dev__pytest-9359"
     ],
     "resolved_ids": [
         "mwaskom__seaborn-2848",
         "mwaskom__seaborn-3010",
         "pallets__flask-4992",
         "pylint-dev__pylint-5859",
-        "pylint-dev__pylint-7993"
+        "pylint-dev__pylint-7993",
+        "pytest-dev__pytest-6116",
+        "pytest-dev__pytest-7168",
+        "pytest-dev__pytest-8365",
+        "pytest-dev__pytest-9359"
     ],
     "unresolved_ids": [
         "mwaskom__seaborn-3190",
@@ -83,7 +109,12 @@
         "pylint-dev__pylint-7080",
         "pylint-dev__pylint-7228",
         "pytest-dev__pytest-11143",
-        "pytest-dev__pytest-5227"
+        "pytest-dev__pytest-5227",
+        "pytest-dev__pytest-5692",
+        "pytest-dev__pytest-7373",
+        "pytest-dev__pytest-7432",
+        "pytest-dev__pytest-7490",
+        "pytest-dev__pytest-8906"
     ],
     "error_ids": [],
     "schema_version": 2

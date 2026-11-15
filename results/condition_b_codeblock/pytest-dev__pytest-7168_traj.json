@@ -1,0 +1,273 @@
+{
+  "instance_id": "pytest-dev__pytest-7168",
+  "condition": "condition_b_codeblock",
+  "turns_taken": 14,
+  "finished_by_tool": true,
+  "empty_action_retries": 0,
+  "wall_time_sec": 179.55,
+  "usage_metrics": {
+    "calls": 14,
+    "prompt_tokens": 117931,
+    "cache_hit_tokens": 105088,
+    "cache_miss_tokens": 12843,
+    "cache_hit_rate_pct": 89.11,
+    "completion_tokens": 6194,
+    "total_tokens": 124125,
+    "task_cost_usd": 0.005958,
+    "session_cost_usd": 0.038848
+  },
+  "usage_summary": "[Quota Tracker] Calls: 14 | Prompt Tokens: 117,931 | Completion Tokens: 6,194 | Total Tokens: 124,125 | Est. Cost: $0.0060[DEEPSEEK][DeepSeek OFF-PEAK (1x)] Calls: 14 | Cache Hit: 89.1% (105,088/117,931) | Out: 6,194 | Task Spend: $0.00596 | Total Session Spend: $0.03885",
+  "model_patch": "diff --git a/src/_pytest/_io/saferepr.py b/src/_pytest/_io/saferepr.py\nindex 23af4d0bb..47a00de60 100755\n--- a/src/_pytest/_io/saferepr.py\n+++ b/src/_pytest/_io/saferepr.py\n@@ -20,7 +20,7 @@ def _format_repr_exception(exc: BaseException, obj: Any) -> str:\n     except BaseException as exc:\n         exc_info = \"unpresentable exception ({})\".format(_try_repr_or_str(exc))\n     return \"<[{} raised in repr()] {} object at 0x{:x}>\".format(\n-        exc_info, obj.__class__.__name__, id(obj)\n+        exc_info, type(obj).__name__, id(obj)\n     )\n \n \ndiff --git a/testing/io/test_saferepr.py b/testing/io/test_saferepr.py\nindex 06084202e..d3a31ab59 100755\n--- a/testing/io/test_saferepr.py\n+++ b/testing/io/test_saferepr.py\n@@ -130,6 +130,24 @@ def test_buggy_builtin_repr():\n     assert \"Buggy\" in saferepr(int())\n \n \n+def test_broken_getattribute():\n+    # A broken __getattribute__ must not break the error formatting in\n+    # ``_format_repr_exception`` (the object's class name is needed there).\n+    # Regression test for #7204.\n+    class BrokenGetAttribute:\n+        def __getattribute__(self, attr):\n+            raise RuntimeError(\"broken __getattribute__\")\n+\n+        def __repr__(self):\n+            raise RuntimeError(\"broken __repr__\")\n+\n+    obj = BrokenGetAttribute()\n+    assert saferepr(obj) == (\n+        \"<[RuntimeError('broken __repr__') raised in repr()] BrokenGetAttribute \"\n+        \"object at 0x{:x}>\".format(id(obj))\n+    )\n+\n+\n def test_big_repr():\n     from _pytest._io.saferepr import SafeRepr\n \n",
+  "trajectory": [
+    {
+      "turn": 1,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && cat _pytest/_io/saferepr.py"
+      },
+      "metrics_snapshot": {
+        "calls": 1,
+        "prompt_tokens": 3027,
+        "cache_hit_tokens": 0,
+        "cache_miss_tokens": 3027,
+        "cache_hit_rate_pct": 0.0,
+        "completion_tokens": 1000,
+        "total_tokens": 4027,
+        "task_cost_usd": 0.001054,
+        "session_cost_usd": 0.033944
+      }
+    },
+    {
+      "turn": 2,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && ls && echo \"---\" && find . -name saferepr.py"
+      },
+      "metrics_snapshot": {
+        "calls": 2,
+        "prompt_tokens": 7089,
+        "cache_hit_tokens": 2944,
+        "cache_miss_tokens": 4145,
+        "cache_hit_rate_pct": 41.53,
+        "completion_tokens": 1658,
+        "total_tokens": 8747,
+        "task_cost_usd": 0.001625,
+        "session_cost_usd": 0.034516
+      }
+    },
+    {
+      "turn": 3,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && cat src/_pytest/_io/saferepr.py"
+      },
+      "metrics_snapshot": {
+        "calls": 3,
+        "prompt_tokens": 11888,
+        "cache_hit_tokens": 6912,
+        "cache_miss_tokens": 4976,
+        "cache_hit_rate_pct": 58.14,
+        "completion_tokens": 2161,
+        "total_tokens": 14049,
+        "task_cost_usd": 0.002064,
+        "session_cost_usd": 0.034954
+      }
+    },
+    {
+      "turn": 4,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && cat > /tmp/test_repro.py <<'EOF'\nclass SomeClass:\n    def __getattribute__(self, attr):\n        raise\n    def __repr__(self):\n        raise\n\ndef test():\n    SomeClass().attr\nEOF\npython -m pytest /tmp/test_repro.py 2>&1 | tail -40"
+      },
+      "metrics_snapshot": {
+        "calls": 4,
+        "prompt_tokens": 18037,
+        "cache_hit_tokens": 11648,
+        "cache_miss_tokens": 6389,
+        "cache_hit_rate_pct": 64.58,
+        "completion_tokens": 2834,
+        "total_tokens": 20871,
+        "task_cost_usd": 0.002694,
+        "session_cost_usd": 0.035584
+      }
+    },
+    {
+      "turn": 5,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python - <<'PY'\np = \"src/_pytest/_io/saferepr.py\"\ns = open(p).read()\ns = s.replace(\"exc_info, obj.__class__.__name__, id(obj)\", \"exc_info, type(obj).__name__, id(obj)\")\nopen(p, \"w\").write(s)\nPY\ngrep -n \"type(obj).__name__\" src/_pytest/_io/saferepr.py"
+      },
+      "metrics_snapshot": {
+        "calls": 5,
+        "prompt_tokens": 25256,
+        "cache_hit_tokens": 17792,
+        "cache_miss_tokens": 7464,
+        "cache_hit_rate_pct": 70.45,
+        "completion_tokens": 3693,
+        "total_tokens": 28949,
+        "task_cost_usd": 0.003389,
+        "session_cost_usd": 0.036279
+      }
+    },
+    {
+      "turn": 6,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python -m pytest /tmp/test_repro.py 2>&1 | tail -20"
+      },
+      "metrics_snapshot": {
+        "calls": 6,
+        "prompt_tokens": 33334,
+        "cache_hit_tokens": 24960,
+        "cache_miss_tokens": 8374,
+        "cache_hit_rate_pct": 74.88,
+        "completion_tokens": 3961,
+        "total_tokens": 37295,
+        "task_cost_usd": 0.003708,
+        "session_cost_usd": 0.036598
+      }
+    },
+    {
+      "turn": 7,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python - <<'PY'\nfrom _pytest._io.saferepr import saferepr, safeformat\nclass SomeClass:\n    def __getattribute__(self, attr):\n        raise\n    def __repr__(self):\n        raise\no = SomeClass()\nprint(\"saferepr:\", saferepr(o))\nprint(\"safeformat:\", safeformat(o))\nPY"
+      },
+      "metrics_snapshot": {
+        "calls": 7,
+        "prompt_tokens": 41882,
+        "cache_hit_tokens": 33024,
+        "cache_miss_tokens": 8858,
+        "cache_hit_rate_pct": 78.85,
+        "completion_tokens": 4623,
+        "total_tokens": 46505,
+        "task_cost_usd": 0.004202,
+        "session_cost_usd": 0.037092
+      }
+    },
+    {
+      "turn": 8,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '1,60p' testing/io/test_saferepr.py && echo \"=== all test names ===\" && grep -n \"def test\" testing/io/test_saferepr.py"
+      },
+      "metrics_snapshot": {
+        "calls": 8,
+        "prompt_tokens": 51138,
+        "cache_hit_tokens": 41472,
+        "cache_miss_tokens": 9666,
+        "cache_hit_rate_pct": 81.1,
+        "completion_tokens": 4771,
+        "total_tokens": 55909,
+        "task_cost_usd": 0.004437,
+        "session_cost_usd": 0.037327
+      }
+    },
+    {
+      "turn": 9,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '59,135p' testing/io/test_saferepr.py"
+      },
+      "metrics_snapshot": {
+        "calls": 9,
+        "prompt_tokens": 61073,
+        "cache_hit_tokens": 50688,
+        "cache_miss_tokens": 10385,
+        "cache_hit_rate_pct": 83.0,
+        "completion_tokens": 4884,
+        "total_tokens": 65957,
+        "task_cost_usd": 0.00464,
+        "session_cost_usd": 0.03753
+      }
+    },
+    {
+      "turn": 10,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python - <<'PY'\np = \"testing/io/test_saferepr.py\"\ns = open(p).read()\nmarker = '''def test_big_repr():'''\nnew_test = '''def test_broken_getattribute():\n    # A broken __getattribute__ must not break the error formatting in\n    # ``_format_repr_exception`` (the object's class name is needed there).\n    # Regression test for #7204.\n    class BrokenGetAttribute:\n        def __getattribute__(self, attr):\n            raise RuntimeError(\"broken __getattribute__\")\n\n        def __repr__(self):\n            raise RuntimeError(\"broken __repr__\")\n\n    obj = BrokenGetAttribute()\n    assert saferepr(obj) == (\n        \"<[RuntimeError('broken __repr__') raised in repr()] BrokenGetAttribute \"\n        \"object at 0x{:x}>\".format(id(obj))\n    )\n\n\n'''\nassert marker in s\ns = s.replace(marker, new_test + marker, 1)\nopen(p, \"w\").write(s)\nPY\nsed -n '120,155p' testing/io/test_saferepr.py"
+      },
+      "metrics_snapshot": {
+        "calls": 10,
+        "prompt_tokens": 71713,
+        "cache_hit_tokens": 60544,
+        "cache_miss_tokens": 11169,
+        "cache_hit_rate_pct": 84.43,
+        "completion_tokens": 5791,
+        "total_tokens": 77504,
+        "task_cost_usd": 0.005332,
+        "session_cost_usd": 0.038222
+      }
+    },
+    {
+      "turn": 11,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python -m pytest testing/io/test_saferepr.py -q 2>&1 | tail -20"
+      },
+      "metrics_snapshot": {
+        "calls": 11,
+        "prompt_tokens": 82953,
+        "cache_hit_tokens": 71168,
+        "cache_miss_tokens": 11785,
+        "cache_hit_rate_pct": 85.79,
+        "completion_tokens": 5873,
+        "total_tokens": 88826,
+        "task_cost_usd": 0.005505,
+        "session_cost_usd": 0.038395
+      }
+    },
+    {
+      "turn": 12,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python -m pytest /tmp/test_repro.py 2>&1 | tail -12"
+      },
+      "metrics_snapshot": {
+        "calls": 12,
+        "prompt_tokens": 94304,
+        "cache_hit_tokens": 82304,
+        "cache_miss_tokens": 12000,
+        "cache_hit_rate_pct": 87.28,
+        "completion_tokens": 5966,
+        "total_tokens": 100270,
+        "task_cost_usd": 0.005627,
+        "session_cost_usd": 0.038517
+      }
+    },
+    {
+      "turn": 13,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && git diff"
+      },
+      "metrics_snapshot": {
+        "calls": 13,
+        "prompt_tokens": 105855,
+        "cache_hit_tokens": 93568,
+        "cache_miss_tokens": 12287,
+        "cache_hit_rate_pct": 88.39,
+        "completion_tokens": 6026,
+        "total_tokens": 111881,
+        "task_cost_usd": 0.005739,
+        "session_cost_usd": 0.03863
+      }
+    },
+    {
+      "turn": 14,
+      "action": "finish_task",
+      "args": {},
+      "metrics_snapshot": {
+        "calls": 14,
+        "prompt_tokens": 117931,
+        "cache_hit_tokens": 105088,
+        "cache_miss_tokens": 12843,
+        "cache_hit_rate_pct": 89.11,
+        "completion_tokens": 6194,
+        "total_tokens": 124125,
+        "task_cost_usd": 0.005958,
+        "session_cost_usd": 0.038848
+      }
+    }
+  ]
+}

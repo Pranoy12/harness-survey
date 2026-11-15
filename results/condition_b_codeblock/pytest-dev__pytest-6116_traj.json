@@ -1,0 +1,237 @@
+{
+  "instance_id": "pytest-dev__pytest-6116",
+  "condition": "condition_b_codeblock",
+  "turns_taken": 15,
+  "finished_by_tool": true,
+  "empty_action_retries": 3,
+  "wall_time_sec": 40.3,
+  "usage_metrics": {
+    "calls": 15,
+    "prompt_tokens": 38225,
+    "cache_hit_tokens": 32896,
+    "cache_miss_tokens": 5329,
+    "cache_hit_rate_pct": 86.06,
+    "completion_tokens": 1919,
+    "total_tokens": 40144,
+    "task_cost_usd": 0.002049,
+    "session_cost_usd": 0.03289
+  },
+  "usage_summary": "[Quota Tracker] Calls: 15 | Prompt Tokens: 38,225 | Completion Tokens: 1,919 | Total Tokens: 40,144 | Est. Cost: $0.0020[DEEPSEEK][DeepSeek OFF-PEAK (1x)] Calls: 15 | Cache Hit: 86.1% (32,896/38,225) | Out: 1,919 | Task Spend: $0.00205 | Total Session Spend: $0.03289",
+  "model_patch": "diff --git a/src/_pytest/main.py b/src/_pytest/main.py\nindex 843c5b5f7..b4261c188 100755\n--- a/src/_pytest/main.py\n+++ b/src/_pytest/main.py\n@@ -109,6 +109,7 @@ def pytest_addoption(parser):\n     group.addoption(\n         \"--collectonly\",\n         \"--collect-only\",\n+        \"--co\",\n         action=\"store_true\",\n         help=\"only collect tests, don't execute them.\",\n     ),\ndiff --git a/testing/test_terminal.py b/testing/test_terminal.py\nindex 1bec577b8..46a12c57e 100755\n--- a/testing/test_terminal.py\n+++ b/testing/test_terminal.py\n@@ -276,14 +276,15 @@ class TestTerminal:\n \n \n class TestCollectonly:\n-    def test_collectonly_basic(self, testdir):\n+    @pytest.mark.parametrize(\"option\", [\"--collect-only\", \"--co\"])\n+    def test_collectonly_basic(self, testdir, option):\n         testdir.makepyfile(\n             \"\"\"\n             def test_func():\n                 pass\n         \"\"\"\n         )\n-        result = testdir.runpytest(\"--collect-only\")\n+        result = testdir.runpytest(option)\n         result.stdout.fnmatch_lines(\n             [\"<Module test_collectonly_basic.py>\", \"  <Function test_func>\"]\n         )\n",
+  "trajectory": [
+    {
+      "turn": 1,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && git log --oneline -5 && grep -rn \"collect-only\" src/ | head -20"
+      },
+      "metrics_snapshot": {
+        "calls": 1,
+        "prompt_tokens": 507,
+        "cache_hit_tokens": 0,
+        "cache_miss_tokens": 507,
+        "cache_hit_rate_pct": 0.0,
+        "completion_tokens": 110,
+        "total_tokens": 617,
+        "task_cost_usd": 0.000142,
+        "session_cost_usd": 0.030983
+      }
+    },
+    {
+      "turn": 3,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '90,130p' src/_pytest/main.py"
+      },
+      "metrics_snapshot": {
+        "calls": 3,
+        "prompt_tokens": 2176,
+        "cache_hit_tokens": 1024,
+        "cache_miss_tokens": 1152,
+        "cache_hit_rate_pct": 47.06,
+        "completion_tokens": 242,
+        "total_tokens": 2418,
+        "task_cost_usd": 0.000321,
+        "session_cost_usd": 0.031162
+      }
+    },
+    {
+      "turn": 5,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && grep -rn \"collectonly\\|collect-only\\|collect_only\" . --exclude-dir=.git | head -40"
+      },
+      "metrics_snapshot": {
+        "calls": 5,
+        "prompt_tokens": 4779,
+        "cache_hit_tokens": 3072,
+        "cache_miss_tokens": 1707,
+        "cache_hit_rate_pct": 64.28,
+        "completion_tokens": 490,
+        "total_tokens": 5269,
+        "task_cost_usd": 0.000559,
+        "session_cost_usd": 0.0314
+      }
+    },
+    {
+      "turn": 6,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && grep -rn \"collectonly\\|_addoption\" testing/test_config.py | head -20 && sed -n '780,800p' testing/test_config.py"
+      },
+      "metrics_snapshot": {
+        "calls": 6,
+        "prompt_tokens": 7197,
+        "cache_hit_tokens": 4352,
+        "cache_miss_tokens": 2845,
+        "cache_hit_rate_pct": 60.47,
+        "completion_tokens": 764,
+        "total_tokens": 7961,
+        "task_cost_usd": 0.000898,
+        "session_cost_usd": 0.031739
+      }
+    },
+    {
+      "turn": 7,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python - <<'PY'\nimport re\np='src/_pytest/main.py'\ns=open(p).read()\nold='''    group.addoption(\n        \"--collectonly\",\n        \"--collect-only\",\n        action=\"store_true\",\n        help=\"only collect tests, don't execute them.\",\n    ),'''\nnew='''    group.addoption(\n        \"--collectonly\",\n        \"--collect-only\",\n        \"--co\",\n        action=\"store_true\",\n        help=\"only collect tests, don't execute them.\",\n    ),'''\nassert old in s\ns=s.replace(old,new)\nopen(p,'w').write(s)\nprint(\"done\")\nPY"
+      },
+      "metrics_snapshot": {
+        "calls": 7,
+        "prompt_tokens": 10023,
+        "cache_hit_tokens": 6656,
+        "cache_miss_tokens": 3367,
+        "cache_hit_rate_pct": 66.41,
+        "completion_tokens": 1004,
+        "total_tokens": 11027,
+        "task_cost_usd": 0.001127,
+        "session_cost_usd": 0.031968
+      }
+    },
+    {
+      "turn": 8,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python -m pytest --help 2>/dev/null | grep -i \"collect-only\""
+      },
+      "metrics_snapshot": {
+        "calls": 8,
+        "prompt_tokens": 13007,
+        "cache_hit_tokens": 9472,
+        "cache_miss_tokens": 3535,
+        "cache_hit_rate_pct": 72.82,
+        "completion_tokens": 1116,
+        "total_tokens": 14123,
+        "task_cost_usd": 0.001228,
+        "session_cost_usd": 0.032069
+      }
+    },
+    {
+      "turn": 9,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python -m pytest --co -q 2>&1 | tail -5 && python -m pytest testing/test_terminal.py -q -k collectonly 2>&1 | tail -10"
+      },
+      "metrics_snapshot": {
+        "calls": 9,
+        "prompt_tokens": 16050,
+        "cache_hit_tokens": 12288,
+        "cache_miss_tokens": 3762,
+        "cache_hit_rate_pct": 76.56,
+        "completion_tokens": 1189,
+        "total_tokens": 17239,
+        "task_cost_usd": 0.001315,
+        "session_cost_usd": 0.032155
+      }
+    },
+    {
+      "turn": 10,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '279,295p' testing/test_terminal.py"
+      },
+      "metrics_snapshot": {
+        "calls": 10,
+        "prompt_tokens": 19228,
+        "cache_hit_tokens": 15232,
+        "cache_miss_tokens": 3996,
+        "cache_hit_rate_pct": 79.22,
+        "completion_tokens": 1355,
+        "total_tokens": 20583,
+        "task_cost_usd": 0.001458,
+        "session_cost_usd": 0.032299
+      }
+    },
+    {
+      "turn": 11,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python - <<'PY'\np='testing/test_terminal.py'\ns=open(p).read()\nold='''    def test_collectonly_basic(self, testdir):\n        testdir.makepyfile(\n            \"\"\"\n            def test_func():\n                pass\n        \"\"\"\n        )\n        result = testdir.runpytest(\"--collect-only\")\n        result.stdout.fnmatch_lines(\n            [\"<Module test_collectonly_basic.py>\", \"  <Function test_func>\"]\n        )\n'''\nnew='''    @pytest.mark.parametrize(\"option\", [\"--collect-only\", \"--co\"])\n    def test_collectonly_basic(self, testdir, option):\n        testdir.makepyfile(\n            \"\"\"\n            def test_func():\n                pass\n        \"\"\"\n        )\n        result = testdir.runpytest(option)\n        result.stdout.fnmatch_lines(\n            [\"<Module test_collectonly_basic.py>\", \"  <Function test_func>\"]\n        )\n'''\nassert old in s\ns=s.replace(old,new)\nopen(p,'w').write(s)\nprint(\"done\")\nPY"
+      },
+      "metrics_snapshot": {
+        "calls": 11,
+        "prompt_tokens": 22560,
+        "cache_hit_tokens": 18304,
+        "cache_miss_tokens": 4256,
+        "cache_hit_rate_pct": 81.13,
+        "completion_tokens": 1663,
+        "total_tokens": 24223,
+        "task_cost_usd": 0.001691,
+        "session_cost_usd": 0.032532
+      }
+    },
+    {
+      "turn": 13,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python -m pytest testing/test_terminal.py -q -k collectonly 2>&1 | tail -5 && git diff"
+      },
+      "metrics_snapshot": {
+        "calls": 13,
+        "prompt_tokens": 29891,
+        "cache_hit_tokens": 25216,
+        "cache_miss_tokens": 4675,
+        "cache_hit_rate_pct": 84.36,
+        "completion_tokens": 1806,
+        "total_tokens": 31697,
+        "task_cost_usd": 0.00186,
+        "session_cost_usd": 0.032701
+      }
+    },
+    {
+      "turn": 14,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python -m pytest testing/test_config.py -q -k \"terminal or option\" 2>&1 | tail -5"
+      },
+      "metrics_snapshot": {
+        "calls": 14,
+        "prompt_tokens": 34018,
+        "cache_hit_tokens": 28928,
+        "cache_miss_tokens": 5090,
+        "cache_hit_rate_pct": 85.04,
+        "completion_tokens": 1906,
+        "total_tokens": 35924,
+        "task_cost_usd": 0.001994,
+        "session_cost_usd": 0.032835
+      }
+    },
+    {
+      "turn": 15,
+      "action": "finish_task",
+      "args": {},
+      "metrics_snapshot": {
+        "calls": 15,
+        "prompt_tokens": 38225,
+        "cache_hit_tokens": 32896,
+        "cache_miss_tokens": 5329,
+        "cache_hit_rate_pct": 86.06,
+        "completion_tokens": 1919,
+        "total_tokens": 40144,
+        "task_cost_usd": 0.002049,
+        "session_cost_usd": 0.03289
+      }
+    }
+  ]
+}
