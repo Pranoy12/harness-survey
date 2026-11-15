@@ -2,273 +2,472 @@
   "instance_id": "pallets__flask-4992",
   "condition": "condition_c_compacted",
   "turns_taken": 25,
-  "finished_by_tool": true,
-  "model_patch": "diff --git a/src/flask/config.py b/src/flask/config.py\nindex d4fc310f..5e48be33 100755\n--- a/src/flask/config.py\n+++ b/src/flask/config.py\n@@ -234,6 +234,7 @@ class Config(dict):\n         filename: str,\n         load: t.Callable[[t.IO[t.Any]], t.Mapping],\n         silent: bool = False,\n+        text: bool = True,\n     ) -> bool:\n         \"\"\"Update the values in the config from a file that is loaded\n         using the ``load`` parameter. The loaded data is passed to the\n@@ -244,8 +245,8 @@ class Config(dict):\n             import json\n             app.config.from_file(\"config.json\", load=json.load)\n \n-            import toml\n-            app.config.from_file(\"config.toml\", load=toml.load)\n+            import tomllib\n+            app.config.from_file(\"config.toml\", load=tomllib.load, text=False)\n \n         :param filename: The path to the data file. This can be an\n             absolute path or relative to the config root path.\n@@ -254,14 +255,18 @@ class Config(dict):\n         :type load: ``Callable[[Reader], Mapping]`` where ``Reader``\n             implements a ``read`` method.\n         :param silent: Ignore the file if it doesn't exist.\n+        :param text: Open the file in text or binary mode.\n         :return: ``True`` if the file was loaded successfully.\n \n+        .. versionchanged:: 2.3\n+            The ``text`` parameter was added.\n+\n         .. versionadded:: 2.0\n         \"\"\"\n         filename = os.path.join(self.root_path, filename)\n \n         try:\n-            with open(filename) as f:\n+            with open(filename, \"r\" if text else \"rb\") as f:\n                 obj = load(f)\n         except OSError as e:\n             if silent and e.errno in (errno.ENOENT, errno.EISDIR):\n",
+  "finished_by_tool": false,
+  "empty_action_retries": 0,
+  "wall_time_sec": 54.2,
+  "usage_metrics": {
+    "calls": 25,
+    "prompt_tokens": 59873,
+    "cache_hit_tokens": 16000,
+    "cache_miss_tokens": 43873,
+    "cache_hit_rate_pct": 26.72,
+    "completion_tokens": 6188,
+    "total_tokens": 66061,
+    "task_cost_usd": 0.010342,
+    "session_cost_usd": 0.024707
+  },
+  "usage_summary": "[Quota Tracker] Calls: 25 | Prompt Tokens: 59,873 | Completion Tokens: 6,188 | Total Tokens: 66,061 | Est. Cost: $0.0103[DEEPSEEK][DeepSeek OFF-PEAK (1x)] Calls: 25 | Cache Hit: 26.7% (16,000/59,873) | Out: 6,188 | Task Spend: $0.01034 | Total Session Spend: $0.02471",
+  "model_patch": "diff --git a/CHANGES.rst b/CHANGES.rst\nindex 88bfbc68..e1700694 100755\n--- a/CHANGES.rst\n+++ b/CHANGES.rst\n@@ -33,6 +33,8 @@ Unreleased\n -   Use modern packaging metadata with ``pyproject.toml`` instead of ``setup.cfg``.\n     :pr:`4947`\n -   Ensure subdomains are applied with nested blueprints. :issue:`4834`\n+-   Add a ``text`` parameter to :meth:`Config.from_file` to open files in binary\n+    mode, such as when using ``tomllib.load``. :issue:`4884`\n \n \n Version 2.2.3\ndiff --git a/docs/config.rst b/docs/config.rst\nindex d71f0326..0356062a 100755\n--- a/docs/config.rst\n+++ b/docs/config.rst\n@@ -410,8 +410,8 @@ from a TOML file:\n \n .. code-block:: python\n \n-    import toml\n-    app.config.from_file(\"config.toml\", load=toml.load)\n+    import tomllib\n+    app.config.from_file(\"config.toml\", load=tomllib.load, text=False)\n \n Or from a JSON file:\n \ndiff --git a/src/flask/config.py b/src/flask/config.py\nindex d4fc310f..5e48be33 100755\n--- a/src/flask/config.py\n+++ b/src/flask/config.py\n@@ -234,6 +234,7 @@ class Config(dict):\n         filename: str,\n         load: t.Callable[[t.IO[t.Any]], t.Mapping],\n         silent: bool = False,\n+        text: bool = True,\n     ) -> bool:\n         \"\"\"Update the values in the config from a file that is loaded\n         using the ``load`` parameter. The loaded data is passed to the\n@@ -244,8 +245,8 @@ class Config(dict):\n             import json\n             app.config.from_file(\"config.json\", load=json.load)\n \n-            import toml\n-            app.config.from_file(\"config.toml\", load=toml.load)\n+            import tomllib\n+            app.config.from_file(\"config.toml\", load=tomllib.load, text=False)\n \n         :param filename: The path to the data file. This can be an\n             absolute path or relative to the config root path.\n@@ -254,14 +255,18 @@ class Config(dict):\n         :type load: ``Callable[[Reader], Mapping]`` where ``Reader``\n             implements a ``read`` method.\n         :param silent: Ignore the file if it doesn't exist.\n+        :param text: Open the file in text or binary mode.\n         :return: ``True`` if the file was loaded successfully.\n \n+        .. versionchanged:: 2.3\n+            The ``text`` parameter was added.\n+\n         .. versionadded:: 2.0\n         \"\"\"\n         filename = os.path.join(self.root_path, filename)\n \n         try:\n-            with open(filename) as f:\n+            with open(filename, \"r\" if text else \"rb\") as f:\n                 obj = load(f)\n         except OSError as e:\n             if silent and e.errno in (errno.ENOENT, errno.EISDIR):\ndiff --git a/tests/test_config.py b/tests/test_config.py\nindex 76c5d272..cc00ffbc 100755\n--- a/tests/test_config.py\n+++ b/tests/test_config.py\n@@ -37,6 +37,17 @@ def test_config_from_file():\n     common_object_test(app)\n \n \n+def test_config_from_file_toml():\n+    app = flask.Flask(__name__)\n+    current_dir = os.path.dirname(os.path.abspath(__file__))\n+    app.config.from_file(\n+        os.path.join(current_dir, \"static\", \"config.toml\"),\n+        load_toml,\n+        text=False,\n+    )\n+    common_object_test(app)\n+\n+\n def test_from_prefixed_env(monkeypatch):\n     monkeypatch.setenv(\"FLASK_STRING\", \"value\")\n     monkeypatch.setenv(\"FLASK_BOOL\", \"true\")\n",
   "trajectory": [
     {
       "turn": 1,
       "action": "run_shell_command",
       "args": {
-        "command": "cd /testbed && git status && git log --oneline -5"
-      }
-    },
-    {
-      "turn": 1,
-      "action": "run_shell_command",
-      "args": {
-        "command": "cd /testbed && grep -rn \"def from_file\" src/flask/"
+        "command": "cd /testbed && git status --short && ls"
+      },
+      "metrics_snapshot": {
+        "calls": 1,
+        "prompt_tokens": 754,
+        "cache_hit_tokens": 512,
+        "cache_miss_tokens": 242,
+        "cache_hit_rate_pct": 67.9,
+        "completion_tokens": 62,
+        "total_tokens": 816,
+        "task_cost_usd": 7.5e-05,
+        "session_cost_usd": 0.01444
       }
     },
     {
       "turn": 2,
       "action": "run_shell_command",
       "args": {
-        "command": "cd /testbed && sed -n '1,320p' src/flask/config.py"
+        "command": "cd /testbed && grep -R \"def from_file\" -n src tests docs CHANGES.rst"
+      },
+      "metrics_snapshot": {
+        "calls": 2,
+        "prompt_tokens": 1646,
+        "cache_hit_tokens": 1152,
+        "cache_miss_tokens": 494,
+        "cache_hit_rate_pct": 69.99,
+        "completion_tokens": 129,
+        "total_tokens": 1775,
+        "task_cost_usd": 0.000155,
+        "session_cost_usd": 0.01452
       }
     },
     {
       "turn": 3,
       "action": "run_shell_command",
       "args": {
-        "command": "cd /testbed && sed -n '225,285p' src/flask/config.py"
-      }
-    },
-    {
-      "turn": 3,
-      "action": "run_shell_command",
-      "args": {
-        "command": "cd /testbed && grep -rn \"from_file\" tests/ docs/ CHANGES.rst | head -80"
+        "command": "cd /testbed && sed -n '1,340p' src/flask/config.py"
+      },
+      "metrics_snapshot": {
+        "calls": 3,
+        "prompt_tokens": 2638,
+        "cache_hit_tokens": 1920,
+        "cache_miss_tokens": 718,
+        "cache_hit_rate_pct": 72.78,
+        "completion_tokens": 187,
+        "total_tokens": 2825,
+        "task_cost_usd": 0.000226,
+        "session_cost_usd": 0.014591
       }
     },
     {
       "turn": 4,
       "action": "run_shell_command",
       "args": {
-        "command": "cd /testbed && head -60 CHANGES.rst && grep -rn \"__version__\\|version\" src/flask/__init__.py pyproject.toml setup.cfg | head -30"
-      }
-    },
-    {
-      "turn": 4,
-      "action": "run_shell_command",
-      "args": {
-        "command": "cd /testbed && sed -n '1,220p' tests/test_config.py && sed -n '395,430p' docs/config.rst"
+        "command": "cd /testbed && sed -n '220,290p' src/flask/config.py && grep -R \"from_file\" -n tests docs CHANGES.rst | head -100"
+      },
+      "metrics_snapshot": {
+        "calls": 4,
+        "prompt_tokens": 5787,
+        "cache_hit_tokens": 2560,
+        "cache_miss_tokens": 3227,
+        "cache_hit_rate_pct": 44.24,
+        "completion_tokens": 266,
+        "total_tokens": 6053,
+        "task_cost_usd": 0.000651,
+        "session_cost_usd": 0.015017
       }
     },
     {
       "turn": 5,
       "action": "run_shell_command",
       "args": {
-        "command": "cd /testbed && git log --oneline -8 && ls tests/static/"
-      }
-    },
-    {
-      "turn": 5,
-      "action": "run_shell_command",
-      "args": {
-        "command": "cd /testbed && python - <<'PY'\nimport sys\nprint(sys.version)\ntry:\n    import tomllib\n    print('tomllib available')\nexcept ImportError as e:\n    print(e)\nPY"
+        "command": "cd /testbed && sed -n '1,70p' CHANGES.rst && sed -n '1,60p' tests/test_config.py && sed -n '170,195p' tests/test_config.py && sed -n '395,430p' docs/config.rst && git log --oneline -5"
+      },
+      "metrics_snapshot": {
+        "calls": 5,
+        "prompt_tokens": 9685,
+        "cache_hit_tokens": 3200,
+        "cache_miss_tokens": 6485,
+        "cache_hit_rate_pct": 33.04,
+        "completion_tokens": 871,
+        "total_tokens": 10556,
+        "task_cost_usd": 0.001505,
+        "session_cost_usd": 0.01587
       }
     },
     {
       "turn": 6,
       "action": "run_shell_command",
       "args": {
-        "command": "cd /testbed && grep -n \"def from_file\" -A70 -B10 src/flask/config.py"
-      }
-    },
-    {
-      "turn": 6,
-      "action": "run_shell_command",
-      "args": {
-        "command": "cd /testbed && cat tests/static/config.json && sed -n '1,60p' src/flask/config.py"
+        "command": "cd /testbed && python - <<'PY'\nfrom pathlib import Path\np = Path('src/flask/config.py')\ns = p.read_text()\nold = '''    def from_file(\n        self,\n        filename: str,\n        load: t.Callable[[t.IO[t.Any]], t.Mapping],\n        silent: bool = False,\n    ) -> bool:\n        \"\"\"Update the values in the config from a file that is loaded\n        using the ``load`` parameter. The loaded data is passed to the\n        :meth:`from_mapping` method.\n\n        .. code-block:: python\n\n            import json\n            app.config.from_file(\"config.json\", load=json.load)\n\n            import toml\n            app.config.from_file(\"config.toml\", load=toml.load)\n\n        :param filename: The path to the data file. This can be an\n            absolute path or relative to the config root path.\n        :param load: A callable that takes a file handle and returns a\n            mapping of loaded data from the file.\n        :type load: ``Callable[[Reader], Mapping]`` where ``Reader``\n            implements a ``read`` method.\n        :param silent: Ignore the file if it doesn't exist.\n        :return: ``True`` if the file was loaded successfully.\n\n        .. versionadded:: 2.0\n        \"\"\"\n        filename = os.path.join(self.root_path, filename)\n\n        try:\n            with open(filename) as f:\n                obj = load(f)\n'''\nnew = '''    def from_file(\n        self,\n        filename: str,\n        load: t.Callable[[t.IO[t.Any]], t.Mapping],\n        silent: bool = False,\n        text: bool = True,\n    ) -> bool:\n        \"\"\"Update the values in the config from a file that is loaded\n        using the ``load`` parameter. The loaded data is passed to the\n        :meth:`from_mapping` method.\n\n        .. code-block:: python\n\n            import json\n            app.config.from_file(\"config.json\", load=json.load)\n\n            import tomllib\n            app.config.from_file(\"config.toml\", load=tomllib.load, text=False)\n\n        :param filename: The path to the data file. This can be an\n            absolute path or relative to the config root path.\n        :param load: A callable that takes a file handle and returns a\n            mapping of loaded data from the file.\n        :type load: ``Callable[[Reader], Mapping]`` where ``Reader``\n            implements a ``read`` method.\n        :param silent: Ignore the file if it doesn't exist.\n        :param text: Open the file in text or binary mode.\n        :return: ``True`` if the file was loaded successfully.\n\n        .. versionchanged:: 2.3\n            The ``text`` parameter was added.\n\n        .. versionadded:: 2.0\n        \"\"\"\n        filename = os.path.join(self.root_path, filename)\n\n        try:\n            with open(filename, \"r\" if text else \"rb\") as f:\n                obj = load(f)\n'''\nassert old in s\np.write_text(s.replace(old, new))\nPY\npython - <<'PY'\nfrom pathlib import Path\np = Path('CHANGES.rst')\ns = p.read_text()\nold = '''-   Ensure subdomains are applied with nested blueprints. :issue:`4834`\n'''\nnew = '''-   Ensure subdomains are applied with nested blueprints. :issue:`4834`\n-   Add a ``text`` parameter to :meth:`Config.from_file` to open files in binary\n    mode, such as when using ``tomllib.load``. :issue:`4884`\n'''\nassert old in s\np.write_text(s.replace(old, new, 1))\np = Path('docs/config.rst')\ns = p.read_text()\nold = '''    import toml\n    app.config.from_file(\"config.toml\", load=toml.load)\n'''\nnew = '''    import tomllib\n    app.config.from_file(\"config.toml\", load=tomllib.load, text=False)\n'''\nassert old in s\np.write_text(s.replace(old, new))\nPY\ngit diff"
+      },
+      "metrics_snapshot": {
+        "calls": 6,
+        "prompt_tokens": 13662,
+        "cache_hit_tokens": 3840,
+        "cache_miss_tokens": 9822,
+        "cache_hit_rate_pct": 28.11,
+        "completion_tokens": 1977,
+        "total_tokens": 15639,
+        "task_cost_usd": 0.002671,
+        "session_cost_usd": 0.017036
       }
     },
     {
       "turn": 7,
       "action": "run_shell_command",
       "args": {
-        "command": "cd /testbed && grep -n \"from_file\" -n tests/test_config.py docs/config.rst CHANGES.rst | head -30 && sed -n '1,30p' CHANGES.rst"
+        "command": "cd /testbed && python --version && python -c \"import tomllib; print('tomllib available')\" && cat tests/static/config.json && python - <<'PY'\nfrom pathlib import Path\np = Path('tests/test_config.py')\ns = p.read_text()\nold = '''def test_config_from_file():\n    app = flask.Flask(__name__)\n    current_dir = os.path.dirname(os.path.abspath(__file__))\n    app.config.from_file(os.path.join(current_dir, \"static\", \"config.json\"), json.load)\n    common_object_test(app)\n'''\nnew = '''def test_config_from_file():\n    app = flask.Flask(__name__)\n    current_dir = os.path.dirname(os.path.abspath(__file__))\n    app.config.from_file(os.path.join(current_dir, \"static\", \"config.json\"), json.load)\n    common_object_test(app)\n\n\ndef test_config_from_file_binary():\n    app = flask.Flask(__name__)\n    current_dir = os.path.dirname(os.path.abspath(__file__))\n\n    def load_binary(file):\n        return json.loads(file.read().decode())\n\n    app.config.from_file(\n        os.path.join(current_dir, \"static\", \"config.json\"),\n        load_binary,\n        text=False,\n    )\n    common_object_test(app)\n'''\nassert old in s\np.write_text(s.replace(old, new))\nPY\npytest tests/test_config.py -q"
+      },
+      "metrics_snapshot": {
+        "calls": 7,
+        "prompt_tokens": 18659,
+        "cache_hit_tokens": 4480,
+        "cache_miss_tokens": 14179,
+        "cache_hit_rate_pct": 24.01,
+        "completion_tokens": 2347,
+        "total_tokens": 21006,
+        "task_cost_usd": 0.003548,
+        "session_cost_usd": 0.017914
       }
     },
     {
       "turn": 8,
       "action": "run_shell_command",
       "args": {
-        "command": "cd /testbed && sed -n '1,60p' tests/test_config.py && sed -n '165,195p' tests/test_config.py"
-      }
-    },
-    {
-      "turn": 8,
-      "action": "run_shell_command",
-      "args": {
-        "command": "cd /testbed && sed -n '390,430p' docs/config.rst && python -V"
+        "command": "cd /testbed && cat > tests/static/config.toml <<'EOF'\nTEST_KEY = \"foo\"\nSECRET_KEY = \"config\"\nEOF\npython - <<'PY'\nfrom pathlib import Path\np = Path('tests/test_config.py')\ns = p.read_text()\ns = s.replace('''import json\nimport os\nimport typing as t\n''', '''import json\nimport os\nimport typing as t\nfrom tomllib import load as load_toml\n''', 1)\nold = '''def test_config_from_file_binary():\n    app = flask.Flask(__name__)\n    current_dir = os.path.dirname(os.path.abspath(__file__))\n\n    def load_binary(file):\n        return json.loads(file.read().decode())\n\n    app.config.from_file(\n        os.path.join(current_dir, \"static\", \"config.json\"),\n        load_binary,\n        text=False,\n    )\n    common_object_test(app)\n'''\nnew = '''def test_config_from_file_toml():\n    app = flask.Flask(__name__)\n    current_dir = os.path.dirname(os.path.abspath(__file__))\n    app.config.from_file(\n        os.path.join(current_dir, \"static\", \"config.toml\"),\n        load_toml,\n        text=False,\n    )\n    common_object_test(app)\n'''\nassert old in s\np.write_text(s.replace(old, new))\nPY\npytest tests/test_config.py -q && git diff --stat && git status --short"
+      },
+      "metrics_snapshot": {
+        "calls": 8,
+        "prompt_tokens": 21720,
+        "cache_hit_tokens": 5120,
+        "cache_miss_tokens": 16600,
+        "cache_hit_rate_pct": 23.57,
+        "completion_tokens": 2817,
+        "total_tokens": 24537,
+        "task_cost_usd": 0.004196,
+        "session_cost_usd": 0.018561
       }
     },
     {
       "turn": 9,
       "action": "run_shell_command",
       "args": {
-        "command": "cd /testbed && grep -n \"def from_file\" -B5 -A45 src/flask/config.py && ls tests/static | head"
+        "command": "cd /testbed && sed -n '1,30p' tests/test_config.py && grep -n \"load_toml\\|test_config_from_file\" tests/test_config.py"
+      },
+      "metrics_snapshot": {
+        "calls": 9,
+        "prompt_tokens": 23458,
+        "cache_hit_tokens": 5760,
+        "cache_miss_tokens": 17698,
+        "cache_hit_rate_pct": 24.55,
+        "completion_tokens": 2908,
+        "total_tokens": 26366,
+        "task_cost_usd": 0.004417,
+        "session_cost_usd": 0.018782
       }
     },
     {
       "turn": 10,
       "action": "run_shell_command",
       "args": {
-        "command": "cd /testbed && sed -n '1,50p' CHANGES.rst"
-      }
-    },
-    {
-      "turn": 10,
-      "action": "run_shell_command",
-      "args": {
-        "command": "cd /testbed && cat tests/static/config.json && grep -R \"from_file\" -n docs tests src | head -30"
+        "command": "cd /testbed && sed -n '30,60p' tests/test_config.py && git diff -- tests/test_config.py"
+      },
+      "metrics_snapshot": {
+        "calls": 10,
+        "prompt_tokens": 25054,
+        "cache_hit_tokens": 6400,
+        "cache_miss_tokens": 18654,
+        "cache_hit_rate_pct": 25.54,
+        "completion_tokens": 3060,
+        "total_tokens": 28114,
+        "task_cost_usd": 0.004653,
+        "session_cost_usd": 0.019019
       }
     },
     {
       "turn": 11,
       "action": "run_shell_command",
       "args": {
-        "command": "cd /testbed && sed -n '1,65p' tests/test_config.py && sed -n '395,430p' docs/config.rst && grep -n \"python_requires\\|requires-python\" -R pyproject.toml setup.cfg 2>/dev/null"
+        "command": "cd /testbed && grep -n \"requires-python\\|Programming Language :: Python :: 3\" pyproject.toml | head -20 && ls tests/static/config.toml"
+      },
+      "metrics_snapshot": {
+        "calls": 11,
+        "prompt_tokens": 26749,
+        "cache_hit_tokens": 7040,
+        "cache_miss_tokens": 19709,
+        "cache_hit_rate_pct": 26.32,
+        "completion_tokens": 3241,
+        "total_tokens": 29990,
+        "task_cost_usd": 0.004922,
+        "session_cost_usd": 0.019288
       }
     },
     {
       "turn": 12,
       "action": "run_shell_command",
       "args": {
-        "command": "cd /testbed && sed -n '1,70p' tests/test_config.py"
-      }
-    },
-    {
-      "turn": 12,
-      "action": "run_shell_command",
-      "args": {
-        "command": "cd /testbed && sed -n '400,425p' docs/config.rst"
-      }
-    },
-    {
-      "turn": 12,
-      "action": "run_shell_command",
-      "args": {
-        "command": "cd /testbed && sed -n '220,285p' src/flask/config.py"
-      }
-    },
-    {
-      "turn": 13,
-      "action": "run_shell_command",
-      "args": {
-        "command": "cd /testbed && sed -n '1,90p' CHANGES.rst"
+        "command": "cd /testbed && grep -n \"tomli\\|toml\" pyproject.toml setup.cfg tox.ini 2>/dev/null || true && head -20 tests/test_config.py && python --version"
+      },
+      "metrics_snapshot": {
+        "calls": 12,
+        "prompt_tokens": 28369,
+        "cache_hit_tokens": 7680,
+        "cache_miss_tokens": 20689,
+        "cache_hit_rate_pct": 27.07,
+        "completion_tokens": 3354,
+        "total_tokens": 31723,
+        "task_cost_usd": 0.005139,
+        "session_cost_usd": 0.019504
       }
     },
     {
       "turn": 13,
       "action": "run_shell_command",
       "args": {
-        "command": "cd /testbed && find tests -name '*.json' -o -name '*.toml' | head -20 && python -V"
-      }
-    },
-    {
-      "turn": 13,
-      "action": "run_shell_command",
-      "args": {
-        "command": "cd /testbed && grep -R \"from_file\" -n docs src tests | head -50"
+        "command": "cd /testbed && python - <<'PY'\nimport tomllib\nfrom flask import Flask\napp = Flask(__name__, root_path=\"tests/static\")\ntry:\n    app.config.from_file(\"config.toml\", tomllib.load)\nexcept Exception as e:\n    print(type(e).__name__, e)\nPY"
+      },
+      "metrics_snapshot": {
+        "calls": 13,
+        "prompt_tokens": 29562,
+        "cache_hit_tokens": 8320,
+        "cache_miss_tokens": 21242,
+        "cache_hit_rate_pct": 28.14,
+        "completion_tokens": 3542,
+        "total_tokens": 33104,
+        "task_cost_usd": 0.005336,
+        "session_cost_usd": 0.019702
       }
     },
     {
       "turn": 14,
       "action": "run_shell_command",
       "args": {
-        "command": "cd /testbed && cat tests/static/config.json && git log --oneline -5 && grep -n \"version\" pyproject.toml | head"
+        "command": "cd /testbed && python - <<'PY'\nfrom pathlib import Path\np = Path('src/flask/config.py')\ns = p.read_text()\nold = '''    def from_file(\n        self,\n        filename: str,\n        load: t.Callable[[t.IO[t.Any]], t.Mapping[str, t.Any]],\n        silent: bool = False,\n    ) -> bool:\n        \"\"\"Update the values in the config from a file that is loaded\n        using the ``load`` parameter. The loaded data is passed to the\n        :meth:`from_mapping` method.\n\n        .. code-block:: python\n\n            import json\n            app.config.from_file(\"config.json\", load=json.load)\n\n            import tomllib\n            app.config.from_file(\"config.toml\", load=tomllib.load, text=False)\n\n        .. versionchanged:: 3.1\n            Add support for passing ``silent=True`` to ignore missing files.\n\n        .. versionchanged:: 2.0.0\n            Added the ``silent`` parameter.\n\n        .. versionadded:: 2.0.0\n\n        :param filename: The path to the data file. This path can be\n            relative to the instance path or absolute.\n        :param load: A callable that takes a file object and returns a\n            mapping object. The default is to load JSON data.\n        :param silent: Ignore the file if it doesn't exist.\n        \"\"\"\n        file_path = os.path.join(self.root_path, filename)\n\n        try:\n            with open(file_path) as f:\n                obj = load(f)\n        except OSError as e:\n            if silent and e.errno in (errno.ENOENT, errno.EISDIR):\n                return False\n\n            e.strerror = f\"Unable to load configuration file ({e.strerror})\"\n            raise\n\n        return self.from_mapping(obj)\n'''\nprint('old present?', old in s)\nPY"
+      },
+      "metrics_snapshot": {
+        "calls": 14,
+        "prompt_tokens": 30768,
+        "cache_hit_tokens": 8960,
+        "cache_miss_tokens": 21808,
+        "cache_hit_rate_pct": 29.12,
+        "completion_tokens": 3995,
+        "total_tokens": 34763,
+        "task_cost_usd": 0.005695,
+        "session_cost_usd": 0.020061
       }
     },
     {
       "turn": 15,
       "action": "run_shell_command",
       "args": {
-        "command": "cd /testbed && sed -n '1,40p' src/flask/config.py && sed -n '220,300p' src/flask/config.py"
+        "command": "cd /testbed && sed -n '1,280p' src/flask/config.py"
+      },
+      "metrics_snapshot": {
+        "calls": 15,
+        "prompt_tokens": 32234,
+        "cache_hit_tokens": 9600,
+        "cache_miss_tokens": 22634,
+        "cache_hit_rate_pct": 29.78,
+        "completion_tokens": 4060,
+        "total_tokens": 36294,
+        "task_cost_usd": 0.00586,
+        "session_cost_usd": 0.020225
       }
     },
     {
       "turn": 16,
       "action": "run_shell_command",
       "args": {
-        "command": "cd /testbed && grep -n \"from_file\\|tomllib\\|TOML\\|2\\.3\" CHANGES.rst | head -30 && git log -1 --format='%ad' --date=iso"
+        "command": "cd /testbed && sed -n '280,380p' src/flask/config.py && git log --oneline -5 && git status --short"
+      },
+      "metrics_snapshot": {
+        "calls": 16,
+        "prompt_tokens": 35770,
+        "cache_hit_tokens": 10240,
+        "cache_miss_tokens": 25530,
+        "cache_hit_rate_pct": 28.63,
+        "completion_tokens": 4145,
+        "total_tokens": 39915,
+        "task_cost_usd": 0.006347,
+        "session_cost_usd": 0.020713
       }
     },
     {
       "turn": 17,
       "action": "run_shell_command",
       "args": {
-        "command": "cd /testbed && sed -n '1,55p' CHANGES.rst && git log --oneline -5"
+        "command": "cd /testbed && git diff -- CHANGES.rst docs/config.rst src/flask/config.py tests/test_config.py && cat tests/static/config.toml"
+      },
+      "metrics_snapshot": {
+        "calls": 17,
+        "prompt_tokens": 39555,
+        "cache_hit_tokens": 10880,
+        "cache_miss_tokens": 28675,
+        "cache_hit_rate_pct": 27.51,
+        "completion_tokens": 4241,
+        "total_tokens": 43796,
+        "task_cost_usd": 0.006878,
+        "session_cost_usd": 0.021244
       }
     },
     {
       "turn": 18,
       "action": "run_shell_command",
       "args": {
-        "command": "cd /testbed && sed -n '1,320p' src/flask/config.py"
-      }
-    },
-    {
-      "turn": 18,
-      "action": "run_shell_command",
-      "args": {
-        "command": "cd /testbed && grep -R \"from_file\" -n tests docs src | head -50"
+        "command": "cd /testbed && sed -n '1,80p' tests/test_config.py && grep -R \"def load_toml\\|text=False\\|from_file\" -n tests src/flask | head -50 && python - <<'PY'\nimport sys\nprint(sys.version)\nPY"
+      },
+      "metrics_snapshot": {
+        "calls": 18,
+        "prompt_tokens": 42107,
+        "cache_hit_tokens": 11520,
+        "cache_miss_tokens": 30587,
+        "cache_hit_rate_pct": 27.36,
+        "completion_tokens": 4827,
+        "total_tokens": 46934,
+        "task_cost_usd": 0.007519,
+        "session_cost_usd": 0.021884
       }
     },
     {
       "turn": 19,
       "action": "run_shell_command",
       "args": {
-        "command": "cd /testbed && sed -n '225,310p' src/flask/config.py && sed -n '1,60p' tests/test_config.py && sed -n '400,430p' docs/config.rst"
+        "command": "cd /testbed && git status --short && git log --oneline -5 && git diff --stat && find tests/static -maxdepth 1 -type f -printf '%f\\n' | sort"
+      },
+      "metrics_snapshot": {
+        "calls": 19,
+        "prompt_tokens": 45457,
+        "cache_hit_tokens": 12160,
+        "cache_miss_tokens": 33297,
+        "cache_hit_rate_pct": 26.75,
+        "completion_tokens": 4990,
+        "total_tokens": 50447,
+        "task_cost_usd": 0.008025,
+        "session_cost_usd": 0.02239
       }
     },
     {
       "turn": 20,
       "action": "run_shell_command",
       "args": {
-        "command": "cd /testbed && git status --short && git log -3 --oneline && grep -n \"Version 2.3\\|Unreleased\\|Version 2.2\" -n CHANGES.rst | head -20"
-      }
-    },
-    {
-      "turn": 20,
-      "action": "run_shell_command",
-      "args": {
-        "command": "cd /testbed && python - <<'PY'\nimport sys\nprint(sys.version)\ntry:\n import tomllib\n print('tomllib yes')\nexcept Exception as e: print(e)\nPY"
+        "command": "cd /testbed && git diff -- CHANGES.rst docs/config.rst src/flask/config.py tests/test_config.py && cat tests/static/config.toml"
+      },
+      "metrics_snapshot": {
+        "calls": 20,
+        "prompt_tokens": 48107,
+        "cache_hit_tokens": 12800,
+        "cache_miss_tokens": 35307,
+        "cache_hit_rate_pct": 26.61,
+        "completion_tokens": 5092,
+        "total_tokens": 53199,
+        "task_cost_usd": 0.00839,
+        "session_cost_usd": 0.022755
       }
     },
     {
       "turn": 21,
       "action": "run_shell_command",
       "args": {
-        "command": "cd /testbed && sed -n '1,40p' CHANGES.rst && grep -R \"from_file\" -n docs src tests | head -50"
+        "command": "cd /testbed && sed -n '1,80p' tests/test_config.py && python - <<'PY'\nimport sys\nprint(sys.version)\ntry:\n import tomllib; print('tomllib ok')\nexcept Exception as e: print(e)\nPY"
+      },
+      "metrics_snapshot": {
+        "calls": 21,
+        "prompt_tokens": 50309,
+        "cache_hit_tokens": 13440,
+        "cache_miss_tokens": 36869,
+        "cache_hit_rate_pct": 26.71,
+        "completion_tokens": 5318,
+        "total_tokens": 55627,
+        "task_cost_usd": 0.008761,
+        "session_cost_usd": 0.023127
       }
     },
     {
       "turn": 22,
       "action": "run_shell_command",
       "args": {
-        "command": "cd /testbed && sed -n '210,290p' src/flask/config.py && sed -n '25,45p' tests/test_config.py && sed -n '170,195p' tests/test_config.py"
+        "command": "cd /testbed && git status --short && git log -3 --oneline && grep -R \"load_toml\\|tomllib\" -n . --exclude-dir=.git | head -30 && python -m pytest tests/test_config.py -q"
+      },
+      "metrics_snapshot": {
+        "calls": 22,
+        "prompt_tokens": 53050,
+        "cache_hit_tokens": 14080,
+        "cache_miss_tokens": 38970,
+        "cache_hit_rate_pct": 26.54,
+        "completion_tokens": 5635,
+        "total_tokens": 58685,
+        "task_cost_usd": 0.009269,
+        "session_cost_usd": 0.023634
       }
     },
     {
       "turn": 23,
       "action": "run_shell_command",
       "args": {
-        "command": "cd /testbed && python - <<'PY'\nfrom pathlib import Path\np = Path('src/flask/config.py')\ns = p.read_text()\nold = '''    def from_file(\n        self,\n        filename: str,\n        load: t.Callable[[t.IO[t.Any]], t.Mapping],\n        silent: bool = False,\n    ) -> bool:\n        \"\"\"Update the values in the config from a file that is loaded\n        using the ``load`` parameter. The loaded data is passed to the\n        :meth:`from_mapping` method.\n\n        .. code-block:: python\n\n            import json\n            app.config.from_file(\"config.json\", load=json.load)\n\n            import toml\n            app.config.from_file(\"config.toml\", load=toml.load)\n\n        :param filename: The path to the data file. This can be an\n            absolute path or relative to the config root path.\n        :param load: A callable that takes a file handle and returns a\n            mapping of loaded data from the file.\n        :type load: ``Callable[[Reader], Mapping]`` where ``Reader``\n            implements a ``read`` method.\n        :param silent: Ignore the file if it doesn't exist.\n        :return: ``True`` if the file was loaded successfully.\n\n        .. versionadded:: 2.0\n        \"\"\"\n        filename = os.path.join(self.root_path, filename)\n\n        try:\n            with open(filename) as f:\n                obj = load(f)\n'''\nnew = '''    def from_file(\n        self,\n        filename: str,\n        load: t.Callable[[t.IO[t.Any]], t.Mapping],\n        silent: bool = False,\n        text: bool = True,\n    ) -> bool:\n        \"\"\"Update the values in the config from a file that is loaded\n        using the ``load`` parameter. The loaded data is passed to the\n        :meth:`from_mapping` method.\n\n        .. code-block:: python\n\n            import json\n            app.config.from_file(\"config.json\", load=json.load)\n\n            import tomllib\n            app.config.from_file(\"config.toml\", load=tomllib.load, text=False)\n\n        :param filename: The path to the data file. This can be an\n            absolute path or relative to the config root path.\n        :param load: A callable that takes a file handle and returns a\n            mapping of loaded data from the file.\n        :type load: ``Callable[[Reader], Mapping]`` where ``Reader``\n            implements a ``read`` method.\n        :param silent: Ignore the file if it doesn't exist.\n        :param text: Open the file in text or binary mode.\n        :return: ``True`` if the file was loaded successfully.\n\n        .. versionchanged:: 2.3\n            The ``text`` parameter was added.\n\n        .. versionadded:: 2.0\n        \"\"\"\n        filename = os.path.join(self.root_path, filename)\n\n        try:\n            with open(filename, \"r\" if text else \"rb\") as f:\n                obj = load(f)\n'''\nassert old in s\np.write_text(s.replace(old, new))\nPY\npython - <<'PY'\nimport json, tempfile, tomllib\nfrom pathlib import Path\nfrom flask import Flask\n\nwith tempfile.TemporaryDirectory() as d:\n    p = Path(d, \"config.toml\")\n    p.write_text('FOO = \"bar\"\\nNUMBER = 42\\n')\n    app = Flask(__name__)\n    app.config.root_path = d\n    assert app.config.from_file(\"config.toml\", tomllib.load, text=False)\n    assert app.config[\"FOO\"] == \"bar\"\n    assert app.config[\"NUMBER\"] == 42\n\n    p2 = Path(d, \"config.json\")\n    p2.write_text(json.dumps({\"FOO\": \"json\"}))\n    assert app.config.from_file(\"config.json\", json.load)\n    assert app.config[\"FOO\"] == \"json\"\nprint(\"ok\")\nPY\ngit diff -- src/flask/config.py"
+        "command": "cd /testbed && git status --short && git diff -- src/flask/config.py tests/test_config.py && sed -n '200,245p' src/flask/config.py"
+      },
+      "metrics_snapshot": {
+        "calls": 23,
+        "prompt_tokens": 55142,
+        "cache_hit_tokens": 14720,
+        "cache_miss_tokens": 40422,
+        "cache_hit_rate_pct": 26.69,
+        "completion_tokens": 5756,
+        "total_tokens": 60898,
+        "task_cost_usd": 0.009561,
+        "session_cost_usd": 0.023927
       }
     },
     {
       "turn": 24,
       "action": "run_shell_command",
       "args": {
-        "command": "cd /testbed && pytest -q tests/test_config.py"
+        "command": "cd /testbed && sed -n '1,35p' tests/test_config.py && cat tests/static/config.toml && git diff -- CHANGES.rst docs/config.rst | head -100 && grep -n \"python_requires\\|requires-python\\|Programming Language :: Python\" -n pyproject.toml setup.cfg 2>/dev/null"
+      },
+      "metrics_snapshot": {
+        "calls": 24,
+        "prompt_tokens": 57561,
+        "cache_hit_tokens": 15360,
+        "cache_miss_tokens": 42201,
+        "cache_hit_rate_pct": 26.68,
+        "completion_tokens": 5972,
+        "total_tokens": 63533,
+        "task_cost_usd": 0.009959,
+        "session_cost_usd": 0.024325
       }
     },
     {
       "turn": 25,
-      "action": "finish_task",
-      "args": {}
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && head -12 tests/test_config.py; python -m pytest tests/test_config.py -q 2>&1 | tail -20"
+      },
+      "metrics_snapshot": {
+        "calls": 25,
+        "prompt_tokens": 59873,
+        "cache_hit_tokens": 16000,
+        "cache_miss_tokens": 43873,
+        "cache_hit_rate_pct": 26.72,
+        "completion_tokens": 6188,
+        "total_tokens": 66061,
+        "task_cost_usd": 0.010342,
+        "session_cost_usd": 0.024707
+      }
     }
-  ],
-  "usage_summary": "[Quota Tracker] Calls: 50 | Prompt Tokens: 162,428 | Completion Tokens: 13,162 | Total Tokens: 175,590 | Est. Cost: $0.0281[DEEPSEEK][DeepSeek OFF-PEAK (1x)] Calls: 50 | Cache Hit: 17.6% (28,544/162,428) | Out: 13,162 | Session Spend: $0.02807"
+  ]
 }

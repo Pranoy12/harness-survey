@@ -1,0 +1,327 @@
+{
+  "instance_id": "mwaskom__seaborn-3010",
+  "condition": "condition_a",
+  "turns_taken": 12,
+  "finished_by_tool": true,
+  "empty_action_retries": 1,
+  "wall_time_sec": 51.05,
+  "usage_metrics": {
+    "calls": 12,
+    "prompt_tokens": 89608,
+    "cache_hit_tokens": 74752,
+    "cache_miss_tokens": 14856,
+    "cache_hit_rate_pct": 83.42,
+    "completion_tokens": 4114,
+    "total_tokens": 93722,
+    "task_cost_usd": 0.004921,
+    "session_cost_usd": 0.013877
+  },
+  "usage_summary": "[Quota Tracker] Calls: 12 | Prompt Tokens: 89,608 | Completion Tokens: 4,114 | Total Tokens: 93,722 | Est. Cost: $0.0049[DEEPSEEK][DeepSeek OFF-PEAK (1x)] Calls: 12 | Cache Hit: 83.4% (74,752/89,608) | Out: 4,114 | Task Spend: $0.00492 | Total Session Spend: $0.01388",
+  "model_patch": "diff --git a/seaborn/_stats/regression.py b/seaborn/_stats/regression.py\nindex 7b7ddc8..c2044f1 100755\n--- a/seaborn/_stats/regression.py\n+++ b/seaborn/_stats/regression.py\n@@ -38,7 +38,7 @@ class PolyFit(Stat):\n \n     def __call__(self, data, groupby, orient, scales):\n \n-        return groupby.apply(data, self._fit_predict)\n+        return groupby.apply(data.dropna(subset=[\"x\", \"y\"]), self._fit_predict)\n \n \n @dataclass\ndiff --git a/tests/_stats/test_regression.py b/tests/_stats/test_regression.py\nindex 7facf75..c6f443f 100755\n--- a/tests/_stats/test_regression.py\n+++ b/tests/_stats/test_regression.py\n@@ -35,6 +35,17 @@ class TestPolyFit:\n             res[\"y\"].diff().diff().dropna(), np.zeros(grid.size - 2)\n         )\n \n+    def test_missing_data(self, df):\n+\n+        df.loc[df.index[:10], \"x\"] = np.nan\n+        df.loc[df.index[10:20], \"y\"] = np.nan\n+\n+        groupby = GroupBy([\"group\"])\n+        res = PolyFit(gridsize=10)(df, groupby, \"x\", {})\n+\n+        assert not res[\"x\"].isna().any()\n+        assert not res[\"y\"].isna().any()\n+\n     def test_one_grouper(self, df):\n \n         groupby = GroupBy([\"group\"])\n",
+  "trajectory": [
+    {
+      "turn": 1,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && cat seaborn/_stats/regression.py && echo \"---\" && git log --oneline -5"
+      },
+      "metrics_snapshot": {
+        "calls": 1,
+        "prompt_tokens": 1824,
+        "cache_hit_tokens": 1664,
+        "cache_miss_tokens": 160,
+        "cache_hit_rate_pct": 91.23,
+        "completion_tokens": 136,
+        "total_tokens": 1960,
+        "task_cost_usd": 0.000111,
+        "session_cost_usd": 0.009066
+      }
+    },
+    {
+      "turn": 1,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && ls && find . -path ./node_modules -prune -o -name \"*regression*\" -print"
+      },
+      "metrics_snapshot": {
+        "calls": 1,
+        "prompt_tokens": 1824,
+        "cache_hit_tokens": 1664,
+        "cache_miss_tokens": 160,
+        "cache_hit_rate_pct": 91.23,
+        "completion_tokens": 136,
+        "total_tokens": 1960,
+        "task_cost_usd": 0.000111,
+        "session_cost_usd": 0.009066
+      }
+    },
+    {
+      "turn": 2,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && cat tests/_stats/test_regression.py"
+      },
+      "metrics_snapshot": {
+        "calls": 2,
+        "prompt_tokens": 4304,
+        "cache_hit_tokens": 3584,
+        "cache_miss_tokens": 720,
+        "cache_hit_rate_pct": 83.27,
+        "completion_tokens": 267,
+        "total_tokens": 4571,
+        "task_cost_usd": 0.000279,
+        "session_cost_usd": 0.009235
+      }
+    },
+    {
+      "turn": 2,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && grep -rn \"dropna\\|isna\\|notna\\|missing\" seaborn/_stats/ seaborn/_core/ | head -50"
+      },
+      "metrics_snapshot": {
+        "calls": 2,
+        "prompt_tokens": 4304,
+        "cache_hit_tokens": 3584,
+        "cache_miss_tokens": 720,
+        "cache_hit_rate_pct": 83.27,
+        "completion_tokens": 267,
+        "total_tokens": 4571,
+        "task_cost_usd": 0.000279,
+        "session_cost_usd": 0.009235
+      }
+    },
+    {
+      "turn": 3,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '1,140p' seaborn/_stats/aggregation.py && echo \"=== base ===\" && cat seaborn/_stats/base.py"
+      },
+      "metrics_snapshot": {
+        "calls": 3,
+        "prompt_tokens": 7718,
+        "cache_hit_tokens": 6144,
+        "cache_miss_tokens": 1574,
+        "cache_hit_rate_pct": 79.61,
+        "completion_tokens": 413,
+        "total_tokens": 8131,
+        "task_cost_usd": 0.000502,
+        "session_cost_usd": 0.009458
+      }
+    },
+    {
+      "turn": 3,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '1,130p' seaborn/_core/groupby.py"
+      },
+      "metrics_snapshot": {
+        "calls": 3,
+        "prompt_tokens": 7718,
+        "cache_hit_tokens": 6144,
+        "cache_miss_tokens": 1574,
+        "cache_hit_rate_pct": 79.61,
+        "completion_tokens": 413,
+        "total_tokens": 8131,
+        "task_cost_usd": 0.000502,
+        "session_cost_usd": 0.009458
+      }
+    },
+    {
+      "turn": 4,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python -c \"\nimport seaborn.objects as so\nso.Plot([1, 2, 3, None, 4], [1, 2, 3, 4, 5]).add(so.Line(), so.PolyFit())\np = so.Plot([1, 2, 3, None, 4], [1, 2, 3, 4, 5]).add(so.Line(), so.PolyFit())\ntry:\n    p.plot()\nexcept Exception as e:\n    import traceback; traceback.print_exc()\n\""
+      },
+      "metrics_snapshot": {
+        "calls": 4,
+        "prompt_tokens": 13388,
+        "cache_hit_tokens": 9600,
+        "cache_miss_tokens": 3788,
+        "cache_hit_rate_pct": 71.71,
+        "completion_tokens": 848,
+        "total_tokens": 14236,
+        "task_cost_usd": 0.001106,
+        "session_cost_usd": 0.010061
+      }
+    },
+    {
+      "turn": 4,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && grep -rn \"dropna\\|PolyFit\" doc/_tutorial/*.ipynb doc/**/*.ipynb 2>/dev/null | head -20; grep -rn \"PolyFit\" seaborn tests | head -30"
+      },
+      "metrics_snapshot": {
+        "calls": 4,
+        "prompt_tokens": 13388,
+        "cache_hit_tokens": 9600,
+        "cache_miss_tokens": 3788,
+        "cache_hit_rate_pct": 71.71,
+        "completion_tokens": 848,
+        "total_tokens": 14236,
+        "task_cost_usd": 0.001106,
+        "session_cost_usd": 0.010061
+      }
+    },
+    {
+      "turn": 5,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python - <<'EOF'\nfrom pathlib import Path\np = Path(\"seaborn/_stats/regression.py\")\ntext = p.read_text()\nold = \"\"\"    def __call__(self, data, groupby, orient, scales):\\n\\n        return groupby.apply(data, self._fit_predict)\\n\"\"\"\nnew = \"\"\"    def __call__(self, data, groupby, orient, scales):\\n\\n        return groupby.apply(data.dropna(subset=[\"x\", \"y\"]), self._fit_predict)\\n\"\"\"\nassert old in text\np.write_text(text.replace(old, new))\nEOF\nsed -n '35,45p' seaborn/_stats/regression.py"
+      },
+      "metrics_snapshot": {
+        "calls": 5,
+        "prompt_tokens": 20735,
+        "cache_hit_tokens": 15616,
+        "cache_miss_tokens": 5119,
+        "cache_hit_rate_pct": 75.31,
+        "completion_tokens": 1798,
+        "total_tokens": 22533,
+        "task_cost_usd": 0.001893,
+        "session_cost_usd": 0.010849
+      }
+    },
+    {
+      "turn": 6,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python -c \"\nimport seaborn.objects as so\np = so.Plot([1, 2, 3, None, 4], [1, 2, 3, 4, 5]).add(so.Line(), so.PolyFit())\nres = p.plot()\nprint('plotted successfully')\n\""
+      },
+      "metrics_snapshot": {
+        "calls": 6,
+        "prompt_tokens": 29139,
+        "cache_hit_tokens": 23808,
+        "cache_miss_tokens": 5331,
+        "cache_hit_rate_pct": 81.7,
+        "completion_tokens": 1979,
+        "total_tokens": 31118,
+        "task_cost_usd": 0.002058,
+        "session_cost_usd": 0.011014
+      }
+    },
+    {
+      "turn": 6,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python -m pytest tests/_stats/test_regression.py -q"
+      },
+      "metrics_snapshot": {
+        "calls": 6,
+        "prompt_tokens": 29139,
+        "cache_hit_tokens": 23808,
+        "cache_miss_tokens": 5331,
+        "cache_hit_rate_pct": 81.7,
+        "completion_tokens": 1979,
+        "total_tokens": 31118,
+        "task_cost_usd": 0.002058,
+        "session_cost_usd": 0.011014
+      }
+    },
+    {
+      "turn": 7,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python - <<'EOF'\nimport numpy as np\nimport pandas as pd\nfrom seaborn._core.groupby import GroupBy\nfrom seaborn._stats.regression import PolyFit\n\ndf = pd.DataFrame({\"x\": [1, 2, 3, None, 4], \"y\": [1, 2, 3, 4, 5]})\nres = PolyFit(order=1)(df, GroupBy([\"group\"]), \"x\", {})\nprint(res.head())\nprint(res.shape)\n\ndf = pd.DataFrame({\n    \"x\": [1, 2, 3, None, 4, 5, np.nan, 7],\n    \"y\": [1, 2, 3, 4, 5, np.nan, 6, 7],\n    \"group\": [\"a\", \"a\", \"a\", \"a\", \"b\", \"b\", \"b\", \"b\"],\n})\nres = PolyFit(order=1)(df, GroupBy([\"group\"]), \"x\", {})\nprint(res.groupby(\"group\")[\"x\"].agg([\"min\", \"max\"]))\nEOF"
+      },
+      "metrics_snapshot": {
+        "calls": 7,
+        "prompt_tokens": 38233,
+        "cache_hit_tokens": 32384,
+        "cache_miss_tokens": 5849,
+        "cache_hit_rate_pct": 84.7,
+        "completion_tokens": 2540,
+        "total_tokens": 40773,
+        "task_cost_usd": 0.002499,
+        "session_cost_usd": 0.011454
+      }
+    },
+    {
+      "turn": 7,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && git diff"
+      },
+      "metrics_snapshot": {
+        "calls": 7,
+        "prompt_tokens": 38233,
+        "cache_hit_tokens": 32384,
+        "cache_miss_tokens": 5849,
+        "cache_hit_rate_pct": 84.7,
+        "completion_tokens": 2540,
+        "total_tokens": 40773,
+        "task_cost_usd": 0.002499,
+        "session_cost_usd": 0.011454
+      }
+    },
+    {
+      "turn": 8,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python - <<'EOF'\nfrom pathlib import Path\np = Path(\"tests/_stats/test_regression.py\")\ntext = p.read_text()\nold = \"\"\"    def test_one_grouper(self, df):\\n\"\"\"\nnew = \"\"\"    def test_missing_data(self, df):\\n\\n        df.loc[df.index[:10], \"x\"] = np.nan\\n        df.loc[df.index[10:20], \"y\"] = np.nan\\n\\n        groupby = GroupBy([\"group\"])\\n        res = PolyFit(gridsize=10)(df, groupby, \"x\", {})\\n\\n        assert not res[\"x\"].isna().any()\\n        assert not res[\"y\"].isna().any()\\n\\n    def test_one_grouper(self, df):\\n\"\"\"\nassert old in text\np.write_text(text.replace(old, new))\nEOF\npython -m pytest tests/_stats/test_regression.py -q && git diff"
+      },
+      "metrics_snapshot": {
+        "calls": 8,
+        "prompt_tokens": 48167,
+        "cache_hit_tokens": 41984,
+        "cache_miss_tokens": 6183,
+        "cache_hit_rate_pct": 87.16,
+        "completion_tokens": 2972,
+        "total_tokens": 51139,
+        "task_cost_usd": 0.002837,
+        "session_cost_usd": 0.011792
+      }
+    },
+    {
+      "turn": 9,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python -m pytest tests/_stats -q"
+      },
+      "metrics_snapshot": {
+        "calls": 9,
+        "prompt_tokens": 58944,
+        "cache_hit_tokens": 52224,
+        "cache_miss_tokens": 6720,
+        "cache_hit_rate_pct": 88.6,
+        "completion_tokens": 3464,
+        "total_tokens": 62408,
+        "task_cost_usd": 0.003243,
+        "session_cost_usd": 0.012199
+      }
+    },
+    {
+      "turn": 11,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python -m pytest tests/_stats/test_regression.py tests/_core/test_groupby.py -q && git diff --stat"
+      },
+      "metrics_snapshot": {
+        "calls": 11,
+        "prompt_tokens": 79814,
+        "cache_hit_tokens": 65152,
+        "cache_miss_tokens": 14662,
+        "cache_hit_rate_pct": 81.63,
+        "completion_tokens": 3952,
+        "total_tokens": 83766,
+        "task_cost_usd": 0.004766,
+        "session_cost_usd": 0.013722
+      }
+    },
+    {
+      "turn": 12,
+      "action": "finish_task",
+      "args": {},
+      "metrics_snapshot": {
+        "calls": 12,
+        "prompt_tokens": 89608,
+        "cache_hit_tokens": 74752,
+        "cache_miss_tokens": 14856,
+        "cache_hit_rate_pct": 83.42,
+        "completion_tokens": 4114,
+        "total_tokens": 93722,
+        "task_cost_usd": 0.004921,
+        "session_cost_usd": 0.013877
+      }
+    }
+  ]
+}

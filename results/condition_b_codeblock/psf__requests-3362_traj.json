@@ -3,138 +3,363 @@
   "condition": "condition_b_codeblock",
   "turns_taken": 25,
   "finished_by_tool": false,
-  "model_patch": "diff --git a/requests/utils.py b/requests/utils.py\nindex 8d17b6b2..38fd994b 100755\n--- a/requests/utils.py\n+++ b/requests/utils.py\n@@ -355,6 +355,10 @@ def get_encoding_from_headers(headers):\n     if 'text' in content_type:\n         return 'ISO-8859-1'\n \n+    if 'application/json' in content_type:\n+        # Assume UTF-8 based on RFC 4627: https://www.ietf.org/rfc/rfc4627.txt since the charset was unset\n+        return 'utf-8'\n+\n \n def stream_decode_response_unicode(iterator, r):\n     \"\"\"Stream decodes a iterator.\"\"\"\ndiff --git a/tests/test_requests.py b/tests/test_requests.py\nindex d2a2714a..d180c8a4 100755\n--- a/tests/test_requests.py\n+++ b/tests/test_requests.py\n@@ -25,6 +25,7 @@ from requests.exceptions import (\n     MissingSchema, ReadTimeout, Timeout, RetryError, TooManyRedirects,\n     ProxyError)\n from requests.models import PreparedRequest\n+from requests.utils import get_encoding_from_headers\n from requests.structures import CaseInsensitiveDict\n from requests.sessions import SessionRedirectMixin\n from requests.models import urlencode\n",
+  "empty_action_retries": 6,
+  "wall_time_sec": 80.0,
+  "usage_metrics": {
+    "calls": 25,
+    "prompt_tokens": 140335,
+    "cache_hit_tokens": 128128,
+    "cache_miss_tokens": 12207,
+    "cache_hit_rate_pct": 91.3,
+    "completion_tokens": 12274,
+    "total_tokens": 152609,
+    "task_cost_usd": 0.00958,
+    "session_cost_usd": 0.06958
+  },
+  "usage_summary": "[Quota Tracker] Calls: 25 | Prompt Tokens: 140,335 | Completion Tokens: 12,274 | Total Tokens: 152,609 | Est. Cost: $0.0096[DEEPSEEK][DeepSeek OFF-PEAK (1x)] Calls: 25 | Cache Hit: 91.3% (128,128/140,335) | Out: 12,274 | Task Spend: $0.00958 | Total Session Spend: $0.06958",
+  "model_patch": "diff --git a/requests/utils.py b/requests/utils.py\nindex 8d17b6b2..97fe4d0b 100755\n--- a/requests/utils.py\n+++ b/requests/utils.py\n@@ -355,6 +355,11 @@ def get_encoding_from_headers(headers):\n     if 'text' in content_type:\n         return 'ISO-8859-1'\n \n+    if 'application/json' in content_type:\n+        # Assume UTF-8 based on RFC 4627: https://tools.ietf.org/html/rfc4627\n+        # since the charset was unset.\n+        return 'utf-8'\n+\n \n def stream_decode_response_unicode(iterator, r):\n     \"\"\"Stream decodes a iterator.\"\"\"\ndiff --git a/tests/test_requests.py b/tests/test_requests.py\nindex d2a2714a..9ebb4380 100755\n--- a/tests/test_requests.py\n+++ b/tests/test_requests.py\n@@ -980,6 +980,18 @@ class TestRequests:\n         chunks = r.iter_content(decode_unicode=True)\n         assert all(isinstance(chunk, str) for chunk in chunks)\n \n+    def test_response_decode_unicode_json(self):\n+        \"\"\"\n+        When called with decode_unicode on an application/json response\n+        without an explicit charset, iter_content should return unicode.\n+        \"\"\"\n+        r = requests.Response()\n+        r.headers = {'content-type': 'application/json'}\n+        r.raw = io.BytesIO(b'{\"a\": \"\\xc3\\xa9\"}')\n+        chunks = list(r.iter_content(16, decode_unicode=True))\n+        assert all(isinstance(chunk, str) for chunk in chunks)\n+        assert ''.join(chunks) == '{\"a\": \"\\u00e9\"}'\n+\n     def test_response_chunk_size_int(self):\n         \"\"\"Ensure that chunk_size is passed as an integer, otherwise\n         raise a TypeError.\ndiff --git a/tests/test_utils.py b/tests/test_utils.py\nindex 17149d26..14bb5b85 100755\n--- a/tests/test_utils.py\n+++ b/tests/test_utils.py\n@@ -368,6 +368,10 @@ def test_parse_dict_header(value, expected):\n             CaseInsensitiveDict({'content-type': 'text/plain'}),\n             'ISO-8859-1'\n         ),\n+        (\n+            CaseInsensitiveDict({'content-type': 'application/json'}),\n+            'utf-8'\n+        ),\n     ))\n def test_get_encoding_from_headers(value, expected):\n     assert get_encoding_from_headers(value) == expected\n",
   "trajectory": [
     {
       "turn": 1,
       "action": "run_shell_command",
       "args": {
-        "command": "cd /testbed && ls -la && git log --oneline -5"
+        "command": "cd /testbed && git status --short && ls"
+      },
+      "metrics_snapshot": {
+        "calls": 1,
+        "prompt_tokens": 399,
+        "cache_hit_tokens": 256,
+        "cache_miss_tokens": 143,
+        "cache_hit_rate_pct": 64.16,
+        "completion_tokens": 116,
+        "total_tokens": 515,
+        "task_cost_usd": 9.2e-05,
+        "session_cost_usd": 0.060092
       }
     },
     {
-      "turn": 3,
+      "turn": 2,
       "action": "run_shell_command",
       "args": {
-        "command": "cd /testbed && grep -n \"iter_content\\|decode_unicode\\|def text\\|def content\\|def json\\|stream_decode\" requests/models.py"
+        "command": "cd /testbed && grep -n \"def iter_content\" -A90 requests/models.py"
+      },
+      "metrics_snapshot": {
+        "calls": 2,
+        "prompt_tokens": 989,
+        "cache_hit_tokens": 640,
+        "cache_miss_tokens": 349,
+        "cache_hit_rate_pct": 64.71,
+        "completion_tokens": 231,
+        "total_tokens": 1220,
+        "task_cost_usd": 0.000193,
+        "session_cost_usd": 0.060193
       }
     },
     {
       "turn": 4,
       "action": "run_shell_command",
       "args": {
-        "command": "cd /testbed && sed -n '640,810p' requests/models.py"
+        "command": "cd /testbed && grep -n \"stream_decode_response_unicode\" -A25 requests/utils.py"
+      },
+      "metrics_snapshot": {
+        "calls": 4,
+        "prompt_tokens": 4214,
+        "cache_hit_tokens": 2688,
+        "cache_miss_tokens": 1526,
+        "cache_hit_rate_pct": 63.79,
+        "completion_tokens": 535,
+        "total_tokens": 4749,
+        "task_cost_usd": 0.000558,
+        "session_cost_usd": 0.060558
+      }
+    },
+    {
+      "turn": 5,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && grep -n \"def get_encoding_from_headers\" -A45 requests/utils.py && grep -n \"def text\" -A25 requests/models.py"
+      },
+      "metrics_snapshot": {
+        "calls": 5,
+        "prompt_tokens": 6225,
+        "cache_hit_tokens": 4352,
+        "cache_miss_tokens": 1873,
+        "cache_hit_rate_pct": 69.91,
+        "completion_tokens": 787,
+        "total_tokens": 7012,
+        "task_cost_usd": 0.000766,
+        "session_cost_usd": 0.060766
       }
     },
     {
       "turn": 6,
       "action": "run_shell_command",
       "args": {
-        "command": "cd /testbed && grep -n \"stream_decode_response_unicode\" -A 40 requests/utils.py"
+        "command": "cd /testbed && grep -rn \"decode_unicode\" tests/ | head -50 && git log --oneline -5"
+      },
+      "metrics_snapshot": {
+        "calls": 6,
+        "prompt_tokens": 8975,
+        "cache_hit_tokens": 6272,
+        "cache_miss_tokens": 2703,
+        "cache_hit_rate_pct": 69.88,
+        "completion_tokens": 1542,
+        "total_tokens": 10517,
+        "task_cost_usd": 0.001349,
+        "session_cost_usd": 0.06135
       }
     },
     {
-      "turn": 8,
+      "turn": 7,
       "action": "run_shell_command",
       "args": {
-        "command": "cd /testbed && python -c \"\nimport requests\nprint(requests.__version__)\nfrom requests.utils import stream_decode_response_unicode\nimport codecs\n# Simulate application/json with no charset: encoding None\nclass R:\n    encoding = None\nit = iter([b'{\\\"a\\\": 1}'])\nprint(list(stream_decode_response_unicode(it, R())))\n\""
+        "command": "cd /testbed && sed -n '950,1000p' tests/test_requests.py"
+      },
+      "metrics_snapshot": {
+        "calls": 7,
+        "prompt_tokens": 12028,
+        "cache_hit_tokens": 8960,
+        "cache_miss_tokens": 3068,
+        "cache_hit_rate_pct": 74.49,
+        "completion_tokens": 1658,
+        "total_tokens": 13686,
+        "task_cost_usd": 0.001482,
+        "session_cost_usd": 0.061482
       }
     },
     {
-      "turn": 10,
+      "turn": 9,
       "action": "run_shell_command",
       "args": {
-        "command": "cd /testbed && grep -rn \"stream_decode\\|decode_unicode\\|iter_content\" tests/ | head -40"
+        "command": "cd /testbed && python - <<'PY'\nimport io\nimport requests\nfrom requests.utils import get_encoding_from_headers\n\nheaders = {'content-type': 'application/json'}\nprint('get_encoding_from_headers:', get_encoding_from_headers(headers))\n\nr = requests.Response()\nr.headers = headers\nr.raw = io.BytesIO(b'{\"a\": \"\\xc3\\xa9\"}')\nprint('r.encoding:', r.encoding)\nprint('r.text  :', repr(r.text))\n\nr2 = requests.Response()\nr2.headers = headers\nr2.raw = io.BytesIO(b'{\"a\": \"\\xc3\\xa9\"}')\nchunk = next(r2.iter_content(16, decode_unicode=True))\nprint('iter_content:', repr(chunk), type(chunk))\nPY"
+      },
+      "metrics_snapshot": {
+        "calls": 9,
+        "prompt_tokens": 19438,
+        "cache_hit_tokens": 15360,
+        "cache_miss_tokens": 4078,
+        "cache_hit_rate_pct": 79.02,
+        "completion_tokens": 4132,
+        "total_tokens": 23570,
+        "task_cost_usd": 0.003137,
+        "session_cost_usd": 0.063137
       }
     },
     {
       "turn": 12,
       "action": "run_shell_command",
       "args": {
-        "command": "cd /testbed && sed -n '955,1000p' tests/test_requests.py"
+        "command": "cd /testbed && grep -rn \"encoding_from_headers\\|application/json\" tests/*.py | head -40"
+      },
+      "metrics_snapshot": {
+        "calls": 12,
+        "prompt_tokens": 32172,
+        "cache_hit_tokens": 27264,
+        "cache_miss_tokens": 4908,
+        "cache_hit_rate_pct": 84.74,
+        "completion_tokens": 7009,
+        "total_tokens": 39181,
+        "task_cost_usd": 0.005023,
+        "session_cost_usd": 0.065024
       }
     },
     {
       "turn": 13,
       "action": "run_shell_command",
       "args": {
-        "command": "cd /testbed && git log --all --oneline | head -20 && git branch -a && git tag | tail -5"
+        "command": "cd /testbed && sed -n '350,380p' tests/test_utils.py"
+      },
+      "metrics_snapshot": {
+        "calls": 13,
+        "prompt_tokens": 37139,
+        "cache_hit_tokens": 31616,
+        "cache_miss_tokens": 5523,
+        "cache_hit_rate_pct": 85.13,
+        "completion_tokens": 7118,
+        "total_tokens": 44257,
+        "task_cost_usd": 0.005194,
+        "session_cost_usd": 0.065194
       }
     },
     {
       "turn": 14,
       "action": "run_shell_command",
       "args": {
-        "command": "cd /testbed && grep -n \"def get_encoding_from_headers\" -A 30 requests/utils.py"
+        "command": "cd /testbed && python - <<'PY'\nimport re\np = 'requests/utils.py'\ns = open(p).read()\nold = \"\"\"    if 'text' in content_type:\n        return 'ISO-8859-1'\n\"\"\"\nnew = \"\"\"    if 'text' in content_type:\n        return 'ISO-8859-1'\n\n    if 'application/json' in content_type:\n        # Assume UTF-8 based on RFC 4627: https://tools.ietf.org/html/rfc4627\n        # since the charset was unset.\n        return 'utf-8'\n\"\"\"\nassert old in s\ns = s.replace(old, new, 1)\nopen(p, 'w').write(s)\nPY"
+      },
+      "metrics_snapshot": {
+        "calls": 14,
+        "prompt_tokens": 42441,
+        "cache_hit_tokens": 36480,
+        "cache_miss_tokens": 5961,
+        "cache_hit_rate_pct": 85.95,
+        "completion_tokens": 8691,
+        "total_tokens": 51132,
+        "task_cost_usd": 0.006218,
+        "session_cost_usd": 0.066218
+      }
+    },
+    {
+      "turn": 15,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python -m pytest tests/test_utils.py -q 2>&1 | tail -30"
+      },
+      "metrics_snapshot": {
+        "calls": 15,
+        "prompt_tokens": 48816,
+        "cache_hit_tokens": 41728,
+        "cache_miss_tokens": 7088,
+        "cache_hit_rate_pct": 85.48,
+        "completion_tokens": 8818,
+        "total_tokens": 57634,
+        "task_cost_usd": 0.006479,
+        "session_cost_usd": 0.066479
       }
     },
     {
       "turn": 16,
       "action": "run_shell_command",
       "args": {
-        "command": "cd /testbed && grep -rn \"json\" tests/test_requests.py | grep -in \"encoding\\|utf\" | head -20"
+        "command": "cd /testbed && python -m pytest tests/test_utils.py -q -k \"not TestSuperLen\" 2>&1 | tail -20"
+      },
+      "metrics_snapshot": {
+        "calls": 16,
+        "prompt_tokens": 55960,
+        "cache_hit_tokens": 48000,
+        "cache_miss_tokens": 7960,
+        "cache_hit_rate_pct": 85.78,
+        "completion_tokens": 8976,
+        "total_tokens": 64936,
+        "task_cost_usd": 0.006724,
+        "session_cost_usd": 0.066724
       }
     },
     {
       "turn": 17,
       "action": "run_shell_command",
       "args": {
-        "command": "cd /testbed && sed -n '1,60p' HISTORY.rst"
+        "command": "cd /testbed && git stash && python -m pytest tests/test_utils.py -q 2>&1 | tail -5; git stash pop"
+      },
+      "metrics_snapshot": {
+        "calls": 17,
+        "prompt_tokens": 63668,
+        "cache_hit_tokens": 55040,
+        "cache_miss_tokens": 8628,
+        "cache_hit_rate_pct": 86.45,
+        "completion_tokens": 9455,
+        "total_tokens": 73123,
+        "task_cost_usd": 0.007132,
+        "session_cost_usd": 0.067133
+      }
+    },
+    {
+      "turn": 18,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && git diff --stat && grep -n \"test_response_decode_unicode_json\\|application/json'})\" tests/test_requests.py tests/test_utils.py | head"
+      },
+      "metrics_snapshot": {
+        "calls": 18,
+        "prompt_tokens": 71933,
+        "cache_hit_tokens": 62720,
+        "cache_miss_tokens": 9213,
+        "cache_hit_rate_pct": 87.19,
+        "completion_tokens": 9711,
+        "total_tokens": 81644,
+        "task_cost_usd": 0.007397,
+        "session_cost_usd": 0.067397
+      }
+    },
+    {
+      "turn": 19,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python - <<'PY'\np = 'tests/test_utils.py'\ns = open(p).read()\nold = \"\"\"        (\n            CaseInsensitiveDict({'content-type': 'text/plain'}),\n            'ISO-8859-1'\n        ),\n\"\"\"\nnew = \"\"\"        (\n            CaseInsensitiveDict({'content-type': 'text/plain'}),\n            'ISO-8859-1'\n        ),\n        (\n            CaseInsensitiveDict({'content-type': 'application/json'}),\n            'utf-8'\n        ),\n\"\"\"\nif old not in s:\n    raise SystemExit('test_utils anchor not found')\ns = s.replace(old, new, 1)\nopen(p, 'w').write(s)\n\np = 'tests/test_requests.py'\ns = open(p).read()\nold = \"\"\"        chunks = r.iter_content(decode_unicode=True)\n        assert all(isinstance(chunk, str) for chunk in chunks)\n\n    def test_response_chunk_size_int(self):\"\"\"\nnew = \"\"\"        chunks = r.iter_content(decode_unicode=True)\n        assert all(isinstance(chunk, str) for chunk in chunks)\n\n    def test_response_decode_unicode_json(self):\n        \\\"\\\"\\\"\n        When called with decode_unicode on an application/json response\n        without an explicit charset, iter_content should return unicode.\n        \\\"\\\"\\\"\n        r = requests.Response()\n        r.headers = {'content-type': 'application/json'}\n        r.raw = io.BytesIO(b'{\"a\": \"\\\\xc3\\\\xa9\"}')\n        chunks = list(r.iter_content(16, decode_unicode=True))\n        assert all(isinstance(chunk, str) for chunk in chunks)\n        assert ''.join(chunks) == '{\"a\": \"e'}'\n\n    def test_response_chunk_size_int(self):\"\"\"\nif old not in s:\n    raise SystemExit('test_requests anchor not found')\ns = s.replace(old, new, 1)\nopen(p, 'w').write(s)\nprint('done')\nPY"
+      },
+      "metrics_snapshot": {
+        "calls": 19,
+        "prompt_tokens": 80422,
+        "cache_hit_tokens": 70912,
+        "cache_miss_tokens": 9510,
+        "cache_hit_rate_pct": 88.17,
+        "completion_tokens": 10403,
+        "total_tokens": 90825,
+        "task_cost_usd": 0.007881,
+        "session_cost_usd": 0.067881
       }
     },
     {
       "turn": 20,
       "action": "run_shell_command",
       "args": {
-        "command": "cd /testbed && ls tests && grep -rn \"get_encoding_from_headers\" tests/ | head"
+        "command": "cd /testbed && python - <<'PY'\np = 'tests/test_requests.py'\ns = open(p).read()\nold = \"\"\"        assert ''.join(chunks) == '{\"a\": \"e'}'\"\"\"\nnew = \"\"\"        assert ''.join(chunks) == '{\"a\": \"\\\\u00e9\"}'\"\"\"\nassert old in s\ns = s.replace(old, new, 1)\nopen(p, 'w').write(s)\nPY"
+      },
+      "metrics_snapshot": {
+        "calls": 20,
+        "prompt_tokens": 89480,
+        "cache_hit_tokens": 79360,
+        "cache_miss_tokens": 10120,
+        "cache_hit_rate_pct": 88.69,
+        "completion_tokens": 10874,
+        "total_tokens": 100354,
+        "task_cost_usd": 0.00828,
+        "session_cost_usd": 0.068281
       }
     },
     {
       "turn": 21,
       "action": "run_shell_command",
       "args": {
-        "command": "cd /testbed && sed -n '350,385p' tests/test_utils.py"
+        "command": "cd /testbed && git diff -- tests/"
+      },
+      "metrics_snapshot": {
+        "calls": 21,
+        "prompt_tokens": 98773,
+        "cache_hit_tokens": 88320,
+        "cache_miss_tokens": 10453,
+        "cache_hit_rate_pct": 89.42,
+        "completion_tokens": 11006,
+        "total_tokens": 109779,
+        "task_cost_usd": 0.008437,
+        "session_cost_usd": 0.068437
       }
     },
     {
       "turn": 22,
       "action": "run_shell_command",
       "args": {
-        "command": "cd /testbed && python - <<'PY'\nimport re\np = 'requests/utils.py'\ns = open(p).read()\nold = \"\"\"    if 'text' in content_type:\n        return 'ISO-8859-1'\n\"\"\"\nnew = \"\"\"    if 'text' in content_type:\n        return 'ISO-8859-1'\n\n    if 'application/json' in content_type:\n        # Assume UTF-8 based on RFC 4627: https://www.ietf.org/rfc/rfc4627.txt since the charset was unset\n        return 'utf-8'\n\"\"\"\nassert old in s\ns = s.replace(old, new, 1)\nopen(p, 'w').write(s)\nPY"
+        "command": "cd /testbed && python -m pytest \"tests/test_requests.py::TestRequests::test_response_decode_unicode\" \"tests/test_requests.py::TestRequests::test_response_decode_unicode_json\" -q 2>&1 | tail -15"
+      },
+      "metrics_snapshot": {
+        "calls": 22,
+        "prompt_tokens": 108663,
+        "cache_hit_tokens": 97536,
+        "cache_miss_tokens": 11127,
+        "cache_hit_rate_pct": 89.76,
+        "completion_tokens": 11083,
+        "total_tokens": 119746,
+        "task_cost_usd": 0.008611,
+        "session_cost_usd": 0.068612
       }
     },
     {
       "turn": 23,
       "action": "run_shell_command",
       "args": {
-        "command": "cd /testbed && grep -n \"from requests.utils import\\|^import\\|^from\" tests/test_requests.py | head -30"
-      }
-    },
-    {
-      "turn": 24,
-      "action": "run_shell_command",
-      "args": {
-        "command": "cd /testbed && sed -n '18,35p' tests/test_requests.py"
-      }
-    },
-    {
-      "turn": 25,
-      "action": "run_shell_command",
-      "args": {
-        "command": "cd /testbed && python - <<'PY'\np = 'tests/test_requests.py'\ns = open(p).read()\nold = \"from requests.models import PreparedRequest\\n\"\nnew = \"from requests.models import PreparedRequest\\nfrom requests.utils import get_encoding_from_headers\\n\"\nassert old in s\ns = s.replace(old, new, 1)\nopen(p, 'w').write(s)\nPY\npytest tests/test_requests.py -k \"decode_unicode or chunk_size\" tests/test_utils.py -q 2>&1 | tail -15\ngit diff --stat\npython -c \"\nimport requests\nr = requests.Response()\nr.headers['content-type'] = 'application/json'\nr.raw = __import__('io').BytesIO(b'{\\\"a\\\": 1}')\nr.encoding = requests.utils.get_encoding_from_headers(r.headers)\nprint(list(r.iter_content(16*1024, decode_unicode=True)))\n\""
+        "command": "cd /testbed && grep -n \"encoding\" requests/sessions.py requests/adapters.py"
+      },
+      "metrics_snapshot": {
+        "calls": 23,
+        "prompt_tokens": 118908,
+        "cache_hit_tokens": 107392,
+        "cache_miss_tokens": 11516,
+        "cache_hit_rate_pct": 90.32,
+        "completion_tokens": 11895,
+        "total_tokens": 130803,
+        "task_cost_usd": 0.009187,
+        "session_cost_usd": 0.069187
       }
     }
-  ],
-  "usage_metrics": {
-    "calls": 25,
-    "prompt_tokens": 120813,
-    "cache_hit_tokens": 110720,
-    "cache_miss_tokens": 10093,
-    "cache_hit_rate_pct": 91.65,
-    "completion_tokens": 14176,
-    "total_tokens": 134989,
-    "task_cost_usd": 0.010352,
-    "session_cost_usd": 0.02571
-  },
-  "usage_summary": "[Quota Tracker] Calls: 25 | Prompt Tokens: 120,813 | Completion Tokens: 14,176 | Total Tokens: 134,989 | Est. Cost: $0.0104[DEEPSEEK][DeepSeek OFF-PEAK (1x)] Calls: 25 | Cache Hit: 91.6% (110,720/120,813) | Out: 14,176 | Task Spend: $0.01035 | Total Session Spend: $0.02571"
+  ]
 }

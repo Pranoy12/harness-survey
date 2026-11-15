@@ -1,0 +1,237 @@
+{
+  "instance_id": "pylint-dev__pylint-5859",
+  "condition": "condition_b_codeblock",
+  "turns_taken": 12,
+  "finished_by_tool": true,
+  "empty_action_retries": 0,
+  "wall_time_sec": 62.78,
+  "usage_metrics": {
+    "calls": 12,
+    "prompt_tokens": 106077,
+    "cache_hit_tokens": 92928,
+    "cache_miss_tokens": 13149,
+    "cache_hit_rate_pct": 87.6,
+    "completion_tokens": 9012,
+    "total_tokens": 115089,
+    "task_cost_usd": 0.007658,
+    "session_cost_usd": 0.033281
+  },
+  "usage_summary": "[Quota Tracker] Calls: 12 | Prompt Tokens: 106,077 | Completion Tokens: 9,012 | Total Tokens: 115,089 | Est. Cost: $0.0077[DEEPSEEK][DeepSeek OFF-PEAK (1x)] Calls: 12 | Cache Hit: 87.6% (92,928/106,077) | Out: 9,012 | Task Spend: $0.00766 | Total Session Spend: $0.03328",
+  "model_patch": "diff --git a/pylint/checkers/misc.py b/pylint/checkers/misc.py\nindex 69149e61..a9e9912b 100755\n--- a/pylint/checkers/misc.py\n+++ b/pylint/checkers/misc.py\n@@ -121,9 +121,9 @@ class EncodingChecker(BaseChecker):\n \n         notes = \"|\".join(re.escape(note) for note in self.config.notes)\n         if self.config.notes_rgx:\n-            regex_string = rf\"#\\s*({notes}|{self.config.notes_rgx})\\b\"\n+            regex_string = rf\"#\\s*({notes}|{self.config.notes_rgx})(?!\\w)\"\n         else:\n-            regex_string = rf\"#\\s*({notes})\\b\"\n+            regex_string = rf\"#\\s*({notes})(?!\\w)\"\n \n         self._fixme_pattern = re.compile(regex_string, re.I)\n \ndiff --git a/tests/checkers/unittest_misc.py b/tests/checkers/unittest_misc.py\nindex 23e19a9d..16eb293a 100755\n--- a/tests/checkers/unittest_misc.py\n+++ b/tests/checkers/unittest_misc.py\n@@ -106,6 +106,16 @@ class TestFixme(CheckerTestCase):\n         ):\n             self.checker.process_tokens(_tokenize_str(code))\n \n+    @set_config(notes=[\"???\"])\n+    def test_note_tag_is_punctuation(self) -> None:\n+        code = \"\"\"a = 1\n+                # ???: no\n+                \"\"\"\n+        with self.assertAddsMessages(\n+            MessageTest(msg_id=\"fixme\", line=2, args=\"???: no\", col_offset=17)\n+        ):\n+            self.checker.process_tokens(_tokenize_str(code))\n+\n     def test_dont_trigger_on_todoist(self) -> None:\n         code = \"\"\"\n         # Todoist API: What is this task about?\n",
+  "trajectory": [
+    {
+      "turn": 1,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && git status --short && grep -R \"notes\" -n pylint/checkers | head -50"
+      },
+      "metrics_snapshot": {
+        "calls": 1,
+        "prompt_tokens": 602,
+        "cache_hit_tokens": 0,
+        "cache_miss_tokens": 602,
+        "cache_hit_rate_pct": 0.0,
+        "completion_tokens": 2048,
+        "total_tokens": 2650,
+        "task_cost_usd": 0.001319,
+        "session_cost_usd": 0.026941
+      }
+    },
+    {
+      "turn": 2,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '70,210p' pylint/checkers/misc.py"
+      },
+      "metrics_snapshot": {
+        "calls": 2,
+        "prompt_tokens": 3455,
+        "cache_hit_tokens": 512,
+        "cache_miss_tokens": 2943,
+        "cache_hit_rate_pct": 14.82,
+        "completion_tokens": 3087,
+        "total_tokens": 6542,
+        "task_cost_usd": 0.002295,
+        "session_cost_usd": 0.027917
+      }
+    },
+    {
+      "turn": 3,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && find tests -iname '*misc*' -o -iname '*fixme*' | head -50 && grep -R \"notes-rgx\\|notes=\\|W0511\\|fixme\" -n tests | head -150"
+      },
+      "metrics_snapshot": {
+        "calls": 3,
+        "prompt_tokens": 8302,
+        "cache_hit_tokens": 3328,
+        "cache_miss_tokens": 4974,
+        "cache_hit_rate_pct": 40.09,
+        "completion_tokens": 4275,
+        "total_tokens": 12577,
+        "task_cost_usd": 0.003321,
+        "session_cost_usd": 0.028943
+      }
+    },
+    {
+      "turn": 4,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '1,180p' tests/checkers/unittest_misc.py && echo '--- fixme.py ---' && nl -ba tests/functional/f/fixme.py && echo '--- fixme.rc ---' && cat tests/functional/f/fixme.rc && echo '--- expected ---' && cat tests/functional/f/fixme.txt"
+      },
+      "metrics_snapshot": {
+        "calls": 4,
+        "prompt_tokens": 15868,
+        "cache_hit_tokens": 8064,
+        "cache_miss_tokens": 7804,
+        "cache_hit_rate_pct": 50.82,
+        "completion_tokens": 4604,
+        "total_tokens": 20472,
+        "task_cost_usd": 0.003957,
+        "session_cost_usd": 0.029579
+      }
+    },
+    {
+      "turn": 5,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && printf '# YES: yes\\n# ???: no\\n' > /tmp/test_notes.py && python -m pylint /tmp/test_notes.py --notes='YES,???' --disable=all --enable=fixme; printf 'exit=%s\\n' \"$?\""
+      },
+      "metrics_snapshot": {
+        "calls": 5,
+        "prompt_tokens": 25697,
+        "cache_hit_tokens": 15616,
+        "cache_miss_tokens": 10081,
+        "cache_hit_rate_pct": 60.77,
+        "completion_tokens": 6218,
+        "total_tokens": 31915,
+        "task_cost_usd": 0.00529,
+        "session_cost_usd": 0.030912
+      }
+    },
+    {
+      "turn": 6,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && git diff -- pylint/checkers/misc.py tests/checkers/unittest_misc.py"
+      },
+      "metrics_snapshot": {
+        "calls": 6,
+        "prompt_tokens": 36053,
+        "cache_hit_tokens": 25344,
+        "cache_miss_tokens": 10709,
+        "cache_hit_rate_pct": 70.3,
+        "completion_tokens": 6326,
+        "total_tokens": 42379,
+        "task_cost_usd": 0.005478,
+        "session_cost_usd": 0.0311
+      }
+    },
+    {
+      "turn": 7,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python - <<'PY'\nfrom pathlib import Path\np = Path('pylint/checkers/misc.py')\ns = p.read_text()\nold = '''        notes = \"|\".join(re.escape(note) for note in self.config.notes)\n        if self.config.notes_rgx:\n            regex_string = rf\"#\\\\s*({notes}|{self.config.notes_rgx})\\\\b\"\n        else:\n            regex_string = rf\"#\\\\s*({notes})\\\\b\"\n'''\nnew = '''        notes = \"|\".join(re.escape(note) for note in self.config.notes)\n        if self.config.notes_rgx:\n            regex_string = rf\"#\\\\s*({notes}|{self.config.notes_rgx})(?!\\\\w)\"\n        else:\n            regex_string = rf\"#\\\\s*({notes})(?!\\\\w)\"\n'''\nassert old in s, 'source pattern not found'\np.write_text(s.replace(old, new))\n\np = Path('tests/checkers/unittest_misc.py')\ns = p.read_text()\nold = '''    def test_dont_trigger_on_todoist(self) -> None:\n'''\nnew = '''    @set_config(notes=[\"???\"])\n    def test_note_tag_is_punctuation(self) -> None:\n        code = \"\"\"a = 1\n                # ???: no\n                \"\"\"\n        with self.assertAddsMessages(\n            MessageTest(msg_id=\"fixme\", line=2, args=\"???: no\", col_offset=17)\n        ):\n            self.checker.process_tokens(_tokenize_str(code))\n\n    def test_dont_trigger_on_todoist(self) -> None:\n'''\nassert old in s, 'test insertion pattern not found'\np.write_text(s.replace(old, new))\nPY\ngit diff -- pylint/checkers/misc.py tests/checkers/unittest_misc.py"
+      },
+      "metrics_snapshot": {
+        "calls": 7,
+        "prompt_tokens": 46467,
+        "cache_hit_tokens": 35584,
+        "cache_miss_tokens": 10883,
+        "cache_hit_rate_pct": 76.58,
+        "completion_tokens": 6890,
+        "total_tokens": 53357,
+        "task_cost_usd": 0.005873,
+        "session_cost_usd": 0.031495
+      }
+    },
+    {
+      "turn": 8,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && printf '# YES: yes\\n# ???: no\\n' > /tmp/test_notes.py && python -m pylint /tmp/test_notes.py --notes='YES,???' --disable=all --enable=fixme; status=$?; printf 'pylint exit=%s\\n' \"$status\"; python -m pytest tests/checkers/unittest_misc.py -q; printf 'pytest exit=%s\\n' \"$?\""
+      },
+      "metrics_snapshot": {
+        "calls": 8,
+        "prompt_tokens": 57795,
+        "cache_hit_tokens": 45952,
+        "cache_miss_tokens": 11843,
+        "cache_hit_rate_pct": 79.51,
+        "completion_tokens": 7146,
+        "total_tokens": 64941,
+        "task_cost_usd": 0.006202,
+        "session_cost_usd": 0.031824
+      }
+    },
+    {
+      "turn": 9,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python -m pytest tests/test_functional.py -q -k fixme"
+      },
+      "metrics_snapshot": {
+        "calls": 9,
+        "prompt_tokens": 69529,
+        "cache_hit_tokens": 57216,
+        "cache_miss_tokens": 12313,
+        "cache_hit_rate_pct": 82.29,
+        "completion_tokens": 7708,
+        "total_tokens": 77237,
+        "task_cost_usd": 0.006643,
+        "session_cost_usd": 0.032266
+      }
+    },
+    {
+      "turn": 10,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && git diff --check && git status --short && git diff --stat"
+      },
+      "metrics_snapshot": {
+        "calls": 10,
+        "prompt_tokens": 81549,
+        "cache_hit_tokens": 68864,
+        "cache_miss_tokens": 12685,
+        "cache_hit_rate_pct": 84.44,
+        "completion_tokens": 8961,
+        "total_tokens": 90510,
+        "task_cost_usd": 0.007486,
+        "session_cost_usd": 0.033108
+      }
+    },
+    {
+      "turn": 11,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python -m pytest tests/checkers/unittest_misc.py tests/test_functional.py -q -k 'fixme or misc'"
+      },
+      "metrics_snapshot": {
+        "calls": 11,
+        "prompt_tokens": 93710,
+        "cache_hit_tokens": 80768,
+        "cache_miss_tokens": 12942,
+        "cache_hit_rate_pct": 86.19,
+        "completion_tokens": 8999,
+        "total_tokens": 102709,
+        "task_cost_usd": 0.007583,
+        "session_cost_usd": 0.033205
+      }
+    },
+    {
+      "turn": 12,
+      "action": "finish_task",
+      "args": {},
+      "metrics_snapshot": {
+        "calls": 12,
+        "prompt_tokens": 106077,
+        "cache_hit_tokens": 92928,
+        "cache_miss_tokens": 13149,
+        "cache_hit_rate_pct": 87.6,
+        "completion_tokens": 9012,
+        "total_tokens": 115089,
+        "task_cost_usd": 0.007658,
+        "session_cost_usd": 0.033281
+      }
+    }
+  ]
+}

@@ -1,71 +1,219 @@
 {
   "instance_id": "pallets__flask-4992",
   "condition": "condition_b_codeblock",
-  "turns_taken": 10,
+  "turns_taken": 14,
   "finished_by_tool": true,
-  "model_patch": "diff --git a/src/flask/config.py b/src/flask/config.py\nindex d4fc310f..5e48be33 100755\n--- a/src/flask/config.py\n+++ b/src/flask/config.py\n@@ -234,6 +234,7 @@ class Config(dict):\n         filename: str,\n         load: t.Callable[[t.IO[t.Any]], t.Mapping],\n         silent: bool = False,\n+        text: bool = True,\n     ) -> bool:\n         \"\"\"Update the values in the config from a file that is loaded\n         using the ``load`` parameter. The loaded data is passed to the\n@@ -244,8 +245,8 @@ class Config(dict):\n             import json\n             app.config.from_file(\"config.json\", load=json.load)\n \n-            import toml\n-            app.config.from_file(\"config.toml\", load=toml.load)\n+            import tomllib\n+            app.config.from_file(\"config.toml\", load=tomllib.load, text=False)\n \n         :param filename: The path to the data file. This can be an\n             absolute path or relative to the config root path.\n@@ -254,14 +255,18 @@ class Config(dict):\n         :type load: ``Callable[[Reader], Mapping]`` where ``Reader``\n             implements a ``read`` method.\n         :param silent: Ignore the file if it doesn't exist.\n+        :param text: Open the file in text or binary mode.\n         :return: ``True`` if the file was loaded successfully.\n \n+        .. versionchanged:: 2.3\n+            The ``text`` parameter was added.\n+\n         .. versionadded:: 2.0\n         \"\"\"\n         filename = os.path.join(self.root_path, filename)\n \n         try:\n-            with open(filename) as f:\n+            with open(filename, \"r\" if text else \"rb\") as f:\n                 obj = load(f)\n         except OSError as e:\n             if silent and e.errno in (errno.ENOENT, errno.EISDIR):\ndiff --git a/tests/test_config.py b/tests/test_config.py\nindex 76c5d272..98527baf 100755\n--- a/tests/test_config.py\n+++ b/tests/test_config.py\n@@ -37,6 +37,17 @@ def test_config_from_file():\n     common_object_test(app)\n \n \n+def test_config_from_file_binary():\n+    app = flask.Flask(__name__)\n+    current_dir = os.path.dirname(os.path.abspath(__file__))\n+    app.config.from_file(\n+        os.path.join(current_dir, \"static\", \"config.json\"),\n+        lambda f: json.loads(f.read().decode()),\n+        text=False,\n+    )\n+    common_object_test(app)\n+\n+\n def test_from_prefixed_env(monkeypatch):\n     monkeypatch.setenv(\"FLASK_STRING\", \"value\")\n     monkeypatch.setenv(\"FLASK_BOOL\", \"true\")\n",
+  "empty_action_retries": 3,
+  "wall_time_sec": 171.89,
+  "usage_metrics": {
+    "calls": 14,
+    "prompt_tokens": 118296,
+    "cache_hit_tokens": 103168,
+    "cache_miss_tokens": 15128,
+    "cache_hit_rate_pct": 87.21,
+    "completion_tokens": 13959,
+    "total_tokens": 132255,
+    "task_cost_usd": 0.010954,
+    "session_cost_usd": 0.016138
+  },
+  "usage_summary": "[Quota Tracker] Calls: 14 | Prompt Tokens: 118,296 | Completion Tokens: 13,959 | Total Tokens: 132,255 | Est. Cost: $0.0110[DEEPSEEK][DeepSeek OFF-PEAK (1x)] Calls: 14 | Cache Hit: 87.2% (103,168/118,296) | Out: 13,959 | Task Spend: $0.01095 | Total Session Spend: $0.01614",
+  "model_patch": "diff --git a/src/flask/config.py b/src/flask/config.py\nindex d4fc310f..09a292a4 100755\n--- a/src/flask/config.py\n+++ b/src/flask/config.py\n@@ -234,6 +234,7 @@ class Config(dict):\n         filename: str,\n         load: t.Callable[[t.IO[t.Any]], t.Mapping],\n         silent: bool = False,\n+        text: bool = True,\n     ) -> bool:\n         \"\"\"Update the values in the config from a file that is loaded\n         using the ``load`` parameter. The loaded data is passed to the\n@@ -254,14 +255,19 @@ class Config(dict):\n         :type load: ``Callable[[Reader], Mapping]`` where ``Reader``\n             implements a ``read`` method.\n         :param silent: Ignore the file if it doesn't exist.\n+        :param text: If ``True``, open the file in text mode, otherwise\n+            binary mode.\n         :return: ``True`` if the file was loaded successfully.\n \n         .. versionadded:: 2.0\n+\n+        .. versionchanged:: 2.3\n+            The ``text`` parameter was added.\n         \"\"\"\n         filename = os.path.join(self.root_path, filename)\n \n         try:\n-            with open(filename) as f:\n+            with open(filename, mode=\"r\" if text else \"rb\") as f:\n                 obj = load(f)\n         except OSError as e:\n             if silent and e.errno in (errno.ENOENT, errno.EISDIR):\ndiff --git a/tests/test_config.py b/tests/test_config.py\nindex 76c5d272..b0bf68e8 100755\n--- a/tests/test_config.py\n+++ b/tests/test_config.py\n@@ -37,6 +37,21 @@ def test_config_from_file():\n     common_object_test(app)\n \n \n+def test_config_from_file_binary():\n+    app = flask.Flask(__name__)\n+    current_dir = os.path.dirname(os.path.abspath(__file__))\n+\n+    def load(file):\n+        data = file.read()\n+        assert isinstance(data, bytes)\n+        return json.loads(data)\n+\n+    app.config.from_file(\n+        os.path.join(current_dir, \"static\", \"config.json\"), load, text=False\n+    )\n+    common_object_test(app)\n+\n+\n def test_from_prefixed_env(monkeypatch):\n     monkeypatch.setenv(\"FLASK_STRING\", \"value\")\n     monkeypatch.setenv(\"FLASK_BOOL\", \"true\")\n",
   "trajectory": [
     {
       "turn": 1,
       "action": "run_shell_command",
       "args": {
         "command": "cd /testbed && git status --short && ls"
+      },
+      "metrics_snapshot": {
+        "calls": 1,
+        "prompt_tokens": 595,
+        "cache_hit_tokens": 384,
+        "cache_miss_tokens": 211,
+        "cache_hit_rate_pct": 64.54,
+        "completion_tokens": 2048,
+        "total_tokens": 2643,
+        "task_cost_usd": 0.001262,
+        "session_cost_usd": 0.006446
       }
     },
     {
       "turn": 2,
       "action": "run_shell_command",
       "args": {
-        "command": "cd /testbed && grep -R \"def from_file\" -n src tests && sed -n '1,280p' src/flask/config.py"
+        "command": "cd /testbed && sed -n '1,280p' src/flask/config.py && printf '\\n--- tests references ---\\n' && grep -R \"from_file\" -n tests | head -80"
+      },
+      "metrics_snapshot": {
+        "calls": 2,
+        "prompt_tokens": 3272,
+        "cache_hit_tokens": 896,
+        "cache_miss_tokens": 2376,
+        "cache_hit_rate_pct": 27.38,
+        "completion_tokens": 2673,
+        "total_tokens": 5945,
+        "task_cost_usd": 0.001963,
+        "session_cost_usd": 0.007147
       }
     },
     {
       "turn": 3,
       "action": "run_shell_command",
       "args": {
-        "command": "cd /testbed && sed -n '220,330p' src/flask/config.py && grep -R \"from_file\" -n tests docs | head -50"
+        "command": "cd /testbed && sed -n '210,300p' src/flask/config.py && printf '\\n--- tests refs ---\\n' && grep -R \"from_file\" -n tests | head -100"
+      },
+      "metrics_snapshot": {
+        "calls": 3,
+        "prompt_tokens": 8743,
+        "cache_hit_tokens": 3456,
+        "cache_miss_tokens": 5287,
+        "cache_hit_rate_pct": 39.53,
+        "completion_tokens": 2943,
+        "total_tokens": 11686,
+        "task_cost_usd": 0.002569,
+        "session_cost_usd": 0.007753
+      }
+    },
+    {
+      "turn": 4,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && grep -n \"version\\|requires-python\" -A5 -B2 pyproject.toml | head -60 && sed -n '1,80p' tests/test_config.py && sed -n '160,200p' tests/test_config.py"
+      },
+      "metrics_snapshot": {
+        "calls": 4,
+        "prompt_tokens": 15304,
+        "cache_hit_tokens": 8832,
+        "cache_miss_tokens": 6472,
+        "cache_hit_rate_pct": 57.71,
+        "completion_tokens": 3898,
+        "total_tokens": 19202,
+        "task_cost_usd": 0.003336,
+        "session_cost_usd": 0.00852
       }
     },
     {
       "turn": 5,
       "action": "run_shell_command",
       "args": {
-        "command": "cd /testbed && sed -n '1,120p' CHANGES.rst && grep -n \"version\" pyproject.toml | head -20 && git log -8 --oneline --decorate"
-      }
-    },
-    {
-      "turn": 6,
-      "action": "run_shell_command",
-      "args": {
-        "command": "cd /testbed && python - <<'PY'\nfrom pathlib import Path\np = Path('src/flask/config.py')\ns = p.read_text()\nold = '''    def from_file(\n        self,\n        filename: str,\n        load: t.Callable[[t.IO[t.Any]], t.Mapping],\n        silent: bool = False,\n    ) -> bool:\n        \"\"\"Update the values in the config from a file that is loaded\n        using the ``load`` parameter. The loaded data is passed to the\n        :meth:`from_mapping` method.\n\n        .. code-block:: python\n\n            import json\n            app.config.from_file(\"config.json\", load=json.load)\n\n            import toml\n            app.config.from_file(\"config.toml\", load=toml.load)\n\n        :param filename: The path to the data file. This can be an\n            absolute path or relative to the config root path.\n        :param load: A callable that takes a file handle and returns a\n            mapping of loaded data from the file.\n        :type load: ``Callable[[Reader], Mapping]`` where ``Reader``\n            implements a ``read`` method.\n        :param silent: Ignore the file if it doesn't exist.\n        :return: ``True`` if the file was loaded successfully.\n\n        .. versionadded:: 2.0\n        \"\"\"\n        filename = os.path.join(self.root_path, filename)\n\n        try:\n            with open(filename) as f:\n                obj = load(f)\n'''\nnew = '''    def from_file(\n        self,\n        filename: str,\n        load: t.Callable[[t.IO[t.Any]], t.Mapping],\n        silent: bool = False,\n        text: bool = True,\n    ) -> bool:\n        \"\"\"Update the values in the config from a file that is loaded\n        using the ``load`` parameter. The loaded data is passed to the\n        :meth:`from_mapping` method.\n\n        .. code-block:: python\n\n            import json\n            app.config.from_file(\"config.json\", load=json.load)\n\n            import tomllib\n            app.config.from_file(\"config.toml\", load=tomllib.load, text=False)\n\n        :param filename: The path to the data file. This can be an\n            absolute path or relative to the config root path.\n        :param load: A callable that takes a file handle and returns a\n            mapping of loaded data from the file.\n        :type load: ``Callable[[Reader], Mapping]`` where ``Reader``\n            implements a ``read`` method.\n        :param silent: Ignore the file if it doesn't exist.\n        :param text: Open the file in text or binary mode.\n        :return: ``True`` if the file was loaded successfully.\n\n        .. versionchanged:: 2.3\n            The ``text`` parameter was added.\n\n        .. versionadded:: 2.0\n        \"\"\"\n        filename = os.path.join(self.root_path, filename)\n\n        try:\n            with open(filename, \"r\" if text else \"rb\") as f:\n                obj = load(f)\n'''\nif old not in s:\n    raise SystemExit('old block not found')\np.write_text(s.replace(old, new))\nPY\n\ngrep -n \"def from_file\" -A55 src/flask/config.py"
-      }
-    },
-    {
-      "turn": 7,
-      "action": "run_shell_command",
-      "args": {
-        "command": "cd /testbed && sed -n '1,215p' tests/test_config.py"
-      }
-    },
-    {
-      "turn": 8,
-      "action": "run_shell_command",
-      "args": {
-        "command": "cd /testbed && python - <<'PY'\nfrom pathlib import Path\np = Path('tests/test_config.py')\ns = p.read_text()\nold = '''def test_config_from_file():\n    app = flask.Flask(__name__)\n    current_dir = os.path.dirname(os.path.abspath(__file__))\n    app.config.from_file(os.path.join(current_dir, \"static\", \"config.json\"), json.load)\n    common_object_test(app)\n\n\n'''\nnew = '''def test_config_from_file():\n    app = flask.Flask(__name__)\n    current_dir = os.path.dirname(os.path.abspath(__file__))\n    app.config.from_file(os.path.join(current_dir, \"static\", \"config.json\"), json.load)\n    common_object_test(app)\n\n\ndef test_config_from_file_binary():\n    app = flask.Flask(__name__)\n    current_dir = os.path.dirname(os.path.abspath(__file__))\n    app.config.from_file(\n        os.path.join(current_dir, \"static\", \"config.json\"),\n        lambda f: json.loads(f.read().decode()),\n        text=False,\n    )\n    common_object_test(app)\n\n\n'''\nif old not in s:\n    raise SystemExit('old block not found')\np.write_text(s.replace(old, new))\nPY\n\npytest -q tests/test_config.py && git diff -- src/flask/config.py tests/test_config.py"
+        "command": "cd /testbed && git log --oneline -8 && sed -n '1,40p' src/flask/__init__.py && grep -n \"from_file\" -n CHANGES.rst | head -20"
+      },
+      "metrics_snapshot": {
+        "calls": 5,
+        "prompt_tokens": 23386,
+        "cache_hit_tokens": 15360,
+        "cache_miss_tokens": 8026,
+        "cache_hit_rate_pct": 65.68,
+        "completion_tokens": 4639,
+        "total_tokens": 28025,
+        "task_cost_usd": 0.004033,
+        "session_cost_usd": 0.009217
       }
     },
     {
       "turn": 9,
       "action": "run_shell_command",
       "args": {
-        "command": "cd /testbed && pytest -q"
+        "command": "cd /testbed && git diff -- src/flask/config.py tests/test_config.py && grep -n \"def from_file\" -A45 src/flask/config.py"
+      },
+      "metrics_snapshot": {
+        "calls": 9,
+        "prompt_tokens": 60234,
+        "cache_hit_tokens": 50176,
+        "cache_miss_tokens": 10058,
+        "cache_hit_rate_pct": 83.3,
+        "completion_tokens": 10858,
+        "total_tokens": 71092,
+        "task_cost_usd": 0.008174,
+        "session_cost_usd": 0.013358
       }
     },
     {
       "turn": 10,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python - <<'PY'\nfrom pathlib import Path\n\npath = Path(\"src/flask/config.py\")\ntext = path.read_text()\n\nold = '''        load: t.Callable[[t.IO[t.Any]], t.Mapping],\n        silent: bool = False,\n    ) -> bool:\n'''\nnew = '''        load: t.Callable[[t.IO[t.Any]], t.Mapping],\n        silent: bool = False,\n        text: bool = True,\n    ) -> bool:\n'''\nassert old in text\ntext = text.replace(old, new, 1)\n\nold = '''        :param silent: Ignore the file if it doesn't exist.\n        :return: ``True`` if the file was loaded successfully.\n\n        .. versionadded:: 2.0\n        \"\"\"\n        filename = os.path.join(self.root_path, filename)\n\n        try:\n            with open(filename) as f:\n'''\nnew = '''        :param silent: Ignore the file if it doesn't exist.\n        :param text: If ``True``, open the file in text mode, otherwise\n            binary mode.\n        :return: ``True`` if the file was loaded successfully.\n\n        .. versionadded:: 2.0\n\n        .. versionchanged:: 2.3\n            The ``text`` parameter was added.\n        \"\"\"\n        filename = os.path.join(self.root_path, filename)\n\n        try:\n            with open(filename, mode=\"r\" if text else \"rb\") as f:\n'''\nassert old in text\ntext = text.replace(old, new, 1)\npath.write_text(text)\nprint(\"patched config.py\")\nPY"
+      },
+      "metrics_snapshot": {
+        "calls": 10,
+        "prompt_tokens": 70554,
+        "cache_hit_tokens": 59904,
+        "cache_miss_tokens": 10650,
+        "cache_hit_rate_pct": 84.91,
+        "completion_tokens": 11585,
+        "total_tokens": 82139,
+        "task_cost_usd": 0.008728,
+        "session_cost_usd": 0.013912
+      }
+    },
+    {
+      "turn": 11,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python - <<'PY'\nfrom pathlib import Path\n\npath = Path(\"tests/test_config.py\")\ntext = path.read_text()\n\nold = '''def test_config_from_file():\n    app = flask.Flask(__name__)\n    current_dir = os.path.dirname(os.path.abspath(__file__))\n    app.config.from_file(os.path.join(current_dir, \"static\", \"config.json\"), json.load)\n    common_object_test(app)\n'''\nnew = '''def test_config_from_file():\n    app = flask.Flask(__name__)\n    current_dir = os.path.dirname(os.path.abspath(__file__))\n    app.config.from_file(os.path.join(current_dir, \"static\", \"config.json\"), json.load)\n    common_object_test(app)\n\n\ndef test_config_from_file_binary():\n    app = flask.Flask(__name__)\n    current_dir = os.path.dirname(os.path.abspath(__file__))\n\n    def load(file):\n        data = file.read()\n        assert isinstance(data, bytes)\n        return json.loads(data)\n\n    app.config.from_file(\n        os.path.join(current_dir, \"static\", \"config.json\"), load, text=False\n    )\n    common_object_test(app)\n'''\nassert old in text\ntext = text.replace(old, new, 1)\npath.write_text(text)\nprint(\"patched tests\")\nPY"
+      },
+      "metrics_snapshot": {
+        "calls": 11,
+        "prompt_tokens": 81237,
+        "cache_hit_tokens": 70144,
+        "cache_miss_tokens": 11093,
+        "cache_hit_rate_pct": 86.34,
+        "completion_tokens": 12309,
+        "total_tokens": 93546,
+        "task_cost_usd": 0.00926,
+        "session_cost_usd": 0.014444
+      }
+    },
+    {
+      "turn": 12,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && git diff -- src/flask/config.py tests/test_config.py && python -m pytest tests/test_config.py -q"
+      },
+      "metrics_snapshot": {
+        "calls": 12,
+        "prompt_tokens": 92227,
+        "cache_hit_tokens": 80768,
+        "cache_miss_tokens": 11459,
+        "cache_hit_rate_pct": 87.58,
+        "completion_tokens": 12351,
+        "total_tokens": 104578,
+        "task_cost_usd": 0.009372,
+        "session_cost_usd": 0.014556
+      }
+    },
+    {
+      "turn": 13,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python -m pytest -q"
+      },
+      "metrics_snapshot": {
+        "calls": 13,
+        "prompt_tokens": 103851,
+        "cache_hit_tokens": 91648,
+        "cache_miss_tokens": 12203,
+        "cache_hit_rate_pct": 88.25,
+        "completion_tokens": 13271,
+        "total_tokens": 117122,
+        "task_cost_usd": 0.010068,
+        "session_cost_usd": 0.015252
+      }
+    },
+    {
+      "turn": 14,
       "action": "finish_task",
-      "args": {}
+      "args": {},
+      "metrics_snapshot": {
+        "calls": 14,
+        "prompt_tokens": 118296,
+        "cache_hit_tokens": 103168,
+        "cache_miss_tokens": 15128,
+        "cache_hit_rate_pct": 87.21,
+        "completion_tokens": 13959,
+        "total_tokens": 132255,
+        "task_cost_usd": 0.010954,
+        "session_cost_usd": 0.016138
+      }
     }
-  ],
-  "usage_summary": "[Quota Tracker] Calls: 34 | Prompt Tokens: 207,592 | Completion Tokens: 13,795 | Total Tokens: 221,387 | Est. Cost: $0.0128[DEEPSEEK][DeepSeek OFF-PEAK (1x)] Calls: 34 | Cache Hit: 87.3% (181,248/207,592) | Out: 13,795 | Session Spend: $0.01277"
+  ]
 }

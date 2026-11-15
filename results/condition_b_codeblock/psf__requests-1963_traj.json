@@ -1,173 +1,291 @@
 {
   "instance_id": "psf__requests-1963",
   "condition": "condition_b_codeblock",
-  "turns_taken": 25,
+  "turns_taken": 17,
   "finished_by_tool": true,
-  "model_patch": "diff --git a/requests/sessions.py b/requests/sessions.py\nindex 425db22..a0676a2 100755\n--- a/requests/sessions.py\n+++ b/requests/sessions.py\n@@ -180,6 +180,12 @@ class SessionRedirectMixin(object):\n \n             extract_cookies_to_jar(self.cookies, prepared_request, resp.raw)\n \n+            # https://github.com/kennethreitz/requests/issues/1905\n+            # The next request should be based on the request we just sent,\n+            # not the original request, to ensure that method changes are\n+            # preserved across multiple redirects.\n+            req = prepared_request\n+\n             i += 1\n             yield resp\n \ndiff --git a/test_requests.py b/test_requests.py\nindex 17de849..af1b67a 100755\n--- a/test_requests.py\n+++ b/test_requests.py\n@@ -11,7 +11,7 @@ import unittest\n \n import requests\n import pytest\n-from requests.adapters import HTTPAdapter\n+from requests.adapters import BaseAdapter, HTTPAdapter\n from requests.auth import HTTPDigestAuth\n from requests.compat import (\n     Morsel, cookielib, getproxies, str, urljoin, urlparse)\n@@ -211,6 +211,59 @@ class RequestsTestCase(unittest.TestCase):\n         req_urls = [r.request.url for r in resp.history]\n         assert urls == req_urls\n \n+    def test_redirect_method_is_preserved_from_previous_redirect(self):\n+        class RedirectAdapter(BaseAdapter):\n+            def __init__(self, responses):\n+                self.responses = responses\n+                self.calls = []\n+\n+            def send(self, request, **kwargs):\n+                self.calls.append((request.method, request.url))\n+                resp = self.responses.pop(0)\n+                resp.request = request\n+                return resp\n+\n+            def close(self):\n+                pass\n+\n+        class FakeRaw(object):\n+            def release_conn(self):\n+                pass\n+\n+        def make_response(url, status_code, location=None):\n+            resp = requests.Response()\n+            resp.status_code = status_code\n+            resp.url = url\n+            resp.headers = CaseInsensitiveDict()\n+            if location is not None:\n+                resp.headers['location'] = location\n+            resp._content = b''\n+            resp._content_consumed = True\n+            resp.raw = FakeRaw()\n+            return resp\n+\n+        adapter = RedirectAdapter([\n+            make_response('http://example.com/do_something', 303, '/new_thing'),\n+            make_response('http://example.com/new_thing', 307,\n+                          'http://other.example.com/new_thing'),\n+            make_response('http://other.example.com/new_thing', 200),\n+        ])\n+\n+        s = requests.Session()\n+        s.trust_env = False\n+        s.mount('http://', adapter)\n+\n+        resp = s.post('http://example.com/do_something')\n+\n+        # The intermediate 303 turns the POST into a GET, and the subsequent\n+        # 307 must preserve that GET rather than reverting to the POST.\n+        assert adapter.calls == [\n+            ('POST', 'http://example.com/do_something'),\n+            ('GET', 'http://example.com/new_thing'),\n+            ('GET', 'http://other.example.com/new_thing'),\n+        ]\n+        assert [r.request.method for r in resp.history] == ['POST', 'GET']\n+\n     def test_headers_on_session_with_None_are_not_sent(self):\n         \"\"\"Do not send headers in Session.headers with None values.\"\"\"\n         ses = requests.Session()\n",
+  "empty_action_retries": 2,
+  "wall_time_sec": 100.99,
+  "usage_metrics": {
+    "calls": 17,
+    "prompt_tokens": 164378,
+    "cache_hit_tokens": 148096,
+    "cache_miss_tokens": 16282,
+    "cache_hit_rate_pct": 90.09,
+    "completion_tokens": 14403,
+    "total_tokens": 178781,
+    "task_cost_usd": 0.011528,
+    "session_cost_usd": 0.011528
+  },
+  "usage_summary": "[Quota Tracker] Calls: 17 | Prompt Tokens: 164,378 | Completion Tokens: 14,403 | Total Tokens: 178,781 | Est. Cost: $0.0115[DEEPSEEK][DeepSeek OFF-PEAK (1x)] Calls: 17 | Cache Hit: 90.1% (148,096/164,378) | Out: 14,403 | Task Spend: $0.01153 | Total Session Spend: $0.01153",
+  "model_patch": "diff --git a/requests/sessions.py b/requests/sessions.py\nindex 425db22..e1de881 100755\n--- a/requests/sessions.py\n+++ b/requests/sessions.py\n@@ -180,6 +180,10 @@ class SessionRedirectMixin(object):\n \n             extract_cookies_to_jar(self.cookies, prepared_request, resp.raw)\n \n+            # Override the original request with the prepared request so that\n+            # subsequent redirects use the request that was actually sent.\n+            req = prepared_request\n+\n             i += 1\n             yield resp\n \ndiff --git a/test_requests.py b/test_requests.py\nindex 17de849..6b153ed 100755\n--- a/test_requests.py\n+++ b/test_requests.py\n@@ -118,6 +118,46 @@ class RequestsTestCase(unittest.TestCase):\n         assert r.history[0].status_code == 302\n         assert r.history[0].is_redirect\n \n+    def test_redirect_after_303_uses_redirected_method(self):\n+        class Raw(object):\n+            def release_conn(self):\n+                pass\n+\n+        def make_response(status_code, location, url):\n+            response = requests.Response()\n+            response.status_code = status_code\n+            response.url = url\n+            response.raw = Raw()\n+            response._content = b''\n+            if location is not None:\n+                response.headers['location'] = location\n+            return response\n+\n+        s = requests.Session()\n+        s.trust_env = False\n+        req = requests.Request(\n+            'POST', 'http://server.example.com/do_something').prepare()\n+        first_response = make_response(\n+            303, '/new_thing_1513',\n+            'http://server.example.com/do_something')\n+        responses = [\n+            make_response(\n+                307, '//failover.example.com/new_thing_1513',\n+                'http://server.example.com/new_thing_1513'),\n+            make_response(\n+                200, None,\n+                'http://failover.example.com/new_thing_1513'),\n+        ]\n+        sent = []\n+\n+        def fake_send(prepared_request, **kwargs):\n+            sent.append(prepared_request)\n+            return responses.pop(0)\n+\n+        s.send = fake_send\n+        list(s.resolve_redirects(first_response, req))\n+        assert [r.method for r in sent] == ['GET', 'GET']\n+\n     # def test_HTTP_302_ALLOW_REDIRECT_POST(self):\n     #     r = requests.post(httpbin('status', '302'), data={'some': 'data'})\n     #     self.assertEqual(r.status_code, 200)\n",
   "trajectory": [
     {
       "turn": 1,
       "action": "run_shell_command",
       "args": {
         "command": "cd /testbed && git status --short && ls"
+      },
+      "metrics_snapshot": {
+        "calls": 1,
+        "prompt_tokens": 439,
+        "cache_hit_tokens": 256,
+        "cache_miss_tokens": 183,
+        "cache_hit_rate_pct": 58.31,
+        "completion_tokens": 2048,
+        "total_tokens": 2487,
+        "task_cost_usd": 0.001257,
+        "session_cost_usd": 0.001257
+      }
+    },
+    {
+      "turn": 2,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && grep -n \"def resolve_redirects\" -A150 requests/sessions.py"
+      },
+      "metrics_snapshot": {
+        "calls": 2,
+        "prompt_tokens": 2959,
+        "cache_hit_tokens": 640,
+        "cache_miss_tokens": 2319,
+        "cache_hit_rate_pct": 21.63,
+        "completion_tokens": 2409,
+        "total_tokens": 5368,
+        "task_cost_usd": 0.001795,
+        "session_cost_usd": 0.001795
       }
     },
     {
       "turn": 3,
       "action": "run_shell_command",
       "args": {
-        "command": "cd /testbed && grep -n \"resolve_redirects\" requests/sessions.py && sed -n '100,260p' requests/sessions.py"
+        "command": "cd /testbed && grep -n \"redirect\\|resolve_redirects\\|303\\|307\" test_requests.py | head -100"
+      },
+      "metrics_snapshot": {
+        "calls": 3,
+        "prompt_tokens": 7289,
+        "cache_hit_tokens": 3072,
+        "cache_miss_tokens": 4217,
+        "cache_hit_rate_pct": 42.15,
+        "completion_tokens": 4457,
+        "total_tokens": 11746,
+        "task_cost_usd": 0.003316,
+        "session_cost_usd": 0.003316
       }
     },
     {
       "turn": 4,
       "action": "run_shell_command",
       "args": {
-        "command": "cd /testbed && sed -n '75,140p' requests/sessions.py"
-      }
-    },
-    {
-      "turn": 5,
-      "action": "run_shell_command",
-      "args": {
-        "command": "cd /testbed && grep -n \"__version__\" requests/__init__.py && grep -n \"redirect\" test_requests.py | head -80"
+        "command": "cd /testbed && grep -n \"def is_redirect\\|def content\\|def close\" -A30 -B4 requests/models.py"
+      },
+      "metrics_snapshot": {
+        "calls": 4,
+        "prompt_tokens": 13670,
+        "cache_hit_tokens": 7296,
+        "cache_miss_tokens": 6374,
+        "cache_hit_rate_pct": 53.37,
+        "completion_tokens": 5137,
+        "total_tokens": 18807,
+        "task_cost_usd": 0.00406,
+        "session_cost_usd": 0.00406
       }
     },
     {
       "turn": 6,
       "action": "run_shell_command",
       "args": {
-        "command": "cd /testbed && git log --oneline -15"
+        "command": "cd /testbed && grep -n \"def send\" -A120 requests/sessions.py"
+      },
+      "metrics_snapshot": {
+        "calls": 6,
+        "prompt_tokens": 29267,
+        "cache_hit_tokens": 21248,
+        "cache_miss_tokens": 8019,
+        "cache_hit_rate_pct": 72.6,
+        "completion_tokens": 6297,
+        "total_tokens": 35564,
+        "task_cost_usd": 0.005045,
+        "session_cost_usd": 0.005045
       }
     },
     {
       "turn": 7,
       "action": "run_shell_command",
       "args": {
-        "command": "cd /testbed && python - <<'PY'\nfrom pathlib import Path\np = Path('requests/sessions.py')\ns = p.read_text()\nold = \"\"\"            extract_cookies_to_jar(self.cookies, prepared_request, resp.raw)\n\n            i += 1\n            yield resp\n\"\"\"\nnew = \"\"\"            extract_cookies_to_jar(self.cookies, prepared_request, resp.raw)\n\n            # https://github.com/kennethreitz/requests/issues/1905\n            # The next request should be based on the request we just sent,\n            # not the original request, to ensure that method changes are\n            # preserved across multiple redirects.\n            req = prepared_request\n\n            i += 1\n            yield resp\n\"\"\"\nassert old in s\np.write_text(s.replace(old, new))\nPY\ngit diff"
+        "command": "cd /testbed && python - <<'PY'\nfrom requests.models import Request, Response\nfrom requests.sessions import Session\nimport requests.sessions as sessions\n\nclass Raw(object):\n    def release_conn(self):\n        pass\n\ndef make_resp(status, location, url):\n    r = Response()\n    r.status_code = status\n    if location is not None:\n        r.headers['location'] = location\n    r.url = url\n    r.raw = Raw()\n    r._content = b''\n    return r\n\ns = Session()\ns.trust_env = False\nreq = Request('POST', 'http://server.example.com/do_something').prepare()\nfirst = make_resp(303, '/new_thing_1513', 'http://server.example.com/do_something')\nqueue = [\n    make_resp(307, '//failover.example.com/new_thing_1513', 'http://server.example.com/new_thing_1513'),\n    make_resp(200, None, 'http://failover.example.com/new_thing_1513'),\n]\nsent = []\n\ndef fake_send(prepared_request, **kwargs):\n    sent.append(prepared_request)\n    return queue.pop(0)\n\ns.send = fake_send\nsessions.extract_cookies_to_jar = lambda *args, **kwargs: None\nlist(s.resolve_redirects(first, req))\nprint([r.method for r in sent])\nfor r in sent:\n    print(r.method, r.url, r.headers.get('Content-Length'), r.body)\nPY"
+      },
+      "metrics_snapshot": {
+        "calls": 7,
+        "prompt_tokens": 38138,
+        "cache_hit_tokens": 29056,
+        "cache_miss_tokens": 9082,
+        "cache_hit_rate_pct": 76.19,
+        "completion_tokens": 7104,
+        "total_tokens": 45242,
+        "task_cost_usd": 0.005712,
+        "session_cost_usd": 0.005712
+      }
+    },
+    {
+      "turn": 8,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python - <<'PY'\nfrom pathlib import Path\np = Path('requests/sessions.py')\ns = p.read_text()\nold = \"\"\"            extract_cookies_to_jar(self.cookies, prepared_request, resp.raw)\n\n            i += 1\n            yield resp\n\"\"\"\nnew = \"\"\"            extract_cookies_to_jar(self.cookies, prepared_request, resp.raw)\n\n            # Override the original request with the prepared request so that\n            # subsequent redirects use the request that was actually sent.\n            req = prepared_request\n\n            i += 1\n            yield resp\n\"\"\"\nassert old in s\np.write_text(s.replace(old, new))\nPY\ngit diff -- requests/sessions.py"
+      },
+      "metrics_snapshot": {
+        "calls": 8,
+        "prompt_tokens": 47391,
+        "cache_hit_tokens": 37888,
+        "cache_miss_tokens": 9503,
+        "cache_hit_rate_pct": 79.95,
+        "completion_tokens": 7596,
+        "total_tokens": 54987,
+        "task_cost_usd": 0.006097,
+        "session_cost_usd": 0.006097
       }
     },
     {
       "turn": 9,
       "action": "run_shell_command",
       "args": {
-        "command": "cd /testbed && sed -n '1,60p' test_requests.py && grep -n \"class TestSession\\|def test_\" test_requests.py | sed -n '1,70p'"
+        "command": "cd /testbed && sed -n '1,90p' test_requests.py && sed -n '740,785p' test_requests.py"
+      },
+      "metrics_snapshot": {
+        "calls": 9,
+        "prompt_tokens": 56946,
+        "cache_hit_tokens": 47104,
+        "cache_miss_tokens": 9842,
+        "cache_hit_rate_pct": 82.72,
+        "completion_tokens": 7719,
+        "total_tokens": 64665,
+        "task_cost_usd": 0.006249,
+        "session_cost_usd": 0.006249
       }
     },
     {
       "turn": 10,
       "action": "run_shell_command",
       "args": {
-        "command": "cd /testbed && sed -n '205,214p' test_requests.py && grep -n \"resolve_redirects\\|expect_response\\|_urllib3\" test_requests.py"
-      }
-    },
-    {
-      "turn": 11,
-      "action": "run_shell_command",
-      "args": {
-        "command": "cd /testbed && python - <<'PY'\nimport threading\nfrom http.server import BaseHTTPRequestHandler, HTTPServer\nimport requests\n\nclass H(BaseHTTPRequestHandler):\n    def log_message(self, *a): pass\n    def do_POST(self):\n        if self.path == '/do_something':\n            self.send_response(303)\n            self.send_header('Location', '/new_thing')\n            self.end_headers()\n        else:\n            self.send_response(500); self.end_headers()\n    def do_GET(self):\n        if self.path == '/new_thing':\n            self.send_response(307)\n            self.send_header('Location', '/final')\n            self.end_headers()\n        elif self.path == '/final':\n            body = self.command.encode()\n            self.send_response(200)\n            self.send_header('Content-Length', str(len(body)))\n            self.end_headers()\n            self.wfile.write(body)\n        else:\n            self.send_response(500); self.end_headers()\n\nsrv = HTTPServer(('127.0.0.1', 0), H)\nthreading.Thread(target=srv.serve_forever, daemon=True).start()\nurl = 'http://127.0.0.1:%d/do_something' % srv.server_port\nr = requests.post(url)\nprint('final status', r.status_code, 'method body', r.text)\nassert r.text == 'GET', r.text\nprint('methods in history:', [h.request.method for h in r.history])\nsrv.shutdown()\nPY"
+        "command": "cd /testbed && grep -n \"def extract_cookies_to_jar\\|class MockRequest\\|class MockResponse\" -A80 requests/cookies.py"
+      },
+      "metrics_snapshot": {
+        "calls": 10,
+        "prompt_tokens": 67575,
+        "cache_hit_tokens": 56576,
+        "cache_miss_tokens": 10999,
+        "cache_hit_rate_pct": 83.72,
+        "completion_tokens": 8090,
+        "total_tokens": 75665,
+        "task_cost_usd": 0.006674,
+        "session_cost_usd": 0.006674
       }
     },
     {
       "turn": 12,
       "action": "run_shell_command",
       "args": {
-        "command": "cd /testbed && ls tests 2>/dev/null; grep -n \"monkeypatch\\|HTTPAdapter\\|MockAdapter\\|class .*Adapter\" test_requests.py"
+        "command": "cd /testbed && python - <<'PY'\nfrom requests.models import Request, Response\nfrom requests.sessions import Session\n\nclass Raw(object):\n    def release_conn(self):\n        pass\n\ndef make_resp(status, location, url):\n    r = Response()\n    r.status_code = status\n    if location is not None:\n        r.headers['location'] = location\n    r.url = url\n    r.raw = Raw()\n    r._content = b''\n    return r\n\ns = Session()\ns.trust_env = False\nreq = Request('POST', 'http://server.example.com/do_something').prepare()\nfirst = make_resp(303, '/new_thing_1513', 'http://server.example.com/do_something')\nqueue = [\n    make_resp(307, '//failover.example.com/new_thing_1513', 'http://server.example.com/new_thing_1513'),\n    make_resp(200, None, 'http://failover.example.com/new_thing_1513'),\n]\nsent = []\n\ndef fake_send(prepared_request, **kwargs):\n    sent.append(prepared_request)\n    return queue.pop(0)\n\ns.send = fake_send\nlist(s.resolve_redirects(first, req))\nprint([r.method for r in sent])\nassert [r.method for r in sent] == ['GET', 'GET']\nPY"
+      },
+      "metrics_snapshot": {
+        "calls": 12,
+        "prompt_tokens": 92574,
+        "cache_hit_tokens": 79488,
+        "cache_miss_tokens": 13086,
+        "cache_hit_rate_pct": 85.86,
+        "completion_tokens": 10689,
+        "total_tokens": 103263,
+        "task_cost_usd": 0.008615,
+        "session_cost_usd": 0.008615
       }
     },
     {
       "turn": 13,
       "action": "run_shell_command",
       "args": {
-        "command": "cd /testbed && grep -n \"^class \\|^def \" test_requests.py | tail -30 && wc -l test_requests.py"
+        "command": "cd /testbed && sed -n '90,180p' test_requests.py"
+      },
+      "metrics_snapshot": {
+        "calls": 13,
+        "prompt_tokens": 105415,
+        "cache_hit_tokens": 91904,
+        "cache_miss_tokens": 13511,
+        "cache_hit_rate_pct": 87.18,
+        "completion_tokens": 11120,
+        "total_tokens": 116535,
+        "task_cost_usd": 0.008974,
+        "session_cost_usd": 0.008974
       }
     },
     {
       "turn": 14,
       "action": "run_shell_command",
       "args": {
-        "command": "cd /testbed && grep -n \"def extract_cookies_to_jar\" -A30 requests/cookies.py"
+        "command": "cd /testbed && python - <<'PY'\nfrom pathlib import Path\np = Path('test_requests.py')\ns = p.read_text()\nold = '''    def test_HTTP_302_ALLOW_REDIRECT_GET(self):\n        r = requests.get(httpbin('redirect', '1'))\n        assert r.status_code == 200\n        assert r.history[0].status_code == 302\n        assert r.history[0].is_redirect\n\n'''\nnew = '''    def test_HTTP_302_ALLOW_REDIRECT_GET(self):\n        r = requests.get(httpbin('redirect', '1'))\n        assert r.status_code == 200\n        assert r.history[0].status_code == 302\n        assert r.history[0].is_redirect\n\n    def test_redirect_after_303_uses_redirected_method(self):\n        class Raw(object):\n            def release_conn(self):\n                pass\n\n        def make_response(status_code, location, url):\n            response = requests.Response()\n            response.status_code = status_code\n            response.url = url\n            response.raw = Raw()\n            response._content = b''\n            if location is not None:\n                response.headers['location'] = location\n            return response\n\n        s = requests.Session()\n        s.trust_env = False\n        req = requests.Request(\n            'POST', 'http://server.example.com/do_something').prepare()\n        first_response = make_response(\n            303, '/new_thing_1513',\n            'http://server.example.com/do_something')\n        responses = [\n            make_response(\n                307, '//failover.example.com/new_thing_1513',\n                'http://server.example.com/new_thing_1513'),\n            make_response(\n                200, None,\n                'http://failover.example.com/new_thing_1513'),\n        ]\n        sent = []\n\n        def fake_send(prepared_request, **kwargs):\n            sent.append(prepared_request)\n            return responses.pop(0)\n\n        s.send = fake_send\n        list(s.resolve_redirects(first_response, req))\n        assert [r.method for r in sent] == ['GET', 'GET']\n\n'''\nassert old in s\np.write_text(s.replace(old, new))\nPY\ngit diff -- test_requests.py"
+      },
+      "metrics_snapshot": {
+        "calls": 14,
+        "prompt_tokens": 119236,
+        "cache_hit_tokens": 104704,
+        "cache_miss_tokens": 14532,
+        "cache_hit_rate_pct": 87.81,
+        "completion_tokens": 13110,
+        "total_tokens": 132346,
+        "task_cost_usd": 0.01036,
+        "session_cost_usd": 0.01036
       }
     },
     {
       "turn": 15,
       "action": "run_shell_command",
       "args": {
-        "command": "cd /testbed && python - <<'PY'\nimport requests\nfrom requests.structures import CaseInsensitiveDict\n\ndef fake_response(url, status, location=None):\n    r = requests.Response()\n    r.status_code = status\n    r.url = url\n    r.headers = CaseInsensitiveDict()\n    if location is not None:\n        r.headers['location'] = location\n    r._content = b''\n    r._content_consumed = True\n    return r\n\nsession = requests.Session()\nsession.trust_env = False\nresponses = [\n    fake_response('http://example.com/do_something', 303, '/new_thing'),\n    fake_response('http://example.com/new_thing', 307, 'http://other.example.com/new_thing'),\n    fake_response('http://other.example.com/new_thing', 200),\n]\ncalls = []\ndef fake_send(request, **kwargs):\n    calls.append((request.method, request.url))\n    r = responses.pop(0)\n    r.request = request\n    return r\nsession.send = fake_send\nr = session.post('http://example.com/do_something')\nprint(calls)\nassert calls == [('POST', 'http://example.com/do_something'),\n                 ('GET', 'http://example.com/new_thing'),\n                 ('GET', 'http://other.example.com/new_thing')], calls\nassert r.history[0].request.method == 'POST'\nassert r.history[1].request.method == 'GET'\nprint('ok')\nPY"
+        "command": "cd /testbed && pytest -q test_requests.py::RequestsTestCase::test_redirect_after_303_uses_redirected_method"
+      },
+      "metrics_snapshot": {
+        "calls": 15,
+        "prompt_tokens": 134041,
+        "cache_hit_tokens": 118400,
+        "cache_miss_tokens": 15641,
+        "cache_hit_rate_pct": 88.33,
+        "completion_tokens": 13206,
+        "total_tokens": 147247,
+        "task_cost_usd": 0.010625,
+        "session_cost_usd": 0.010625
+      }
+    },
+    {
+      "turn": 16,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && git status --short && git diff --check"
+      },
+      "metrics_snapshot": {
+        "calls": 16,
+        "prompt_tokens": 149187,
+        "cache_hit_tokens": 133120,
+        "cache_miss_tokens": 16067,
+        "cache_hit_rate_pct": 89.23,
+        "completion_tokens": 14054,
+        "total_tokens": 163241,
+        "task_cost_usd": 0.011242,
+        "session_cost_usd": 0.011242
       }
     },
     {
       "turn": 17,
-      "action": "run_shell_command",
-      "args": {
-        "command": "cd /testbed && grep -n \"def is_redirect\" -A15 requests/models.py"
-      }
-    },
-    {
-      "turn": 18,
-      "action": "run_shell_command",
-      "args": {
-        "command": "cd /testbed && python - <<'PY'\nimport requests\nfrom requests.adapters import BaseAdapter\nfrom requests.structures import CaseInsensitiveDict\n\ndef fake_response(url, status, location=None):\n    r = requests.Response()\n    r.status_code = status\n    r.url = url\n    r.headers = CaseInsensitiveDict()\n    if location is not None:\n        r.headers['location'] = location\n    r._content = b''\n    r._content_consumed = True\n    return r\n\nclass FakeAdapter(BaseAdapter):\n    def __init__(self, responses):\n        self.responses = responses\n        self.calls = []\n    def send(self, request, **kwargs):\n        self.calls.append((request.method, request.url))\n        r = self.responses.pop(0)\n        r.request = request\n        r.connection = None\n        return r\n    def close(self):\n        pass\n\nsession = requests.Session()\nsession.trust_env = False\nadapter = FakeAdapter([\n    fake_response('http://example.com/do_something', 303, '/new_thing'),\n    fake_response('http://example.com/new_thing', 307, 'http://other.example.com/new_thing'),\n    fake_response('http://other.example.com/new_thing', 200),\n])\nsession.mount('http://', adapter)\nr = session.post('http://example.com/do_something')\nprint(adapter.calls)\nassert adapter.calls == [('POST', 'http://example.com/do_something'),\n                         ('GET', 'http://example.com/new_thing'),\n                         ('GET', 'http://other.example.com/new_thing')], adapter.calls\nassert r.history[0].request.method == 'POST'\nassert r.history[1].request.method == 'GET'\nprint('ok')\nPY"
-      }
-    },
-    {
-      "turn": 19,
-      "action": "run_shell_command",
-      "args": {
-        "command": "cd /testbed && python - <<'PY'\nimport requests\nfrom requests.adapters import BaseAdapter\nfrom requests.structures import CaseInsensitiveDict\n\nclass Raw(object):\n    def release_conn(self):\n        pass\n\ndef fake_response(url, status, location=None):\n    r = requests.Response()\n    r.status_code = status\n    r.url = url\n    r.headers = CaseInsensitiveDict()\n    if location is not None:\n        r.headers['location'] = location\n    r._content = b''\n    r._content_consumed = True\n    r.raw = Raw()\n    return r\n\nclass FakeAdapter(BaseAdapter):\n    def __init__(self, responses):\n        self.responses = responses\n        self.calls = []\n    def send(self, request, **kwargs):\n        self.calls.append((request.method, request.url))\n        r = self.responses.pop(0)\n        r.request = request\n        return r\n    def close(self):\n        pass\n\nsession = requests.Session()\nsession.trust_env = False\nadapter = FakeAdapter([\n    fake_response('http://example.com/do_something', 303, '/new_thing'),\n    fake_response('http://example.com/new_thing', 307, 'http://other.example.com/new_thing'),\n    fake_response('http://other.example.com/new_thing', 200),\n])\nsession.mount('http://', adapter)\nr = session.post('http://example.com/do_something')\nprint(adapter.calls)\nassert adapter.calls == [('POST', 'http://example.com/do_something'),\n                         ('GET', 'http://example.com/new_thing'),\n                         ('GET', 'http://other.example.com/new_thing')], adapter.calls\nassert r.history[0].request.method == 'POST'\nassert r.history[1].request.method == 'GET'\nprint('ok')\nPY"
-      }
-    },
-    {
-      "turn": 20,
-      "action": "run_shell_command",
-      "args": {
-        "command": "cd /testbed && python - <<'PY'\nfrom pathlib import Path\np = Path('test_requests.py')\ns = p.read_text()\n\ns = s.replace(\n    \"from requests.adapters import HTTPAdapter\\n\",\n    \"from requests.adapters import BaseAdapter, HTTPAdapter\\n\",\n)\n\nanchor = \"\"\"    def test_requests_in_history_are_not_overridden(self):\n        resp = requests.get(httpbin('redirect/3'))\n        urls = [r.url for r in resp.history]\n        req_urls = [r.request.url for r in resp.history]\n        assert urls == req_urls\n\"\"\"\nnew_test = anchor + '''\n    def test_redirect_method_is_preserved_from_previous_redirect(self):\n        class RedirectAdapter(BaseAdapter):\n            def __init__(self, responses):\n                self.responses = responses\n                self.calls = []\n\n            def send(self, request, **kwargs):\n                self.calls.append((request.method, request.url))\n                resp = self.responses.pop(0)\n                resp.request = request\n                return resp\n\n            def close(self):\n                pass\n\n        class FakeRaw(object):\n            def release_conn(self):\n                pass\n\n        def make_response(url, status_code, location=None):\n            resp = requests.Response()\n            resp.status_code = status_code\n            resp.url = url\n            resp.headers = CaseInsensitiveDict()\n            if location is not None:\n                resp.headers['location'] = location\n            resp._content = b''\n            resp._content_consumed = True\n            resp.raw = FakeRaw()\n            return resp\n\n        adapter = RedirectAdapter([\n            make_response('http://example.com/do_something', 303, '/new_thing'),\n            make_response('http://example.com/new_thing', 307,\n                          'http://other.example.com/new_thing'),\n            make_response('http://other.example.com/new_thing', 200),\n        ])\n\n        s = requests.Session()\n        s.trust_env = False\n        s.mount('http://', adapter)\n\n        resp = s.post('http://example.com/do_something')\n\n        # The intermediate 303 turns the POST into a GET, and the subsequent\n        # 307 must preserve that GET rather than reverting to the POST.\n        assert adapter.calls == [\n            ('POST', 'http://example.com/do_something'),\n            ('GET', 'http://example.com/new_thing'),\n            ('GET', 'http://other.example.com/new_thing'),\n        ]\n        assert [r.request.method for r in resp.history] == ['POST', 'GET']\n'''\nassert anchor in s\ns = s.replace(anchor, new_test)\np.write_text(s)\nPY\ngit diff --stat"
-      }
-    },
-    {
-      "turn": 21,
-      "action": "run_shell_command",
-      "args": {
-        "command": "cd /testbed && python -m pytest test_requests.py -k \"redirect_method_is_preserved or requests_in_history_are_not_overridden\" -q"
-      }
-    },
-    {
-      "turn": 22,
-      "action": "run_shell_command",
-      "args": {
-        "command": "cd /testbed && python -m pytest test_requests.py -k \"redirect_method_is_preserved\" -q 2>&1 | tail -5"
-      }
-    },
-    {
-      "turn": 23,
-      "action": "run_shell_command",
-      "args": {
-        "command": "cd /testbed && git stash -- requests/sessions.py && python -m pytest test_requests.py -k \"redirect_method_is_preserved\" -q 2>&1 | tail -3; git stash pop"
-      }
-    },
-    {
-      "turn": 24,
-      "action": "run_shell_command",
-      "args": {
-        "command": "cd /testbed && git diff"
-      }
-    },
-    {
-      "turn": 25,
       "action": "finish_task",
-      "args": {}
+      "args": {},
+      "metrics_snapshot": {
+        "calls": 17,
+        "prompt_tokens": 164378,
+        "cache_hit_tokens": 148096,
+        "cache_miss_tokens": 16282,
+        "cache_hit_rate_pct": 90.09,
+        "completion_tokens": 14403,
+        "total_tokens": 178781,
+        "task_cost_usd": 0.011528,
+        "session_cost_usd": 0.011528
+      }
     }
-  ],
-  "usage_metrics": {
-    "calls": 25,
-    "prompt_tokens": 148718,
-    "cache_hit_tokens": 134656,
-    "cache_miss_tokens": 14062,
-    "cache_hit_rate_pct": 90.54,
-    "completion_tokens": 9919,
-    "total_tokens": 158637,
-    "task_cost_usd": 0.008465,
-    "session_cost_usd": 0.008465
-  },
-  "usage_summary": "[Quota Tracker] Calls: 25 | Prompt Tokens: 148,718 | Completion Tokens: 9,919 | Total Tokens: 158,637 | Est. Cost: $0.0085[DEEPSEEK][DeepSeek OFF-PEAK (1x)] Calls: 25 | Cache Hit: 90.5% (134,656/148,718) | Out: 9,919 | Task Spend: $0.00846 | Total Session Spend: $0.00846"
+  ]
 }

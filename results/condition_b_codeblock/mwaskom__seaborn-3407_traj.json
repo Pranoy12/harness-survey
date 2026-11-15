@@ -1,0 +1,453 @@
+{
+  "instance_id": "mwaskom__seaborn-3407",
+  "condition": "condition_b_codeblock",
+  "turns_taken": 24,
+  "finished_by_tool": true,
+  "empty_action_retries": 0,
+  "wall_time_sec": 376.29,
+  "usage_metrics": {
+    "calls": 24,
+    "prompt_tokens": 391978,
+    "cache_hit_tokens": 363648,
+    "cache_miss_tokens": 28330,
+    "cache_hit_rate_pct": 92.77,
+    "completion_tokens": 11376,
+    "total_tokens": 403354,
+    "task_cost_usd": 0.012166,
+    "session_cost_usd": 0.025622
+  },
+  "usage_summary": "[Quota Tracker] Calls: 24 | Prompt Tokens: 391,978 | Completion Tokens: 11,376 | Total Tokens: 403,354 | Est. Cost: $0.0122[DEEPSEEK][DeepSeek OFF-PEAK (1x)] Calls: 24 | Cache Hit: 92.8% (363,648/391,978) | Out: 11,376 | Task Spend: $0.01217 | Total Session Spend: $0.02562",
+  "model_patch": "diff --git a/seaborn/axisgrid.py b/seaborn/axisgrid.py\nindex 75349099..6cc50823 100755\n--- a/seaborn/axisgrid.py\n+++ b/seaborn/axisgrid.py\n@@ -1472,8 +1472,10 @@ class PairGrid(Grid):\n                 for ax in diag_axes[1:]:\n                     share_axis(diag_axes[0], ax, \"y\")\n \n-            self.diag_vars = np.array(diag_vars, np.object_)\n-            self.diag_axes = np.array(diag_axes, np.object_)\n+            self.diag_vars = np.empty(len(diag_vars), object)\n+            self.diag_vars[:] = diag_vars\n+            self.diag_axes = np.empty(len(diag_axes), object)\n+            self.diag_axes[:] = diag_axes\n \n         if \"hue\" not in signature(func).parameters:\n             return self._map_diag_iter_hue(func, **kwargs)\ndiff --git a/tests/test_axisgrid.py b/tests/test_axisgrid.py\nindex ce8b0eaa..54b00b01 100755\n--- a/tests/test_axisgrid.py\n+++ b/tests/test_axisgrid.py\n@@ -939,6 +939,27 @@ class TestPairGrid:\n             for ptch in ax.patches:\n                 assert not ptch.fill\n \n+    def test_map_diag_multiindex(self):\n+\n+        columns = pd.MultiIndex.from_product([[\"a\", \"b\"], [\"x\", \"y\"]])\n+        df = pd.DataFrame(\n+            self.rs.normal(size=(60, 4)), columns=columns\n+        )\n+        g = ag.PairGrid(df)\n+        g.map_diag(plt.hist)\n+        g.map_offdiag(plt.scatter)\n+\n+        assert list(g.diag_vars) == list(columns)\n+        for var, ax in zip(g.diag_vars, g.diag_axes):\n+            assert len(ax.patches) == 10\n+            assert pytest.approx(ax.patches[0].get_x()) == df[var].min()\n+\n+        for i, j in zip(*np.tril_indices_from(g.axes, -1)):\n+            ax = g.axes[i, j]\n+            x, y = ax.collections[0].get_offsets().T\n+            assert_array_equal(x, df[columns[j]])\n+            assert_array_equal(y, df[columns[i]])\n+\n     def test_map_diag_rectangular(self):\n \n         x_vars = [\"x\", \"y\"]\n@@ -1362,6 +1383,27 @@ class TestPairGrid:\n             c1.get_paths()[0].vertices, c2.get_paths()[0].vertices,\n         )\n \n+    def test_pairplot_multiindex(self):\n+\n+        columns = pd.MultiIndex.from_product([[\"a\", \"b\"], [\"x\", \"y\"]])\n+        df = pd.DataFrame(\n+            self.rs.normal(size=(60, 4)), columns=columns\n+        )\n+        g = ag.pairplot(df)\n+\n+        for i, j in zip(*np.diag_indices_from(g.axes)):\n+            ax = g.axes[i, j]\n+            diag_ax = g.diag_axes[i]\n+            assert ax.bbox.bounds == diag_ax.bbox.bounds\n+\n+        for i, j in zip(*np.tril_indices_from(g.axes, -1)):\n+            ax = g.axes[i, j]\n+            x_in = df[columns[j]]\n+            y_in = df[columns[i]]\n+            x_out, y_out = ax.collections[0].get_offsets().T\n+            npt.assert_array_equal(x_in, x_out)\n+            npt.assert_array_equal(y_in, y_out)\n+\n     def test_pairplot_diag_kde(self):\n \n         vars = [\"x\", \"y\", \"z\"]\n",
+  "trajectory": [
+    {
+      "turn": 1,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && git status --short && grep -R \"def map_diag\" -n seaborn/axisgrid.py && sed -n '1400,1530p' seaborn/axisgrid.py && sed -n '2050,2180p' seaborn/axisgrid.py"
+      },
+      "metrics_snapshot": {
+        "calls": 1,
+        "prompt_tokens": 1261,
+        "cache_hit_tokens": 0,
+        "cache_miss_tokens": 1261,
+        "cache_hit_rate_pct": 0.0,
+        "completion_tokens": 171,
+        "total_tokens": 1432,
+        "task_cost_usd": 0.000292,
+        "session_cost_usd": 0.013748
+      }
+    },
+    {
+      "turn": 2,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '900,1220p' seaborn/axisgrid.py"
+      },
+      "metrics_snapshot": {
+        "calls": 2,
+        "prompt_tokens": 5043,
+        "cache_hit_tokens": 1152,
+        "cache_miss_tokens": 3891,
+        "cache_hit_rate_pct": 22.84,
+        "completion_tokens": 348,
+        "total_tokens": 5391,
+        "task_cost_usd": 0.000796,
+        "session_cost_usd": 0.014252
+      }
+    },
+    {
+      "turn": 3,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python - <<'PY'\nimport numpy as np, pandas as pd, seaborn as sns\nimport matplotlib\nmatplotlib.use(\"Agg\")\ndata = {(\"A\",\"1\"): np.random.rand(10), (\"A\",\"2\"): np.random.rand(10), (\"B\",\"1\"): np.random.rand(10), (\"B\",\"2\"): np.random.rand(10)}\ndf = pd.DataFrame(data)\nprint(df.columns)\ntry:\n    sns.pairplot(df)\nexcept Exception as e:\n    import traceback; traceback.print_exc()\nPY"
+      },
+      "metrics_snapshot": {
+        "calls": 3,
+        "prompt_tokens": 11313,
+        "cache_hit_tokens": 4864,
+        "cache_miss_tokens": 6449,
+        "cache_hit_rate_pct": 42.99,
+        "completion_tokens": 493,
+        "total_tokens": 11806,
+        "task_cost_usd": 0.001278,
+        "session_cost_usd": 0.014734
+      }
+    },
+    {
+      "turn": 4,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && grep -n \"class PairGrid\" seaborn/axisgrid.py && sed -n '1180,1435p' seaborn/axisgrid.py"
+      },
+      "metrics_snapshot": {
+        "calls": 4,
+        "prompt_tokens": 18036,
+        "cache_hit_tokens": 11008,
+        "cache_miss_tokens": 7028,
+        "cache_hit_rate_pct": 61.03,
+        "completion_tokens": 544,
+        "total_tokens": 18580,
+        "task_cost_usd": 0.001414,
+        "session_cost_usd": 0.01487
+      }
+    },
+    {
+      "turn": 5,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && grep -n \"_find_numeric_cols\\|_add_axis_labels\\|def _map_bivariate\\|def _plot_bivariate\\|_x_var\\b\\|_y_var\\b\" seaborn/axisgrid.py | head -80"
+      },
+      "metrics_snapshot": {
+        "calls": 5,
+        "prompt_tokens": 27083,
+        "cache_hit_tokens": 17664,
+        "cache_miss_tokens": 9419,
+        "cache_hit_rate_pct": 65.22,
+        "completion_tokens": 966,
+        "total_tokens": 28049,
+        "task_cost_usd": 0.002045,
+        "session_cost_usd": 0.015502
+      }
+    },
+    {
+      "turn": 6,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python -c \"import seaborn; print(seaborn.__version__)\" && git log --oneline -5 && sed -n '1552,1690p' seaborn/axisgrid.py"
+      },
+      "metrics_snapshot": {
+        "calls": 6,
+        "prompt_tokens": 36466,
+        "cache_hit_tokens": 26624,
+        "cache_miss_tokens": 9842,
+        "cache_hit_rate_pct": 73.01,
+        "completion_tokens": 1224,
+        "total_tokens": 37690,
+        "task_cost_usd": 0.002291,
+        "session_cost_usd": 0.015747
+      }
+    },
+    {
+      "turn": 7,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && grep -R \"MultiIndex\\|multiindex\" -n tests seaborn | head -50 && python - <<'PY'\nimport numpy as np, pandas as pd\nfrom seaborn.axisgrid import PairGrid\ndata = {(\"A\",\"1\"): np.random.rand(10), (\"A\",\"2\"): np.random.rand(10), (\"B\",\"1\"): np.random.rand(10), (\"B\",\"2\"): np.random.rand(10)}\ndf = pd.DataFrame(data)\ng = PairGrid(df)\nprint(\"x_vars\", g.x_vars)\nprint(\"y_vars\", g.y_vars)\nprint(\"diag_vars before\", g.diag_vars)\ntry:\n    g.map_diag(__import__('seaborn').histplot)\nexcept Exception:\n    import traceback; traceback.print_exc()\nprint(type(g.diag_vars), g.diag_vars)\nPY"
+      },
+      "metrics_snapshot": {
+        "calls": 7,
+        "prompt_tokens": 47179,
+        "cache_hit_tokens": 35968,
+        "cache_miss_tokens": 11211,
+        "cache_hit_rate_pct": 76.24,
+        "completion_tokens": 1910,
+        "total_tokens": 49089,
+        "task_cost_usd": 0.002936,
+        "session_cost_usd": 0.016392
+      }
+    },
+    {
+      "turn": 8,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && grep -R \"diag_vars\\|diag_axes\" -n seaborn tests | head -50"
+      },
+      "metrics_snapshot": {
+        "calls": 8,
+        "prompt_tokens": 59003,
+        "cache_hit_tokens": 46592,
+        "cache_miss_tokens": 12411,
+        "cache_hit_rate_pct": 78.97,
+        "completion_tokens": 2188,
+        "total_tokens": 61191,
+        "task_cost_usd": 0.003314,
+        "session_cost_usd": 0.01677
+      }
+    },
+    {
+      "turn": 9,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '880,1100p' tests/test_axisgrid.py && grep -n \"class TestPairGrid\\|class TestPairPlot\\|def test_.*diag\" tests/test_axisgrid.py | head -60 && sed -n '1330,1430p' tests/test_axisgrid.py"
+      },
+      "metrics_snapshot": {
+        "calls": 9,
+        "prompt_tokens": 71858,
+        "cache_hit_tokens": 58368,
+        "cache_miss_tokens": 13490,
+        "cache_hit_rate_pct": 81.23,
+        "completion_tokens": 3553,
+        "total_tokens": 75411,
+        "task_cost_usd": 0.00433,
+        "session_cost_usd": 0.017787
+      }
+    },
+    {
+      "turn": 10,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python - <<'PY'\nfrom pathlib import Path\np = Path(\"seaborn/axisgrid.py\")\ns = p.read_text()\nold = \"\"\"            self.diag_vars = np.array(diag_vars, np.object_)\n            self.diag_axes = np.array(diag_axes, np.object_)\n\"\"\"\nnew = \"\"\"            self.diag_vars = np.empty(len(diag_vars), object)\n            self.diag_vars[:] = diag_vars\n            self.diag_axes = np.empty(len(diag_axes), object)\n            self.diag_axes[:] = diag_axes\n\"\"\"\nassert old in s\np.write_text(s.replace(old, new))\nPY\npython - <<'PY'\nimport numpy as np, pandas as pd, seaborn as sns\nimport matplotlib\nmatplotlib.use(\"Agg\")\ndata = {(\"A\",\"1\"): np.random.rand(20), (\"A\",\"2\"): np.random.rand(20), (\"B\",\"1\"): np.random.rand(20), (\"B\",\"2\"): np.random.rand(20)}\ndf = pd.DataFrame(data)\ng = sns.pairplot(df)\nprint(\"diag_vars:\", g.diag_vars)\nprint(\"ok\", len(g.diag_axes), len(g.diag_vars))\ng2 = sns.pairplot(df, hue=(\"A\",\"1\"))\nprint(\"hue ok\", g2.diag_vars)\ng3 = sns.pairplot(df, diag_kind=\"kde\")\nprint(\"kde ok\")\nPY"
+      },
+      "metrics_snapshot": {
+        "calls": 10,
+        "prompt_tokens": 87931,
+        "cache_hit_tokens": 71168,
+        "cache_miss_tokens": 16763,
+        "cache_hit_rate_pct": 80.94,
+        "completion_tokens": 4474,
+        "total_tokens": 92405,
+        "task_cost_usd": 0.005412,
+        "session_cost_usd": 0.018869
+      }
+    },
+    {
+      "turn": 11,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python - <<'PY'\nimport numpy as np, pandas as pd, seaborn as sns\nimport matplotlib\nmatplotlib.use(\"Agg\")\nimport matplotlib.pyplot as plt\n\nnp.random.seed(0)\ndata = {(\"A\",\"1\"): np.random.rand(30), (\"A\",\"2\"): np.random.rand(30), (\"B\",\"1\"): np.random.rand(30), (\"B\",\"2\"): np.random.rand(30)}\ndf = pd.DataFrame(data)\n\nfor kind in [\"scatter\", \"kde\", \"hist\", \"reg\"]:\n    for diag_kind in [\"auto\", \"hist\", \"kde\"]:\n        g = sns.pairplot(df, kind=kind, diag_kind=diag_kind)\n        assert len(g.diag_axes) == 4, (kind, diag_kind)\n        plt.close(\"all\")\n    g = sns.pairplot(df, kind=kind, corner=True)\n    assert len(g.diag_axes) == 4\n    plt.close(\"all\")\n    g = sns.pairplot(df, kind=kind, hue=(\"A\", \"1\"))\n    assert len(g.diag_axes) == 3\n    plt.close(\"all\")\nprint(\"all pairplot combos ok\")\n\n# PairGrid with matplotlib functions that iterate over hue\ng = sns.PairGrid(df, hue=(\"A\",\"1\"))\ng.map_diag(plt.hist)\ng.map_offdiag(plt.scatter)\nplt.close(\"all\")\nprint(\"PairGrid matplotlib funcs ok\")\n\n# Rectangular / vars selection\ng = sns.PairGrid(df, vars=[(\"A\",\"1\"), (\"B\",\"2\")])\ng.map_diag(sns.histplot)\ng.map_offdiag(sns.scatterplot)\nplt.close(\"all\")\nprint(\"subset ok\")\nPY\npytest -q tests/test_axisgrid.py -x"
+      },
+      "metrics_snapshot": {
+        "calls": 11,
+        "prompt_tokens": 104548,
+        "cache_hit_tokens": 87168,
+        "cache_miss_tokens": 17380,
+        "cache_hit_rate_pct": 83.38,
+        "completion_tokens": 5822,
+        "total_tokens": 110370,
+        "task_cost_usd": 0.006362,
+        "session_cost_usd": 0.019818
+      }
+    },
+    {
+      "turn": 12,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python - <<'PY'\nimport numpy as np, pandas as pd, seaborn as sns\nimport matplotlib\nmatplotlib.use(\"Agg\")\nimport matplotlib.pyplot as plt\n\nrng = np.random.default_rng(0)\ndf = pd.DataFrame(rng.normal(size=(100, 3)), columns=[\"x\", \"y\", \"z\"])\ntry:\n    sns.pairplot(df, kind=\"kde\")\n    print(\"regular kde ok\")\nexcept Exception as e:\n    print(\"regular kde fail:\", type(e), e)\nPY\ngit diff"
+      },
+      "metrics_snapshot": {
+        "calls": 12,
+        "prompt_tokens": 122934,
+        "cache_hit_tokens": 103680,
+        "cache_miss_tokens": 19254,
+        "cache_hit_rate_pct": 84.34,
+        "completion_tokens": 6183,
+        "total_tokens": 129117,
+        "task_cost_usd": 0.006909,
+        "session_cost_usd": 0.020365
+      }
+    },
+    {
+      "turn": 13,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python - <<'PY'\nimport numpy as np, pandas as pd, seaborn as sns\nimport matplotlib\nmatplotlib.use(\"Agg\")\nimport matplotlib.pyplot as plt\n\nnp.random.seed(0)\ndf = pd.DataFrame({(\"A\",\"1\"): np.random.rand(30), (\"A\",\"2\"): np.random.rand(30), (\"B\",\"1\"): np.random.rand(30), (\"B\",\"2\"): np.random.rand(30)})\nfor dk in [\"auto\", \"hist\", \"kde\", None]:\n    try:\n        sns.pairplot(df, kind=\"kde\", diag_kind=dk)\n        print(dk, \"ok\")\n    except Exception as e:\n        print(dk, \"FAIL\", type(e).__name__, e)\n    plt.close(\"all\")\nPY"
+      },
+      "metrics_snapshot": {
+        "calls": 13,
+        "prompt_tokens": 141745,
+        "cache_hit_tokens": 121984,
+        "cache_miss_tokens": 19761,
+        "cache_hit_rate_pct": 86.06,
+        "completion_tokens": 6519,
+        "total_tokens": 148264,
+        "task_cost_usd": 0.007242,
+        "session_cost_usd": 0.020698
+      }
+    },
+    {
+      "turn": 14,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '1,60p' tests/test_axisgrid.py && sed -n '711,760p' tests/test_axisgrid.py && grep -n \"class TestPairPlot\" tests/test_axisgrid.py"
+      },
+      "metrics_snapshot": {
+        "calls": 14,
+        "prompt_tokens": 160910,
+        "cache_hit_tokens": 140672,
+        "cache_miss_tokens": 20238,
+        "cache_hit_rate_pct": 87.42,
+        "completion_tokens": 6851,
+        "total_tokens": 167761,
+        "task_cost_usd": 0.007568,
+        "session_cost_usd": 0.021024
+      }
+    },
+    {
+      "turn": 15,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python - <<'PY'\nimport numpy as np, pandas as pd, seaborn as sns\nimport matplotlib\nmatplotlib.use(\"Agg\")\nimport matplotlib.pyplot as plt\n\nnp.random.seed(0)\ndf = pd.DataFrame({(\"A\",\"1\"): np.random.rand(30), (\"A\",\"2\"): np.random.rand(30), (\"B\",\"1\"): np.random.rand(30), (\"B\",\"2\"): np.random.rand(30)})\nfor dk in [\"auto\", \"hist\", \"kde\"]:\n    try:\n        sns.pairplot(df, kind=\"kde\", hue=(\"A\", \"1\"), diag_kind=dk)\n        print(dk, \"ok\")\n    except Exception as e:\n        import traceback; traceback.print_exc()\n    plt.close(\"all\")\nPY"
+      },
+      "metrics_snapshot": {
+        "calls": 15,
+        "prompt_tokens": 181037,
+        "cache_hit_tokens": 159744,
+        "cache_miss_tokens": 21293,
+        "cache_hit_rate_pct": 88.24,
+        "completion_tokens": 7256,
+        "total_tokens": 188293,
+        "task_cost_usd": 0.008027,
+        "session_cost_usd": 0.021483
+      }
+    },
+    {
+      "turn": 16,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python - <<'PY'\nimport numpy as np, pandas as pd, seaborn as sns\nimport matplotlib\nmatplotlib.use(\"Agg\")\nimport matplotlib.pyplot as plt\nnp.random.seed(0)\ndf = pd.DataFrame({\"a\": np.random.rand(30), \"b\": np.random.rand(30), \"c\": np.random.rand(30)})\ntry:\n    sns.pairplot(df, kind=\"kde\", hue=\"a\")\n    print(\"regular continuous hue ok\")\nexcept Exception as e:\n    print(\"regular continuous hue FAIL\", type(e).__name__, e)\nPY"
+      },
+      "metrics_snapshot": {
+        "calls": 16,
+        "prompt_tokens": 202668,
+        "cache_hit_tokens": 179840,
+        "cache_miss_tokens": 22828,
+        "cache_hit_rate_pct": 88.74,
+        "completion_tokens": 7511,
+        "total_tokens": 210179,
+        "task_cost_usd": 0.00847,
+        "session_cost_usd": 0.021926
+      }
+    },
+    {
+      "turn": 17,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python - <<'PY'\nfrom pathlib import Path\np = Path(\"tests/test_axisgrid.py\")\ns = p.read_text()\nanchor = \"\"\"    def test_map_diag_rectangular(self):\n\"\"\"\nnew_test = '''    def test_map_diag_multiindex(self):\n\n        columns = pd.MultiIndex.from_product([[\"a\", \"b\"], [\"x\", \"y\"]])\n        df = pd.DataFrame(\n            self.rs.normal(size=(60, 4)), columns=columns\n        )\n        g = ag.PairGrid(df)\n        g.map_diag(plt.hist)\n        g.map_offdiag(plt.scatter)\n\n        assert list(g.diag_vars) == list(columns)\n        for var, ax in zip(g.diag_vars, g.diag_axes):\n            assert len(ax.patches) == 10\n            assert pytest.approx(ax.patches[0].get_x()) == df[var].min()\n\n        for i, j in zip(*np.tril_indices_from(g.axes, -1)):\n            ax = g.axes[i, j]\n            x, y = ax.collections[0].get_offsets().T\n            assert_array_equal(x, df[columns[j]])\n            assert_array_equal(y, df[columns[i]])\n\n'''\nassert anchor in s\ns = s.replace(anchor, new_test + anchor)\np.write_text(s)\nPY\ngrep -n \"test_pairplot_diag_kde\" tests/test_axisgrid.py"
+      },
+      "metrics_snapshot": {
+        "calls": 17,
+        "prompt_tokens": 224464,
+        "cache_hit_tokens": 201344,
+        "cache_miss_tokens": 23120,
+        "cache_hit_rate_pct": 89.7,
+        "completion_tokens": 7981,
+        "total_tokens": 232445,
+        "task_cost_usd": 0.008861,
+        "session_cost_usd": 0.022317
+      }
+    },
+    {
+      "turn": 18,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '1370,1400p' tests/test_axisgrid.py"
+      },
+      "metrics_snapshot": {
+        "calls": 18,
+        "prompt_tokens": 246626,
+        "cache_hit_tokens": 223104,
+        "cache_miss_tokens": 23522,
+        "cache_hit_rate_pct": 90.46,
+        "completion_tokens": 8010,
+        "total_tokens": 254636,
+        "task_cost_usd": 0.009004,
+        "session_cost_usd": 0.02246
+      }
+    },
+    {
+      "turn": 19,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python - <<'PY'\nfrom pathlib import Path\np = Path(\"tests/test_axisgrid.py\")\ns = p.read_text()\nanchor = \"\"\"    def test_pairplot_diag_kde(self):\n\"\"\"\nnew_test = '''    def test_pairplot_multiindex(self):\n\n        columns = pd.MultiIndex.from_product([[\"a\", \"b\"], [\"x\", \"y\"]])\n        df = pd.DataFrame(\n            self.rs.normal(size=(60, 4)), columns=columns\n        )\n        g = ag.pairplot(df)\n\n        for i, j in zip(*np.diag_indices_from(g.axes)):\n            ax = g.axes[i, j]\n            diag_ax = g.diag_axes[i]\n            assert ax.bbox.bounds == diag_ax.bbox.bounds\n\n        for i, j in zip(*np.tril_indices_from(g.axes, -1)):\n            ax = g.axes[i, j]\n            x_in = df[columns[j]]\n            y_in = df[columns[i]]\n            x_out, y_out = ax.collections[0].get_offsets().T\n            npt.assert_array_equal(x_in, x_out)\n            npt.assert_array_equal(y_in, y_out)\n\n'''\nassert anchor in s\ns = s.replace(anchor, new_test + anchor)\np.write_text(s)\nPY\npytest -q tests/test_axisgrid.py -k \"multiindex or map_diag\""
+      },
+      "metrics_snapshot": {
+        "calls": 19,
+        "prompt_tokens": 269132,
+        "cache_hit_tokens": 245248,
+        "cache_miss_tokens": 23884,
+        "cache_hit_rate_pct": 91.13,
+        "completion_tokens": 8358,
+        "total_tokens": 277490,
+        "task_cost_usd": 0.009333,
+        "session_cost_usd": 0.022789
+      }
+    },
+    {
+      "turn": 20,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python - <<'PY'\nimport numpy as np, pandas as pd, seaborn as sns\nimport matplotlib\nmatplotlib.use(\"Agg\")\nimport matplotlib.pyplot as plt\n\nrng = np.random.default_rng(0)\ncols = pd.MultiIndex.from_product([[\"A\", \"B\"], [\"1\", \"2\"]])\ndf = pd.DataFrame(rng.random((100, 4)), columns=cols)\ndf[(\"C\", \"cat\")] = np.tile(list(\"mn\"), 50)\ndf[(\"C\", \"num\")] = rng.random(100)\n\n# MRE\nsns.pairplot(df[cols])\nplt.close(\"all\")\n\n# hue as a MultiIndex column\ng = sns.pairplot(df[cols], hue=(\"C\", \"cat\"))\nassert len(g.diag_axes) == 3\nplt.close(\"all\")\n\n# vars subset\nsns.pairplot(df, vars=[(\"A\", \"1\"), (\"B\", \"2\")])\nplt.close(\"all\")\n\n# dropna and corner\ndf2 = df[cols].copy()\ndf2.iloc[0, 0] = np.nan\nsns.pairplot(df2, dropna=True, corner=True)\nplt.close(\"all\")\n\n# PairGrid with matplotlib funcs, hue, dropna\ng = sns.PairGrid(df[cols], hue=(\"C\", \"cat\"), dropna=True)\ng.map_diag(plt.hist)\ng.map_offdiag(plt.scatter)\nplt.close(\"all\")\n\n# rectangular\ng = sns.PairGrid(df[cols], x_vars=[(\"A\", \"1\"), (\"B\", \"2\")], y_vars=list(cols))\ng.map_diag(sns.histplot)\ng.map_offdiag(sns.scatterplot)\nassert set(g.diag_vars) == {(\"A\", \"1\"), (\"B\", \"2\")}\nplt.close(\"all\")\nprint(\"all multiindex scenarios ok\")\nPY"
+      },
+      "metrics_snapshot": {
+        "calls": 20,
+        "prompt_tokens": 292084,
+        "cache_hit_tokens": 267648,
+        "cache_miss_tokens": 24436,
+        "cache_hit_rate_pct": 91.63,
+        "completion_tokens": 9303,
+        "total_tokens": 301387,
+        "task_cost_usd": 0.01005,
+        "session_cost_usd": 0.023506
+      }
+    },
+    {
+      "turn": 21,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python - <<'PY'\nimport numpy as np, pandas as pd, seaborn as sns\nimport matplotlib\nmatplotlib.use(\"Agg\")\nimport matplotlib.pyplot as plt\n\nrng = np.random.default_rng(0)\ncols = pd.MultiIndex.from_product([[\"A\", \"B\"], [\"1\", \"2\"]])\ndf = pd.DataFrame(rng.random((100, 4)), columns=cols)\ndf[(\"C\", \"cat\")] = np.tile(list(\"mn\"), 50)\ndf[(\"C\", \"num\")] = rng.random(100)\n\nsns.pairplot(df[cols])\nplt.close(\"all\")\n\ng = sns.pairplot(df, hue=(\"C\", \"cat\"))\nassert len(g.diag_axes) == 4\nplt.close(\"all\")\n\nsns.pairplot(df, vars=[(\"A\", \"1\"), (\"B\", \"2\")])\nplt.close(\"all\")\n\ndf2 = df[cols].copy()\ndf2.iloc[0, 0] = np.nan\nsns.pairplot(df2, dropna=True, corner=True)\nplt.close(\"all\")\n\ng = sns.PairGrid(df, hue=(\"C\", \"cat\"), dropna=True)\ng.map_diag(plt.hist)\ng.map_offdiag(plt.scatter)\nplt.close(\"all\")\n\ng = sns.PairGrid(df[cols], x_vars=[(\"A\", \"1\"), (\"B\", \"2\")], y_vars=list(cols))\ng.map_diag(sns.histplot)\ng.map_offdiag(sns.scatterplot)\nassert set(g.diag_vars) == {(\"A\", \"1\"), (\"B\", \"2\")}\nplt.close(\"all\")\nprint(\"all multiindex scenarios ok\")\nPY"
+      },
+      "metrics_snapshot": {
+        "calls": 21,
+        "prompt_tokens": 315948,
+        "cache_hit_tokens": 290560,
+        "cache_miss_tokens": 25388,
+        "cache_hit_rate_pct": 91.96,
+        "completion_tokens": 10438,
+        "total_tokens": 326386,
+        "task_cost_usd": 0.010943,
+        "session_cost_usd": 0.024399
+      }
+    },
+    {
+      "turn": 22,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python - <<'PY'\nimport numpy as np, pandas as pd, seaborn as sns\nimport matplotlib\nmatplotlib.use(\"Agg\")\nimport matplotlib.pyplot as plt\n\nrng = np.random.default_rng(0)\ncols = pd.MultiIndex.from_product([[\"A\", \"B\"], [\"1\", \"2\"]])\ndf = pd.DataFrame(rng.random((100, 4)), columns=cols)\ndf[(\"C\", \"cat\")] = np.tile(list(\"mn\"), 50)\ndf[(\"C\", \"num\")] = rng.random(100)\n\nsns.pairplot(df[cols])\nplt.close(\"all\")\n\ng = sns.pairplot(df, hue=(\"C\", \"cat\"))\nassert len(g.diag_axes) == len(g.x_vars) == 5\nplt.close(\"all\")\n\nsns.pairplot(df, vars=[(\"A\", \"1\"), (\"B\", \"2\")])\nplt.close(\"all\")\n\ndf2 = df[cols].copy()\ndf2.iloc[0, 0] = np.nan\nsns.pairplot(df2, dropna=True, corner=True)\nplt.close(\"all\")\n\ng = sns.PairGrid(df, hue=(\"C\", \"cat\"), dropna=True)\ng.map_diag(plt.hist)\ng.map_offdiag(plt.scatter)\nplt.close(\"all\")\n\ng = sns.PairGrid(df[cols], x_vars=[(\"A\", \"1\"), (\"B\", \"2\")], y_vars=list(cols))\ng.map_diag(sns.histplot)\ng.map_offdiag(sns.scatterplot)\nassert set(g.diag_vars) == {(\"A\", \"1\"), (\"B\", \"2\")}\nplt.close(\"all\")\nprint(\"all multiindex scenarios ok\")\nPY"
+      },
+      "metrics_snapshot": {
+        "calls": 22,
+        "prompt_tokens": 340354,
+        "cache_hit_tokens": 314368,
+        "cache_miss_tokens": 25986,
+        "cache_hit_rate_pct": 92.37,
+        "completion_tokens": 11179,
+        "total_tokens": 351533,
+        "task_cost_usd": 0.011548,
+        "session_cost_usd": 0.025005
+      }
+    },
+    {
+      "turn": 23,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && pytest -q tests/test_axisgrid.py && git diff --stat && git diff"
+      },
+      "metrics_snapshot": {
+        "calls": 23,
+        "prompt_tokens": 365360,
+        "cache_hit_tokens": 338688,
+        "cache_miss_tokens": 26672,
+        "cache_hit_rate_pct": 92.7,
+        "completion_tokens": 11275,
+        "total_tokens": 376635,
+        "task_cost_usd": 0.011782,
+        "session_cost_usd": 0.025238
+      }
+    },
+    {
+      "turn": 24,
+      "action": "finish_task",
+      "args": {},
+      "metrics_snapshot": {
+        "calls": 24,
+        "prompt_tokens": 391978,
+        "cache_hit_tokens": 363648,
+        "cache_miss_tokens": 28330,
+        "cache_hit_rate_pct": 92.77,
+        "completion_tokens": 11376,
+        "total_tokens": 403354,
+        "task_cost_usd": 0.012166,
+        "session_cost_usd": 0.025622
+      }
+    }
+  ]
+}

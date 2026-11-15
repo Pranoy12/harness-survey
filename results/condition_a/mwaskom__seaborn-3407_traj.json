@@ -1,0 +1,399 @@
+{
+  "instance_id": "mwaskom__seaborn-3407",
+  "condition": "condition_a",
+  "turns_taken": 21,
+  "finished_by_tool": true,
+  "empty_action_retries": 0,
+  "wall_time_sec": 199.15,
+  "usage_metrics": {
+    "calls": 21,
+    "prompt_tokens": 292174,
+    "cache_hit_tokens": 272640,
+    "cache_miss_tokens": 19534,
+    "cache_hit_rate_pct": 93.31,
+    "completion_tokens": 5275,
+    "total_tokens": 297449,
+    "task_cost_usd": 0.006913,
+    "session_cost_usd": 0.016596
+  },
+  "usage_summary": "[Quota Tracker] Calls: 21 | Prompt Tokens: 292,174 | Completion Tokens: 5,275 | Total Tokens: 297,449 | Est. Cost: $0.0069[DEEPSEEK][DeepSeek OFF-PEAK (1x)] Calls: 21 | Cache Hit: 93.3% (272,640/292,174) | Out: 5,275 | Task Spend: $0.00691 | Total Session Spend: $0.01660",
+  "model_patch": "diff --git a/seaborn/axisgrid.py b/seaborn/axisgrid.py\nindex 75349099..5eaa7997 100755\n--- a/seaborn/axisgrid.py\n+++ b/seaborn/axisgrid.py\n@@ -1472,8 +1472,8 @@ class PairGrid(Grid):\n                 for ax in diag_axes[1:]:\n                     share_axis(diag_axes[0], ax, \"y\")\n \n-            self.diag_vars = np.array(diag_vars, np.object_)\n-            self.diag_axes = np.array(diag_axes, np.object_)\n+            self.diag_vars = diag_vars\n+            self.diag_axes = diag_axes\n \n         if \"hue\" not in signature(func).parameters:\n             return self._map_diag_iter_hue(func, **kwargs)\ndiff --git a/tests/test_axisgrid.py b/tests/test_axisgrid.py\nindex ce8b0eaa..1a1b62ba 100755\n--- a/tests/test_axisgrid.py\n+++ b/tests/test_axisgrid.py\n@@ -750,6 +750,18 @@ class TestPairGrid:\n         assert g.y_vars == [\"x\", \"y\", \"z\"]\n         assert g.square_grid\n \n+    def test_multiindex_columns(self):\n+\n+        columns = pd.MultiIndex.from_product([[\"a\", \"b\"], [\"x\", \"y\"]])\n+        df = pd.DataFrame(self.rs.rand(10, 4), columns=columns)\n+        g = ag.PairGrid(df)\n+        g.map_diag(plt.hist)\n+\n+        assert g.diag_vars == list(columns)\n+        for var, ax in zip(g.diag_vars, g.diag_axes):\n+            assert var in df.columns\n+            assert len(ax.patches) == 10\n+\n     @pytest.mark.parametrize(\"vars\", [[\"z\", \"x\"], np.array([\"z\", \"x\"])])\n     def test_specific_square_axes(self, vars):\n \n",
+  "trajectory": [
+    {
+      "turn": 1,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && git status --short && ls"
+      },
+      "metrics_snapshot": {
+        "calls": 1,
+        "prompt_tokens": 1443,
+        "cache_hit_tokens": 256,
+        "cache_miss_tokens": 1187,
+        "cache_hit_rate_pct": 17.74,
+        "completion_tokens": 64,
+        "total_tokens": 1507,
+        "task_cost_usd": 0.000217,
+        "session_cost_usd": 0.0099
+      }
+    },
+    {
+      "turn": 2,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && grep -n \"class PairGrid\" -A260 seaborn/axisgrid.py | sed -n '1,300p'"
+      },
+      "metrics_snapshot": {
+        "calls": 2,
+        "prompt_tokens": 3014,
+        "cache_hit_tokens": 1664,
+        "cache_miss_tokens": 1350,
+        "cache_hit_rate_pct": 55.21,
+        "completion_tokens": 141,
+        "total_tokens": 3155,
+        "task_cost_usd": 0.000292,
+        "session_cost_usd": 0.009975
+      }
+    },
+    {
+      "turn": 3,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '1360,1680p' seaborn/axisgrid.py && sed -n '1680,1800p' seaborn/axisgrid.py"
+      },
+      "metrics_snapshot": {
+        "calls": 3,
+        "prompt_tokens": 7417,
+        "cache_hit_tokens": 3200,
+        "cache_miss_tokens": 4217,
+        "cache_hit_rate_pct": 43.14,
+        "completion_tokens": 245,
+        "total_tokens": 7662,
+        "task_cost_usd": 0.000789,
+        "session_cost_usd": 0.010472
+      }
+    },
+    {
+      "turn": 4,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '1680,1760p' seaborn/axisgrid.py && grep -n \"def _find_numeric_cols\\|def _add_axis_labels\" -n seaborn/axisgrid.py"
+      },
+      "metrics_snapshot": {
+        "calls": 4,
+        "prompt_tokens": 14286,
+        "cache_hit_tokens": 7680,
+        "cache_miss_tokens": 6606,
+        "cache_hit_rate_pct": 53.76,
+        "completion_tokens": 334,
+        "total_tokens": 14620,
+        "task_cost_usd": 0.001214,
+        "session_cost_usd": 0.010897
+      }
+    },
+    {
+      "turn": 5,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '1600,1680p' seaborn/axisgrid.py && grep -n \"_find_numeric_cols\" -n seaborn/axisgrid.py"
+      },
+      "metrics_snapshot": {
+        "calls": 5,
+        "prompt_tokens": 22172,
+        "cache_hit_tokens": 14592,
+        "cache_miss_tokens": 7580,
+        "cache_hit_rate_pct": 65.81,
+        "completion_tokens": 414,
+        "total_tokens": 22586,
+        "task_cost_usd": 0.001429,
+        "session_cost_usd": 0.011112
+      }
+    },
+    {
+      "turn": 6,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && grep -R \"diag_vars\\|MultiIndex\\|multiindex\" -n tests seaborn | head -100"
+      },
+      "metrics_snapshot": {
+        "calls": 6,
+        "prompt_tokens": 30816,
+        "cache_hit_tokens": 22528,
+        "cache_miss_tokens": 8288,
+        "cache_hit_rate_pct": 73.1,
+        "completion_tokens": 787,
+        "total_tokens": 31603,
+        "task_cost_usd": 0.001783,
+        "session_cost_usd": 0.011465
+      }
+    },
+    {
+      "turn": 7,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python - <<'PY'\nimport numpy as np, pandas as pd, seaborn as sns\nprint(sns.__version__)\ndata={(\"A\",\"1\"):np.random.rand(100),(\"A\",\"2\"):np.random.rand(100),(\"B\",\"1\"):np.random.rand(100),(\"B\",\"2\"):np.random.rand(100)}\ndf=pd.DataFrame(data)\nprint(df.columns, type(df.columns))\ntry:\n    g=sns.pairplot(df)\n    print('ok')\nexcept Exception as e:\n    import traceback; traceback.print_exc()\nPY"
+      },
+      "metrics_snapshot": {
+        "calls": 7,
+        "prompt_tokens": 40680,
+        "cache_hit_tokens": 31488,
+        "cache_miss_tokens": 9192,
+        "cache_hit_rate_pct": 77.4,
+        "completion_tokens": 960,
+        "total_tokens": 41640,
+        "task_cost_usd": 0.002049,
+        "session_cost_usd": 0.011732
+      }
+    },
+    {
+      "turn": 8,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python - <<'PY'\nfrom pathlib import Path\np = Path('seaborn/axisgrid.py')\ns = p.read_text()\ns = s.replace(\n\"            self.diag_vars = np.array(diag_vars, np.object_)\\n            self.diag_axes = np.array(diag_axes, np.object_)\\n\",\n\"            self.diag_vars = diag_vars\\n            self.diag_axes = diag_axes\\n\",\n)\np.write_text(s)\nPY\ngit diff -- seaborn/axisgrid.py"
+      },
+      "metrics_snapshot": {
+        "calls": 8,
+        "prompt_tokens": 51070,
+        "cache_hit_tokens": 41472,
+        "cache_miss_tokens": 9598,
+        "cache_hit_rate_pct": 81.21,
+        "completion_tokens": 1823,
+        "total_tokens": 52893,
+        "task_cost_usd": 0.002658,
+        "session_cost_usd": 0.01234
+      }
+    },
+    {
+      "turn": 9,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && MPLBACKEND=Agg python - <<'PY'\nimport numpy as np, pandas as pd, seaborn as sns\nimport matplotlib.pyplot as plt\n\ndata={(\"A\",\"1\"):np.random.rand(100),(\"A\",\"2\"):np.random.rand(100),(\"B\",\"1\"):np.random.rand(100),(\"B\",\"2\"):np.random.rand(100)}\ndf=pd.DataFrame(data)\ng=sns.pairplot(df)\nprint('pairplot ok', len(g.axes.flat), g.diag_vars, len(g.diag_axes))\nplt.close('all')\n\n# test PairGrid map/map_diag with tuples and hue perhaps\nhue = pd.Series(np.repeat([\"x\", \"y\"], 50), name=\"hue\")\ndf2 = df.copy()\ndf2[\"hue\"] = hue\ng2 = sns.PairGrid(df2, hue=\"hue\")\ng2.map_offdiag(sns.scatterplot).map_diag(sns.histplot)\nprint('PairGrid hue ok', g2.diag_vars)\nplt.close('all')\n\n# map_diag func without hue parameter too\ng3 = sns.PairGrid(df)\ng3.map_diag(plt.hist)\nprint('PairGrid no hue map_diag ok', g3.diag_vars)\nplt.close('all')\nPY"
+      },
+      "metrics_snapshot": {
+        "calls": 9,
+        "prompt_tokens": 62546,
+        "cache_hit_tokens": 52608,
+        "cache_miss_tokens": 9938,
+        "cache_hit_rate_pct": 84.11,
+        "completion_tokens": 2173,
+        "total_tokens": 64719,
+        "task_cost_usd": 0.002952,
+        "session_cost_usd": 0.012635
+      }
+    },
+    {
+      "turn": 10,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && git log --oneline -10 && git remote -v"
+      },
+      "metrics_snapshot": {
+        "calls": 10,
+        "prompt_tokens": 74934,
+        "cache_hit_tokens": 64384,
+        "cache_miss_tokens": 10550,
+        "cache_hit_rate_pct": 85.92,
+        "completion_tokens": 2515,
+        "total_tokens": 77449,
+        "task_cost_usd": 0.003285,
+        "session_cost_usd": 0.012967
+      }
+    },
+    {
+      "turn": 11,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '850,1030p' tests/test_axisgrid.py && sed -n '1,100p' tests/test_axisgrid.py"
+      },
+      "metrics_snapshot": {
+        "calls": 11,
+        "prompt_tokens": 87846,
+        "cache_hit_tokens": 77056,
+        "cache_miss_tokens": 10790,
+        "cache_hit_rate_pct": 87.72,
+        "completion_tokens": 2616,
+        "total_tokens": 90462,
+        "task_cost_usd": 0.003419,
+        "session_cost_usd": 0.013102
+      }
+    },
+    {
+      "turn": 12,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '2050,2180p' seaborn/axisgrid.py && grep -n \"def pairplot\" -B5 -A130 seaborn/axisgrid.py"
+      },
+      "metrics_snapshot": {
+        "calls": 12,
+        "prompt_tokens": 103529,
+        "cache_hit_tokens": 89984,
+        "cache_miss_tokens": 13545,
+        "cache_hit_rate_pct": 86.92,
+        "completion_tokens": 3030,
+        "total_tokens": 106559,
+        "task_cost_usd": 0.00412,
+        "session_cost_usd": 0.013802
+      }
+    },
+    {
+      "turn": 13,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && MPLBACKEND=Agg python - <<'PY'\nimport numpy as np, pandas as pd, seaborn as sns\nimport matplotlib.pyplot as plt\nrs=np.random.RandomState(0)\ncols=pd.MultiIndex.from_product([['A','B'],['1','2']])\ndf=pd.DataFrame(rs.rand(100,4),columns=cols)\n# Add hue as third level by adding one column with full tuple\ndf[('C','h')] = np.tile(['x','y'],50)\nprint(df.columns)\nfor hue in [('C','h')]:\n    try:\n        g=sns.pairplot(df, hue=hue)\n        print('pairplot hue', hue, 'ok', g.diag_vars)\n    except Exception:\n        import traceback; traceback.print_exc()\n    plt.close('all')\n    try:\n        g=sns.PairGrid(df, hue=hue)\n        g.map_diag(sns.histplot)\n        g.map_offdiag(sns.scatterplot)\n        print('pairgrid hue', hue, 'ok', g.diag_vars)\n    except Exception:\n        import traceback; traceback.print_exc()\n    plt.close('all')\nPY"
+      },
+      "metrics_snapshot": {
+        "calls": 13,
+        "prompt_tokens": 122379,
+        "cache_hit_tokens": 105984,
+        "cache_miss_tokens": 16395,
+        "cache_hit_rate_pct": 86.6,
+        "completion_tokens": 3359,
+        "total_tokens": 125738,
+        "task_cost_usd": 0.004793,
+        "session_cost_usd": 0.014475
+      }
+    },
+    {
+      "turn": 14,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && MPLBACKEND=Agg python - <<'PY'\nimport numpy as np, pandas as pd, seaborn as sns\nimport matplotlib.pyplot as plt\nrs=np.random.RandomState(0)\ncols=pd.MultiIndex.from_product([['A','B'],['1','2']])\ndf=pd.DataFrame(rs.rand(10,4),columns=cols)\nfor func in [plt.hist, sns.histplot, sns.kdeplot]:\n    g=sns.PairGrid(df)\n    g.map_diag(func)\n    print(func, 'ok', g.diag_vars)\n    plt.close('all')\nfor kind in ['scatter','kde','hist','reg']:\n    g=sns.pairplot(df, kind=kind)\n    print('pairplot kind', kind, 'ok')\n    plt.close('all')\nPY"
+      },
+      "metrics_snapshot": {
+        "calls": 14,
+        "prompt_tokens": 141726,
+        "cache_hit_tokens": 125056,
+        "cache_miss_tokens": 16670,
+        "cache_hit_rate_pct": 88.24,
+        "completion_tokens": 3624,
+        "total_tokens": 145350,
+        "task_cost_usd": 0.00505,
+        "session_cost_usd": 0.014733
+      }
+    },
+    {
+      "turn": 15,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && MPLBACKEND=Agg pytest -q tests/test_axisgrid.py -x --disable-warnings --maxfail=1"
+      },
+      "metrics_snapshot": {
+        "calls": 15,
+        "prompt_tokens": 161655,
+        "cache_hit_tokens": 144640,
+        "cache_miss_tokens": 17015,
+        "cache_hit_rate_pct": 89.47,
+        "completion_tokens": 3757,
+        "total_tokens": 165412,
+        "task_cost_usd": 0.00524,
+        "session_cost_usd": 0.014923
+      }
+    },
+    {
+      "turn": 16,
+      "action": "run_shell_command",
+      "args": {
+        "command": "find / -path '*/seaborn/axisgrid.py' 2>/dev/null | head -20"
+      },
+      "metrics_snapshot": {
+        "calls": 16,
+        "prompt_tokens": 181769,
+        "cache_hit_tokens": 164608,
+        "cache_miss_tokens": 17161,
+        "cache_hit_rate_pct": 90.56,
+        "completion_tokens": 3922,
+        "total_tokens": 185691,
+        "task_cost_usd": 0.005421,
+        "session_cost_usd": 0.015104
+      }
+    },
+    {
+      "turn": 17,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && grep -n \"class TestPairGrid\" -A80 tests/test_axisgrid.py | head -100 && grep -n \"def test_map_diag\" tests/test_axisgrid.py"
+      },
+      "metrics_snapshot": {
+        "calls": 17,
+        "prompt_tokens": 202078,
+        "cache_hit_tokens": 184704,
+        "cache_miss_tokens": 17374,
+        "cache_hit_rate_pct": 91.4,
+        "completion_tokens": 4328,
+        "total_tokens": 206406,
+        "task_cost_usd": 0.005757,
+        "session_cost_usd": 0.01544
+      }
+    },
+    {
+      "turn": 18,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python - <<'PY'\nfrom pathlib import Path\np = Path('tests/test_axisgrid.py')\ns = p.read_text()\nneedle = '''    def test_default_axes(self):\n\n        g = ag.PairGrid(self.df)\n        assert g.axes.shape == (3, 3)\n        assert g.x_vars == [\"x\", \"y\", \"z\"]\n        assert g.y_vars == [\"x\", \"y\", \"z\"]\n        assert g.square_grid\n\n'''\nreplacement = needle + '''    def test_multiindex_columns(self):\n\n        columns = pd.MultiIndex.from_product([[\"a\", \"b\"], [\"x\", \"y\"]])\n        df = pd.DataFrame(self.rs.rand(10, 4), columns=columns)\n        g = ag.PairGrid(df)\n        g.map_diag(plt.hist)\n\n        assert g.diag_vars == list(columns)\n        for var, ax in zip(g.diag_vars, g.diag_axes):\n            assert var in df.columns\n            assert len(ax.patches) == 10\n\n'''\nassert needle in s\np.write_text(s.replace(needle, replacement))\nPY\nMPLBACKEND=Agg pytest -q tests/test_axisgrid.py::TestPairGrid::test_multiindex_columns --disable-warnings"
+      },
+      "metrics_snapshot": {
+        "calls": 18,
+        "prompt_tokens": 223793,
+        "cache_hit_tokens": 205312,
+        "cache_miss_tokens": 18481,
+        "cache_hit_rate_pct": 91.74,
+        "completion_tokens": 4838,
+        "total_tokens": 228631,
+        "task_cost_usd": 0.006291,
+        "session_cost_usd": 0.015973
+      }
+    },
+    {
+      "turn": 19,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && git diff --stat && git diff"
+      },
+      "metrics_snapshot": {
+        "calls": 19,
+        "prompt_tokens": 246054,
+        "cache_hit_tokens": 227328,
+        "cache_miss_tokens": 18726,
+        "cache_hit_rate_pct": 92.39,
+        "completion_tokens": 4915,
+        "total_tokens": 250969,
+        "task_cost_usd": 0.00644,
+        "session_cost_usd": 0.016122
+      }
+    },
+    {
+      "turn": 20,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && git status --short"
+      },
+      "metrics_snapshot": {
+        "calls": 20,
+        "prompt_tokens": 268931,
+        "cache_hit_tokens": 249600,
+        "cache_miss_tokens": 19331,
+        "cache_hit_rate_pct": 92.81,
+        "completion_tokens": 5245,
+        "total_tokens": 274176,
+        "task_cost_usd": 0.006795,
+        "session_cost_usd": 0.016478
+      }
+    },
+    {
+      "turn": 21,
+      "action": "finish_task",
+      "args": {},
+      "metrics_snapshot": {
+        "calls": 21,
+        "prompt_tokens": 292174,
+        "cache_hit_tokens": 272640,
+        "cache_miss_tokens": 19534,
+        "cache_hit_rate_pct": 93.31,
+        "completion_tokens": 5275,
+        "total_tokens": 297449,
+        "task_cost_usd": 0.006913,
+        "session_cost_usd": 0.016596
+      }
+    }
+  ]
+}
