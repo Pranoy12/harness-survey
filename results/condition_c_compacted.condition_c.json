@@ -1,19 +1,17 @@
 {
     "total_instances": 15,
     "submitted_instances": 15,
-    "completed_instances": 9,
-    "resolved_instances": 3,
-    "unresolved_instances": 6,
-    "empty_patch_instances": 6,
+    "completed_instances": 7,
+    "resolved_instances": 2,
+    "unresolved_instances": 5,
+    "empty_patch_instances": 8,
     "error_instances": 0,
     "completed_ids": [
         "mwaskom__seaborn-3010",
         "mwaskom__seaborn-3190",
         "pallets__flask-4992",
-        "pallets__flask-5063",
         "psf__requests-1963",
-        "psf__requests-2148",
-        "psf__requests-3362",
+        "psf__requests-2317",
         "psf__requests-863",
         "pylint-dev__pylint-5859"
     ],
@@ -22,8 +20,10 @@
         "mwaskom__seaborn-2848",
         "mwaskom__seaborn-3407",
         "pallets__flask-4045",
-        "psf__requests-2317",
+        "pallets__flask-5063",
+        "psf__requests-2148",
         "psf__requests-2674",
+        "psf__requests-3362",
         "pylint-dev__pylint-6506"
     ],
     "submitted_ids": [
@@ -45,15 +45,13 @@
     ],
     "resolved_ids": [
         "mwaskom__seaborn-3010",
-        "pallets__flask-4992",
         "pylint-dev__pylint-5859"
     ],
     "unresolved_ids": [
         "mwaskom__seaborn-3190",
-        "pallets__flask-5063",
+        "pallets__flask-4992",
         "psf__requests-1963",
-        "psf__requests-2148",
-        "psf__requests-3362",
+        "psf__requests-2317",
         "psf__requests-863"
     ],
     "error_ids": [],
