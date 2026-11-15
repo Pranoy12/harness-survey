@@ -43,7 +43,8 @@ def build_and_cache_dataset(output_path: Path = OUTPUT_FILE) -> List[Dict[str, A
                 "hints_text": item.get("hints_text", ""),
                 "fail_to_pass": item.get("FAIL_TO_PASS", []),
                 "pass_to_pass": item.get("PASS_TO_PASS", []),
-                "environment_setup_commit": item.get("environment_setup_commit", "")
+                "environment_setup_commit": item.get("environment_setup_commit", ""),
+                "test_patch": item.get("test_patch", "")
             })
             counts[repo] += 1
 
