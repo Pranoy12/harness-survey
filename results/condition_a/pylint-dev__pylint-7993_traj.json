@@ -1,0 +1,417 @@
+{
+  "instance_id": "pylint-dev__pylint-7993",
+  "condition": "condition_a",
+  "turns_taken": 20,
+  "finished_by_tool": true,
+  "empty_action_retries": 0,
+  "wall_time_sec": 98.28,
+  "usage_metrics": {
+    "calls": 20,
+    "prompt_tokens": 199665,
+    "cache_hit_tokens": 189184,
+    "cache_miss_tokens": 10481,
+    "cache_hit_rate_pct": 94.75,
+    "completion_tokens": 8264,
+    "total_tokens": 207929,
+    "task_cost_usd": 0.007098,
+    "session_cost_usd": 0.037073
+  },
+  "usage_summary": "[Quota Tracker] Calls: 20 | Prompt Tokens: 199,665 | Completion Tokens: 8,264 | Total Tokens: 207,929 | Est. Cost: $0.0071[DEEPSEEK][DeepSeek OFF-PEAK (1x)] Calls: 20 | Cache Hit: 94.8% (189,184/199,665) | Out: 8,264 | Task Spend: $0.00710 | Total Session Spend: $0.03707",
+  "model_patch": "diff --git a/pylint/reporters/text.py b/pylint/reporters/text.py\nindex 29bd46798..fd2f33358 100755\n--- a/pylint/reporters/text.py\n+++ b/pylint/reporters/text.py\n@@ -11,7 +11,7 @@\n from __future__ import annotations\n \n import os\n-import re\n+import string\n import sys\n import warnings\n from dataclasses import asdict, fields\n@@ -175,15 +175,33 @@ class TextReporter(BaseReporter):\n         self._template = template\n \n         # Check to see if all parameters in the template are attributes of the Message\n-        arguments = re.findall(r\"\\{(.+?)(:.*)?\\}\", template)\n-        for argument in arguments:\n-            if argument[0] not in MESSAGE_FIELDS:\n+        # using the string formatter to correctly handle escaped braces.\n+        fixed_template = []\n+        for (\n+            literal_text,\n+            field_name,\n+            format_spec,\n+            conversion,\n+        ) in string.Formatter().parse(template):\n+            # Escape braces in literal text again so that they are still treated as\n+            # literals when the fixed template is formatted.\n+            fixed_template.append(literal_text.replace(\"{\", \"{{\").replace(\"}\", \"}}\"))\n+            if field_name is None:\n+                continue\n+            if field_name not in MESSAGE_FIELDS:\n                 warnings.warn(\n-                    f\"Don't recognize the argument '{argument[0]}' in the --msg-template. \"\n+                    f\"Don't recognize the argument '{field_name}' in the --msg-template. \"\n                     \"Are you sure it is supported on the current version of pylint?\"\n                 )\n-                template = re.sub(r\"\\{\" + argument[0] + r\"(:.*?)?\\}\", \"\", template)\n-        self._fixed_template = template\n+                continue\n+            fixed_field = f\"{{{field_name}\"\n+            if conversion:\n+                fixed_field += f\"!{conversion}\"\n+            if format_spec:\n+                fixed_field += f\":{format_spec}\"\n+            fixed_field += \"}\"\n+            fixed_template.append(fixed_field)\n+        self._fixed_template = \"\".join(fixed_template)\n \n     def write_message(self, msg: Message) -> None:\n         \"\"\"Convenience method to write a formatted message with class default\ndiff --git a/tests/reporters/unittest_reporting.py b/tests/reporters/unittest_reporting.py\nindex 37f3e5fd9..fcb181c79 100755\n--- a/tests/reporters/unittest_reporting.py\n+++ b/tests/reporters/unittest_reporting.py\n@@ -113,6 +113,22 @@ def test_template_option_non_existing(linter) -> None:\n     assert out_lines[2] == \"my_mod:2::()\"\n \n \n+def test_template_option_with_escaped_braces(linter) -> None:\n+    \"\"\"Test a message template using escaped braces.\"\"\"\n+    output = StringIO()\n+    linter.reporter.out = output\n+    linter.config.msg_template = '{{ \"Category\": \"{category}\" }}'\n+    linter.open()\n+    with warnings.catch_warnings(record=True) as caught_warnings:\n+        warnings.simplefilter(\"always\")\n+        linter.set_current_module(\"my_mod\")\n+    assert not caught_warnings\n+    linter.add_message(\"C0301\", line=1, args=(1, 2))\n+\n+    out_lines = output.getvalue().split(\"\\n\")\n+    assert out_lines[1] == '{ \"Category\": \"convention\" }'\n+\n+\n def test_deprecation_set_output(recwarn):\n     \"\"\"TODO remove in 3.0.\"\"\"\n     reporter = BaseReporter()\n",
+  "trajectory": [
+    {
+      "turn": 1,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && git status --short && ls"
+      },
+      "metrics_snapshot": {
+        "calls": 1,
+        "prompt_tokens": 1155,
+        "cache_hit_tokens": 256,
+        "cache_miss_tokens": 899,
+        "cache_hit_rate_pct": 22.16,
+        "completion_tokens": 62,
+        "total_tokens": 1217,
+        "task_cost_usd": 0.000173,
+        "session_cost_usd": 0.030148
+      }
+    },
+    {
+      "turn": 2,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '1,280p' pylint/reporters/text.py"
+      },
+      "metrics_snapshot": {
+        "calls": 2,
+        "prompt_tokens": 2490,
+        "cache_hit_tokens": 1408,
+        "cache_miss_tokens": 1082,
+        "cache_hit_rate_pct": 56.55,
+        "completion_tokens": 126,
+        "total_tokens": 2616,
+        "task_cost_usd": 0.000242,
+        "session_cost_usd": 0.030217
+      }
+    },
+    {
+      "turn": 3,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && grep -R \"Don't recognize the argument\\|msg-template\\|_fixed_template\\|MESSAGE_FIELDS\" -n tests pylint | head -100"
+      },
+      "metrics_snapshot": {
+        "calls": 3,
+        "prompt_tokens": 6261,
+        "cache_hit_tokens": 2688,
+        "cache_miss_tokens": 3573,
+        "cache_hit_rate_pct": 42.93,
+        "completion_tokens": 223,
+        "total_tokens": 6484,
+        "task_cost_usd": 0.000678,
+        "session_cost_usd": 0.030653
+      }
+    },
+    {
+      "turn": 4,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '1,140p' tests/reporters/unittest_reporting.py && git log --oneline -5"
+      },
+      "metrics_snapshot": {
+        "calls": 4,
+        "prompt_tokens": 10626,
+        "cache_hit_tokens": 6528,
+        "cache_miss_tokens": 4098,
+        "cache_hit_rate_pct": 61.43,
+        "completion_tokens": 293,
+        "total_tokens": 10919,
+        "task_cost_usd": 0.00081,
+        "session_cost_usd": 0.030785
+      }
+    },
+    {
+      "turn": 5,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python - <<'PY'\nimport string\nfor t in ['{{ \"Category\": \"{category}\" }}', '{path}:{line}:{a_new_option}:({a_second_new_option:03d})', '{{}}', '{{{msg}}}', '{foo!r}', '{foo:{width}}', '{{ \"Category\": \"x\" }}']:\n    print(repr(t))\n    for p in string.Formatter().parse(t):\n        print(' ', p)\nPY\npython --version && python -m pylint --version"
+      },
+      "metrics_snapshot": {
+        "calls": 5,
+        "prompt_tokens": 16487,
+        "cache_hit_tokens": 10880,
+        "cache_miss_tokens": 5607,
+        "cache_hit_rate_pct": 65.99,
+        "completion_tokens": 621,
+        "total_tokens": 17108,
+        "task_cost_usd": 0.001246,
+        "session_cost_usd": 0.031221
+      }
+    },
+    {
+      "turn": 6,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && cat > /tmp/test_pylint_msg.py <<'PY'\ndef f(x):\n    return x\nPY\npython -m pylint /tmp/test_pylint_msg.py --msg-template='{{ \"Category\": \"{category}\" }}' 2>&1 | head -30"
+      },
+      "metrics_snapshot": {
+        "calls": 6,
+        "prompt_tokens": 23007,
+        "cache_hit_tokens": 17024,
+        "cache_miss_tokens": 5983,
+        "cache_hit_rate_pct": 73.99,
+        "completion_tokens": 1922,
+        "total_tokens": 24929,
+        "task_cost_usd": 0.002102,
+        "session_cost_usd": 0.032076
+      }
+    },
+    {
+      "turn": 7,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && cat > /tmp/test_pylint_msg.py <<'PY'\nx=1\nPY\npython -m pylint /tmp/test_pylint_msg.py --msg-template='{{ \"Category\": \"{category}\" }}' 2>&1 | head -30"
+      },
+      "metrics_snapshot": {
+        "calls": 7,
+        "prompt_tokens": 30914,
+        "cache_hit_tokens": 24704,
+        "cache_miss_tokens": 6210,
+        "cache_hit_rate_pct": 79.91,
+        "completion_tokens": 2029,
+        "total_tokens": 32943,
+        "task_cost_usd": 0.002223,
+        "session_cost_usd": 0.032198
+      }
+    },
+    {
+      "turn": 8,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python - <<'PY'\nimport string\n\ndef rebuild(template, fields):\n    f = string.Formatter()\n    fixed=[]\n    for literal_text, field_name, format_spec, conversion in f.parse(template):\n        fixed.append(literal_text.replace('{','{{').replace('}','}}'))\n        if field_name is not None:\n            arg = field_name.split('.')[0].split('[')[0]\n            if arg not in fields:\n                continue\n            field = '{' + field_name\n            if conversion:\n                field += '!' + conversion\n            if format_spec:\n                field += ':' + format_spec\n            field += '}'\n            fixed.append(field)\n    return ''.join(fixed)\n\nfields={'category', 'path','line','a_second_new_option'}\nfor t in ['{{ \"Category\": \"{category}\" }}', '{path}:{line}:{a_new_option}:({a_second_new_option:03d})', '{{}}', '{{{msg}}}', '{foo!r}', '{{foo}}', 'abc{foo}def{{bar}}', '{{ \"Category\": \"x\" }}']:\n    r=rebuild(t,fields)\n    print(repr(t), '=>', repr(r))\n    print(' formatted old expected maybe:', end=' ')\n    try:\n        print(repr(t.format(**{k:'v' for k in fields})))\n    except Exception as e: print(e)\n    try:\n        print(' new:', repr(r.format(**{k:'v' for k in fields})))\n    except Exception as e: print(' new err', e)\nPY"
+      },
+      "metrics_snapshot": {
+        "calls": 8,
+        "prompt_tokens": 39029,
+        "cache_hit_tokens": 32640,
+        "cache_miss_tokens": 6389,
+        "cache_hit_rate_pct": 83.63,
+        "completion_tokens": 2944,
+        "total_tokens": 41973,
+        "task_cost_usd": 0.002823,
+        "session_cost_usd": 0.032797
+      }
+    },
+    {
+      "turn": 9,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && find / -path '*pylint/reporters/text.py' 2>/dev/null | head"
+      },
+      "metrics_snapshot": {
+        "calls": 9,
+        "prompt_tokens": 48359,
+        "cache_hit_tokens": 41600,
+        "cache_miss_tokens": 6759,
+        "cache_hit_rate_pct": 86.02,
+        "completion_tokens": 3709,
+        "total_tokens": 52068,
+        "task_cost_usd": 0.003364,
+        "session_cost_usd": 0.033339
+      }
+    },
+    {
+      "turn": 10,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && pytest -q tests/reporters/unittest_reporting.py -q --disable-warnings --maxfail=1"
+      },
+      "metrics_snapshot": {
+        "calls": 10,
+        "prompt_tokens": 58485,
+        "cache_hit_tokens": 51584,
+        "cache_miss_tokens": 6901,
+        "cache_hit_rate_pct": 88.2,
+        "completion_tokens": 4756,
+        "total_tokens": 63241,
+        "task_cost_usd": 0.004044,
+        "session_cost_usd": 0.034018
+      }
+    },
+    {
+      "turn": 11,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python - <<'PY'\nfrom pathlib import Path\np=Path('pylint/reporters/text.py')\ns=p.read_text()\ns=s.replace('import os\\nimport re\\nimport sys\\nimport warnings\\n', 'import os\\nimport re\\nimport string\\nimport sys\\nimport warnings\\n')\nold='''        # Check to see if all parameters in the template are attributes of the Message\n        arguments = re.findall(r\"\\\\{(.+?)(:.*)?\\\\}\", template)\n        for argument in arguments:\n            if argument[0] not in MESSAGE_FIELDS:\n                warnings.warn(\n                    f\"Don't recognize the argument '{argument[0]}' in the --msg-template. \"\n                    \"Are you sure it is supported on the current version of pylint?\"\n                )\n                template = re.sub(r\"\\\\{\" + argument[0] + r\"(:.*?)?\\\\}\", \"\", template)\n        self._fixed_template = template\n'''\nnew='''        # Check to see if all parameters in the template are attributes of the Message\n        # using the string formatter to correctly handle escaped braces.\n        fixed_template = []\n        for literal_text, field_name, format_spec, conversion in string.Formatter().parse(\n            template\n        ):\n            # Escape braces in literal text again so that they are still treated as\n            # literals when the fixed template is formatted.\n            fixed_template.append(literal_text.replace(\"{\", \"{{\").replace(\"}\", \"}}\"))\n            if field_name is None:\n                continue\n            if field_name not in MESSAGE_FIELDS:\n                warnings.warn(\n                    f\"Don't recognize the argument '{field_name}' in the --msg-template. \"\n                    \"Are you sure it is supported on the current version of pylint?\"\n                )\n                continue\n            fixed_field = f\"{{{field_name}\"\n            if conversion:\n                fixed_field += f\"!{conversion}\"\n            if format_spec:\n                fixed_field += f\":{format_spec}\"\n            fixed_field += \"}\"\n            fixed_template.append(fixed_field)\n        self._fixed_template = \"\".join(fixed_template)\n'''\nassert old in s\ns=s.replace(old,new)\np.write_text(s)\nPY\nsed -n '15,25p' pylint/reporters/text.py && sed -n '165,210p' pylint/reporters/text.py"
+      },
+      "metrics_snapshot": {
+        "calls": 11,
+        "prompt_tokens": 69685,
+        "cache_hit_tokens": 62592,
+        "cache_miss_tokens": 7093,
+        "cache_hit_rate_pct": 89.82,
+        "completion_tokens": 5303,
+        "total_tokens": 74988,
+        "task_cost_usd": 0.004434,
+        "session_cost_usd": 0.034408
+      }
+    },
+    {
+      "turn": 12,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && grep -n \"re\\.\" pylint/reporters/text.py; python -m black --check pylint/reporters/text.py 2>&1 || true; python -m isort --check-only pylint/reporters/text.py 2>&1 || true"
+      },
+      "metrics_snapshot": {
+        "calls": 12,
+        "prompt_tokens": 81953,
+        "cache_hit_tokens": 74240,
+        "cache_miss_tokens": 7713,
+        "cache_hit_rate_pct": 90.59,
+        "completion_tokens": 5438,
+        "total_tokens": 87391,
+        "task_cost_usd": 0.004642,
+        "session_cost_usd": 0.034617
+      }
+    },
+    {
+      "turn": 13,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python - <<'PY'\nfrom pathlib import Path\np=Path('pylint/reporters/text.py')\ns=p.read_text().replace('import os\\nimport re\\nimport string\\n', 'import os\\nimport string\\n')\np.write_text(s)\nPY\npython -m black pylint/reporters/text.py && python -m isort pylint/reporters/text.py && sed -n '10,22p' pylint/reporters/text.py && sed -n '174,205p' pylint/reporters/text.py"
+      },
+      "metrics_snapshot": {
+        "calls": 13,
+        "prompt_tokens": 94404,
+        "cache_hit_tokens": 86528,
+        "cache_miss_tokens": 7876,
+        "cache_hit_rate_pct": 91.66,
+        "completion_tokens": 5609,
+        "total_tokens": 100013,
+        "task_cost_usd": 0.004806,
+        "session_cost_usd": 0.034781
+      }
+    },
+    {
+      "turn": 14,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && pytest -q tests/reporters/unittest_reporting.py --disable-warnings --maxfail=1"
+      },
+      "metrics_snapshot": {
+        "calls": 14,
+        "prompt_tokens": 107421,
+        "cache_hit_tokens": 99072,
+        "cache_miss_tokens": 8349,
+        "cache_hit_rate_pct": 92.23,
+        "completion_tokens": 5791,
+        "total_tokens": 113212,
+        "task_cost_usd": 0.005024,
+        "session_cost_usd": 0.034999
+      }
+    },
+    {
+      "turn": 14,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && cat > /tmp/test_pylint_msg.py <<'PY'\n\"\"\"Bad module without final newline.\"\"\"\nx=1\nPY\npython -m pylint /tmp/test_pylint_msg.py --disable=all --enable=missing-module-docstring,invalid-name --msg-template='{{ \"Category\": \"{category}\" }}' 2>&1 | head -30"
+      },
+      "metrics_snapshot": {
+        "calls": 14,
+        "prompt_tokens": 107421,
+        "cache_hit_tokens": 99072,
+        "cache_miss_tokens": 8349,
+        "cache_hit_rate_pct": 92.23,
+        "completion_tokens": 5791,
+        "total_tokens": 113212,
+        "task_cost_usd": 0.005024,
+        "session_cost_usd": 0.034999
+      }
+    },
+    {
+      "turn": 15,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python - <<'PY'\nfrom pathlib import Path\np=Path('tests/reporters/unittest_reporting.py')\ns=p.read_text()\nanchor='''def test_deprecation_set_output(recwarn):\n'''\ntest='''def test_template_option_with_escaped_braces(linter) -> None:\n    \"\"\"Test a message template using escaped braces.\"\"\"\n    output = StringIO()\n    linter.reporter.out = output\n    linter.config.msg_template = '{{ \"Category\": \"{category}\" }}'\n    linter.open()\n    with warnings.catch_warnings(record=True) as caught_warnings:\n        warnings.simplefilter(\"always\")\n        linter.set_current_module(\"my_mod\")\n    assert not caught_warnings\n    linter.add_message(\"C0301\", line=1, args=(1, 2))\n\n    out_lines = output.getvalue().split(\"\\\\n\")\n    assert out_lines[1] == '{ \"Category\": \"convention\" }'\n\n\n'''\nassert anchor in s\ns=s.replace(anchor,test+anchor)\np.write_text(s)\nPY\npytest -q tests/reporters/unittest_reporting.py --disable-warnings --maxfail=1"
+      },
+      "metrics_snapshot": {
+        "calls": 15,
+        "prompt_tokens": 120721,
+        "cache_hit_tokens": 112128,
+        "cache_miss_tokens": 8593,
+        "cache_hit_rate_pct": 92.88,
+        "completion_tokens": 6349,
+        "total_tokens": 127070,
+        "task_cost_usd": 0.005435,
+        "session_cost_usd": 0.035409
+      }
+    },
+    {
+      "turn": 16,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && pytest -q tests/reporters --disable-warnings --maxfail=1"
+      },
+      "metrics_snapshot": {
+        "calls": 16,
+        "prompt_tokens": 134616,
+        "cache_hit_tokens": 125824,
+        "cache_miss_tokens": 8792,
+        "cache_hit_rate_pct": 93.47,
+        "completion_tokens": 6783,
+        "total_tokens": 141399,
+        "task_cost_usd": 0.005766,
+        "session_cost_usd": 0.035741
+      }
+    },
+    {
+      "turn": 16,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python -m black --check pylint/reporters/text.py tests/reporters/unittest_reporting.py && python -m isort --check-only pylint/reporters/text.py tests/reporters/unittest_reporting.py && git diff --check && git diff --stat && git diff"
+      },
+      "metrics_snapshot": {
+        "calls": 16,
+        "prompt_tokens": 134616,
+        "cache_hit_tokens": 125824,
+        "cache_miss_tokens": 8792,
+        "cache_hit_rate_pct": 93.47,
+        "completion_tokens": 6783,
+        "total_tokens": 141399,
+        "task_cost_usd": 0.005766,
+        "session_cost_usd": 0.035741
+      }
+    },
+    {
+      "turn": 17,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python - <<'PY'\nfrom unittest.mock import Mock\nfrom pylint.reporters.text import TextReporter\nfrom pylint.message import Message\nimport warnings\n\ndef test(template):\n    r=TextReporter()\n    r.linter=Mock()\n    r.linter.config.msg_template=template\n    with warnings.catch_warnings(record=True) as w:\n        warnings.simplefilter('always')\n        r.on_set_current_module('mod', None)\n    print('template',repr(template),'fixed',repr(r._fixed_template),'warnings',[str(x.message) for x in w])\n\nfor t in ['{{ \"Category\": \"{category}\" }}', '{path}:{line}:{column}: {msg_id}: {msg} ({symbol})', '{{}}', '{{{msg}}}', '{{foo}}', 'abc{foo}def{{bar}}', '{path!r}', '{path:{line}}']:\n    try: test(t)\n    except Exception as e: print('ERR',repr(t),e)\nPY"
+      },
+      "metrics_snapshot": {
+        "calls": 17,
+        "prompt_tokens": 149911,
+        "cache_hit_tokens": 140032,
+        "cache_miss_tokens": 9879,
+        "cache_hit_rate_pct": 93.41,
+        "completion_tokens": 7450,
+        "total_tokens": 157361,
+        "task_cost_usd": 0.006372,
+        "session_cost_usd": 0.036347
+      }
+    },
+    {
+      "turn": 18,
+      "action": "run_shell_command",
+      "args": {
+        "command": "python - <<'PY'\nimport re\nfor t in ['{line:{unknown}}','{path:{line}}','{foo!r}']:\n print(t, re.findall(r\"\\{(.+?)(:.*)?\\}\",t))\nPY"
+      },
+      "metrics_snapshot": {
+        "calls": 18,
+        "prompt_tokens": 166080,
+        "cache_hit_tokens": 155904,
+        "cache_miss_tokens": 10176,
+        "cache_hit_rate_pct": 93.87,
+        "completion_tokens": 7739,
+        "total_tokens": 173819,
+        "task_cost_usd": 0.006638,
+        "session_cost_usd": 0.036612
+      }
+    },
+    {
+      "turn": 19,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && git status --short && python -m compileall -q pylint/reporters/text.py tests/reporters/unittest_reporting.py && pytest -q tests/reporters/unittest_reporting.py --disable-warnings"
+      },
+      "metrics_snapshot": {
+        "calls": 19,
+        "prompt_tokens": 182602,
+        "cache_hit_tokens": 172288,
+        "cache_miss_tokens": 10314,
+        "cache_hit_rate_pct": 94.35,
+        "completion_tokens": 8223,
+        "total_tokens": 190825,
+        "task_cost_usd": 0.006998,
+        "session_cost_usd": 0.036972
+      }
+    },
+    {
+      "turn": 20,
+      "action": "finish_task",
+      "args": {},
+      "metrics_snapshot": {
+        "calls": 20,
+        "prompt_tokens": 199665,
+        "cache_hit_tokens": 189184,
+        "cache_miss_tokens": 10481,
+        "cache_hit_rate_pct": 94.75,
+        "completion_tokens": 8264,
+        "total_tokens": 207929,
+        "task_cost_usd": 0.007098,
+        "session_cost_usd": 0.037073
+      }
+    }
+  ]
+}

@@ -1,0 +1,471 @@
+{
+  "instance_id": "pytest-dev__pytest-11143",
+  "condition": "condition_c_compacted",
+  "turns_taken": 25,
+  "finished_by_tool": true,
+  "empty_action_retries": 0,
+  "wall_time_sec": 49.58,
+  "usage_metrics": {
+    "calls": 25,
+    "prompt_tokens": 109300,
+    "cache_hit_tokens": 59904,
+    "cache_miss_tokens": 49396,
+    "cache_hit_rate_pct": 54.81,
+    "completion_tokens": 4489,
+    "total_tokens": 113789,
+    "task_cost_usd": 0.010283,
+    "session_cost_usd": 0.070061
+  },
+  "usage_summary": "[Quota Tracker] Calls: 25 | Prompt Tokens: 109,300 | Completion Tokens: 4,489 | Total Tokens: 113,789 | Est. Cost: $0.0103[DEEPSEEK][DeepSeek OFF-PEAK (1x)] Calls: 25 | Cache Hit: 54.8% (59,904/109,300) | Out: 4,489 | Task Spend: $0.01028 | Total Session Spend: $0.07006",
+  "model_patch": "diff --git a/src/_pytest/assertion/rewrite.py b/src/_pytest/assertion/rewrite.py\nindex 157903faf..9bf79f1e1 100755\n--- a/src/_pytest/assertion/rewrite.py\n+++ b/src/_pytest/assertion/rewrite.py\n@@ -676,6 +676,7 @@ class AssertionRewriter(ast.NodeVisitor):\n                 expect_docstring\n                 and isinstance(item, ast.Expr)\n                 and isinstance(item.value, ast.Constant)\n+                and isinstance(item.value.value, str)\n             ):\n                 doc = item.value.value\n                 if self.is_rewrite_disabled(doc):\ndiff --git a/testing/test_assertrewrite.py b/testing/test_assertrewrite.py\nindex d01803204..87145927d 100755\n--- a/testing/test_assertrewrite.py\n+++ b/testing/test_assertrewrite.py\n@@ -141,6 +141,13 @@ class TestAssertionRewrite:\n         assert isinstance(m.body[1], ast.Assert)\n         assert m.body[1].msg is None\n \n+    def test_rewrite_first_statement_number(self) -> None:\n+        s = \"\"\"42\\nassert 14\"\"\"\n+        m = rewrite(s)\n+        assert isinstance(m.body[0], ast.Import)\n+        assert isinstance(m.body[2], ast.Expr)\n+        assert m.body[2].value.value == 42\n+\n     def test_dont_rewrite_plugin(self, pytester: Pytester) -> None:\n         contents = {\n             \"conftest.py\": \"pytest_plugins = 'plugin'; import plugin\",\n",
+  "trajectory": [
+    {
+      "turn": 1,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && git status && git log --oneline -5 && sed -n '650,790p' src/_pytest/assertion/rewrite.py"
+      },
+      "metrics_snapshot": {
+        "calls": 1,
+        "prompt_tokens": 2438,
+        "cache_hit_tokens": 0,
+        "cache_miss_tokens": 2438,
+        "cache_hit_rate_pct": 0.0,
+        "completion_tokens": 81,
+        "total_tokens": 2519,
+        "task_cost_usd": 0.000414,
+        "session_cost_usd": 0.060193
+      }
+    },
+    {
+      "turn": 2,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && grep -rn \"is_rewrite_disabled\\|PYTEST_DONT_REWRITE\" src/_pytest/assertion tests | head -50"
+      },
+      "metrics_snapshot": {
+        "calls": 2,
+        "prompt_tokens": 6294,
+        "cache_hit_tokens": 2432,
+        "cache_miss_tokens": 3862,
+        "cache_hit_rate_pct": 38.64,
+        "completion_tokens": 316,
+        "total_tokens": 6610,
+        "task_cost_usd": 0.000776,
+        "session_cost_usd": 0.060555
+      }
+    },
+    {
+      "turn": 3,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && ls && sed -n '230,260p' src/_pytest/assertion/rewrite.py && grep -rn \"PYTEST_DONT_REWRITE\" testing | head -50"
+      },
+      "metrics_snapshot": {
+        "calls": 3,
+        "prompt_tokens": 10561,
+        "cache_hit_tokens": 6400,
+        "cache_miss_tokens": 4161,
+        "cache_hit_rate_pct": 60.6,
+        "completion_tokens": 408,
+        "total_tokens": 10969,
+        "task_cost_usd": 0.000888,
+        "session_cost_usd": 0.060667
+      }
+    },
+    {
+      "turn": 4,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '640,760p' src/_pytest/assertion/rewrite.py && sed -n '110,170p' testing/test_assertrewrite.py && sed -n '1270,1310p' testing/test_assertrewrite.py"
+      },
+      "metrics_snapshot": {
+        "calls": 4,
+        "prompt_tokens": 13969,
+        "cache_hit_tokens": 8832,
+        "cache_miss_tokens": 5137,
+        "cache_hit_rate_pct": 63.23,
+        "completion_tokens": 508,
+        "total_tokens": 14477,
+        "task_cost_usd": 0.001102,
+        "session_cost_usd": 0.06088
+      }
+    },
+    {
+      "turn": 5,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python - <<'EOF'\nimport ast\nfor s in ['1\\nassert 1','\"doc\"\\nassert 1','b\"x\"\\nassert 1','...\\nassert 1']:\n    m=ast.parse(s)\n    print(repr(s), ast.dump(m.body[0]))\nEOF\ngit log -3 --oneline"
+      },
+      "metrics_snapshot": {
+        "calls": 5,
+        "prompt_tokens": 18905,
+        "cache_hit_tokens": 11264,
+        "cache_miss_tokens": 7641,
+        "cache_hit_rate_pct": 59.58,
+        "completion_tokens": 975,
+        "total_tokens": 19880,
+        "task_cost_usd": 0.001765,
+        "session_cost_usd": 0.061543
+      }
+    },
+    {
+      "turn": 6,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && grep -rn \"is_rewrite_disabled\\|expect_docstring\" src testing | head -30"
+      },
+      "metrics_snapshot": {
+        "calls": 6,
+        "prompt_tokens": 23894,
+        "cache_hit_tokens": 13696,
+        "cache_miss_tokens": 10198,
+        "cache_hit_rate_pct": 57.32,
+        "completion_tokens": 1073,
+        "total_tokens": 24967,
+        "task_cost_usd": 0.002215,
+        "session_cost_usd": 0.061993
+      }
+    },
+    {
+      "turn": 7,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '650,700p' src/_pytest/assertion/rewrite.py && sed -n '735,755p' src/_pytest/assertion/rewrite.py"
+      },
+      "metrics_snapshot": {
+        "calls": 7,
+        "prompt_tokens": 27244,
+        "cache_hit_tokens": 16128,
+        "cache_miss_tokens": 11116,
+        "cache_hit_rate_pct": 59.2,
+        "completion_tokens": 1158,
+        "total_tokens": 28402,
+        "task_cost_usd": 0.002411,
+        "session_cost_usd": 0.062189
+      }
+    },
+    {
+      "turn": 8,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && git log -3 --oneline && git status --short && grep -rn \"PYTEST_DONT_REWRITE\\|docstring\" testing/test_assertrewrite.py | head -40"
+      },
+      "metrics_snapshot": {
+        "calls": 8,
+        "prompt_tokens": 30672,
+        "cache_hit_tokens": 18560,
+        "cache_miss_tokens": 12112,
+        "cache_hit_rate_pct": 60.51,
+        "completion_tokens": 1279,
+        "total_tokens": 31951,
+        "task_cost_usd": 0.00264,
+        "session_cost_usd": 0.062418
+      }
+    },
+    {
+      "turn": 9,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '100,165p' testing/test_assertrewrite.py && sed -n '1265,1310p' testing/test_assertrewrite.py && sed -n '1,80p' src/_pytest/assertion/rewrite.py"
+      },
+      "metrics_snapshot": {
+        "calls": 9,
+        "prompt_tokens": 34045,
+        "cache_hit_tokens": 20992,
+        "cache_miss_tokens": 13053,
+        "cache_hit_rate_pct": 61.66,
+        "completion_tokens": 1379,
+        "total_tokens": 35424,
+        "task_cost_usd": 0.002848,
+        "session_cost_usd": 0.062627
+      }
+    },
+    {
+      "turn": 10,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && grep -n \"def run\\|is_rewrite_disabled\" -A65 -B5 src/_pytest/assertion/rewrite.py"
+      },
+      "metrics_snapshot": {
+        "calls": 10,
+        "prompt_tokens": 38433,
+        "cache_hit_tokens": 23424,
+        "cache_miss_tokens": 15009,
+        "cache_hit_rate_pct": 60.95,
+        "completion_tokens": 1465,
+        "total_tokens": 39898,
+        "task_cost_usd": 0.003201,
+        "session_cost_usd": 0.062979
+      }
+    },
+    {
+      "turn": 11,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && git log -5 --oneline && grep -n \"class TestAssertionRewrite\\|def rewrite(\" -A20 testing/test_assertrewrite.py | head -80 && grep -n \"dont_rewrite\\|docstring\" testing/test_assertrewrite.py"
+      },
+      "metrics_snapshot": {
+        "calls": 11,
+        "prompt_tokens": 45199,
+        "cache_hit_tokens": 25856,
+        "cache_miss_tokens": 19343,
+        "cache_hit_rate_pct": 57.2,
+        "completion_tokens": 1801,
+        "total_tokens": 47000,
+        "task_cost_usd": 0.00406,
+        "session_cost_usd": 0.063838
+      }
+    },
+    {
+      "turn": 12,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '65,160p' testing/test_assertrewrite.py && sed -n '720,750p' src/_pytest/assertion/rewrite.py && sed -n '1,55p' testing/test_assertrewrite.py"
+      },
+      "metrics_snapshot": {
+        "calls": 12,
+        "prompt_tokens": 51582,
+        "cache_hit_tokens": 28288,
+        "cache_miss_tokens": 23294,
+        "cache_hit_rate_pct": 54.84,
+        "completion_tokens": 1906,
+        "total_tokens": 53488,
+        "task_cost_usd": 0.004723,
+        "session_cost_usd": 0.064501
+      }
+    },
+    {
+      "turn": 13,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '670,730p' src/_pytest/assertion/rewrite.py && grep -n \"docstring\" -n src/_pytest/assertion/rewrite.py"
+      },
+      "metrics_snapshot": {
+        "calls": 13,
+        "prompt_tokens": 57014,
+        "cache_hit_tokens": 30720,
+        "cache_miss_tokens": 26294,
+        "cache_hit_rate_pct": 53.88,
+        "completion_tokens": 1996,
+        "total_tokens": 59010,
+        "task_cost_usd": 0.005234,
+        "session_cost_usd": 0.065012
+      }
+    },
+    {
+      "turn": 14,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '655,675p' src/_pytest/assertion/rewrite.py && python - <<'PY'\nimport ast\nfor src in ['1\\nassert False', \"'doc'\\nassert False\", '\"doc\"\\nassert False', 'b\"doc\"\\nassert False', 'f\"doc\"\\nassert False', '123\\nassert False']:\n    t=ast.parse(src)\n    print(repr(src), ast.dump(t.body[0]), getattr(t,'docstring',None))\nPY"
+      },
+      "metrics_snapshot": {
+        "calls": 14,
+        "prompt_tokens": 61815,
+        "cache_hit_tokens": 33152,
+        "cache_miss_tokens": 28663,
+        "cache_hit_rate_pct": 53.63,
+        "completion_tokens": 2149,
+        "total_tokens": 63964,
+        "task_cost_usd": 0.005688,
+        "session_cost_usd": 0.065467
+      }
+    },
+    {
+      "turn": 15,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && git log -1 --oneline && python - <<'PY'\nimport sys\nprint(sys.version)\nPY\ngrep -n \"isinstance(item.value, ast.Constant)\" -R src/_pytest tests | head -20\ngrep -n \"PYTEST_DONT_REWRITE\" -R testing tests | head -30"
+      },
+      "metrics_snapshot": {
+        "calls": 15,
+        "prompt_tokens": 65412,
+        "cache_hit_tokens": 35584,
+        "cache_miss_tokens": 29828,
+        "cache_hit_rate_pct": 54.4,
+        "completion_tokens": 2303,
+        "total_tokens": 67715,
+        "task_cost_usd": 0.005963,
+        "session_cost_usd": 0.065741
+      }
+    },
+    {
+      "turn": 16,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '675,710p' src/_pytest/assertion/rewrite.py && sed -n '120,165p' testing/test_assertrewrite.py && grep -n \"def is_rewrite_disabled\" -A5 src/_pytest/assertion/rewrite.py"
+      },
+      "metrics_snapshot": {
+        "calls": 16,
+        "prompt_tokens": 68655,
+        "cache_hit_tokens": 38016,
+        "cache_miss_tokens": 30639,
+        "cache_hit_rate_pct": 55.37,
+        "completion_tokens": 2411,
+        "total_tokens": 71066,
+        "task_cost_usd": 0.006156,
+        "session_cost_usd": 0.065935
+      }
+    },
+    {
+      "turn": 17,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '1,125p' testing/test_assertrewrite.py && grep -n \"docstring\\|Constant\\|DONT_REWRITE\" testing/test_assertrewrite.py | head -50"
+      },
+      "metrics_snapshot": {
+        "calls": 17,
+        "prompt_tokens": 72318,
+        "cache_hit_tokens": 40448,
+        "cache_miss_tokens": 31870,
+        "cache_hit_rate_pct": 55.93,
+        "completion_tokens": 2763,
+        "total_tokens": 75081,
+        "task_cost_usd": 0.00656,
+        "session_cost_usd": 0.066338
+      }
+    },
+    {
+      "turn": 18,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python - <<'PY'\nfrom _pytest.assertion.rewrite import rewrite_asserts\nimport ast\nfor src in ['1\\nassert 1', 'None\\nassert 1', 'b\"x\"\\nassert 1', '1.2\\nassert 1']:\n    try:\n        t=ast.parse(src)\n        rewrite_asserts(t, src.encode())\n        print('OK',repr(src))\n    except Exception as e:\n        print('FAIL', repr(src), type(e).__name__, e)\nPY"
+      },
+      "metrics_snapshot": {
+        "calls": 18,
+        "prompt_tokens": 77094,
+        "cache_hit_tokens": 42880,
+        "cache_miss_tokens": 34214,
+        "cache_hit_rate_pct": 55.62,
+        "completion_tokens": 2927,
+        "total_tokens": 80021,
+        "task_cost_usd": 0.007017,
+        "session_cost_usd": 0.066795
+      }
+    },
+    {
+      "turn": 19,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '650,775p' src/_pytest/assertion/rewrite.py && sed -n '120,160p' testing/test_assertrewrite.py && cat pyproject.toml | grep -n \"target-version\\|python_requires\\|requires-python\" | head -20"
+      },
+      "metrics_snapshot": {
+        "calls": 19,
+        "prompt_tokens": 81252,
+        "cache_hit_tokens": 45312,
+        "cache_miss_tokens": 35940,
+        "cache_hit_rate_pct": 55.77,
+        "completion_tokens": 3050,
+        "total_tokens": 84302,
+        "task_cost_usd": 0.007357,
+        "session_cost_usd": 0.067135
+      }
+    },
+    {
+      "turn": 20,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && git log --oneline -5 && grep -R \"is_rewrite_disabled\" -n . | head -20 && grep -R \"test_dont_rewrite\" -n testing | head"
+      },
+      "metrics_snapshot": {
+        "calls": 20,
+        "prompt_tokens": 85545,
+        "cache_hit_tokens": 47744,
+        "cache_miss_tokens": 37801,
+        "cache_hit_rate_pct": 55.81,
+        "completion_tokens": 3222,
+        "total_tokens": 88767,
+        "task_cost_usd": 0.007747,
+        "session_cost_usd": 0.067525
+      }
+    },
+    {
+      "turn": 21,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '1,160p' testing/test_assertrewrite.py && sed -n '230,270p' src/_pytest/assertion/rewrite.py"
+      },
+      "metrics_snapshot": {
+        "calls": 21,
+        "prompt_tokens": 90087,
+        "cache_hit_tokens": 50176,
+        "cache_miss_tokens": 39911,
+        "cache_hit_rate_pct": 55.7,
+        "completion_tokens": 3599,
+        "total_tokens": 93686,
+        "task_cost_usd": 0.008297,
+        "session_cost_usd": 0.068075
+      }
+    },
+    {
+      "turn": 22,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '645,762p' src/_pytest/assertion/rewrite.py"
+      },
+      "metrics_snapshot": {
+        "calls": 22,
+        "prompt_tokens": 95214,
+        "cache_hit_tokens": 52608,
+        "cache_miss_tokens": 42606,
+        "cache_hit_rate_pct": 55.25,
+        "completion_tokens": 3669,
+        "total_tokens": 98883,
+        "task_cost_usd": 0.00875,
+        "session_cost_usd": 0.068529
+      }
+    },
+    {
+      "turn": 23,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python - <<'PY'\nfrom pathlib import Path\np = Path('src/_pytest/assertion/rewrite.py')\ns = p.read_text()\ns = s.replace(\n\"\"\"                and isinstance(item.value, ast.Constant)\n            ):\n                doc = item.value.value\"\"\",\n\"\"\"                and isinstance(item.value, ast.Constant)\n                and isinstance(item.value.value, str)\n            ):\n                doc = item.value.value\"\"\")\np.write_text(s)\n\np = Path('testing/test_assertrewrite.py')\ns = p.read_text()\ns = s.replace(\n\"\"\"    def test_dont_rewrite(self) -> None:\n        s = \\\"\\\"\\\"'PYTEST_DONT_REWRITE'\\\\nassert 14\\\"\\\"\\\"\n        m = rewrite(s)\n        assert len(m.body) == 2\n        assert isinstance(m.body[1], ast.Assert)\n        assert m.body[1].msg is None\n\"\"\",\n\"\"\"    def test_dont_rewrite(self) -> None:\n        s = \\\"\\\"\\\"'PYTEST_DONT_REWRITE'\\\\nassert 14\\\"\\\"\\\"\n        m = rewrite(s)\n        assert len(m.body) == 2\n        assert isinstance(m.body[1], ast.Assert)\n        assert m.body[1].msg is None\n\n    def test_rewrite_first_statement_number(self) -> None:\n        s = \\\"\\\"\\\"42\\\\nassert 14\\\"\\\"\\\"\n        m = rewrite(s)\n        assert isinstance(m.body[0], ast.Import)\n        assert isinstance(m.body[2], ast.Expr)\n        assert m.body[2].value.value == 42\n\"\"\")\np.write_text(s)\nPY\ngit diff --check && git diff"
+      },
+      "metrics_snapshot": {
+        "calls": 23,
+        "prompt_tokens": 100909,
+        "cache_hit_tokens": 55040,
+        "cache_miss_tokens": 45869,
+        "cache_hit_rate_pct": 54.54,
+        "completion_tokens": 4388,
+        "total_tokens": 105297,
+        "task_cost_usd": 0.009678,
+        "session_cost_usd": 0.069457
+      }
+    },
+    {
+      "turn": 24,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python -m pytest testing/test_assertrewrite.py -k 'dont_rewrite or rewrite_first_statement_number' -q"
+      },
+      "metrics_snapshot": {
+        "calls": 24,
+        "prompt_tokens": 105573,
+        "cache_hit_tokens": 57472,
+        "cache_miss_tokens": 48101,
+        "cache_hit_rate_pct": 54.44,
+        "completion_tokens": 4463,
+        "total_tokens": 110036,
+        "task_cost_usd": 0.010065,
+        "session_cost_usd": 0.069844
+      }
+    },
+    {
+      "turn": 25,
+      "action": "finish_task",
+      "args": {},
+      "metrics_snapshot": {
+        "calls": 25,
+        "prompt_tokens": 109300,
+        "cache_hit_tokens": 59904,
+        "cache_miss_tokens": 49396,
+        "cache_hit_rate_pct": 54.81,
+        "completion_tokens": 4489,
+        "total_tokens": 113789,
+        "task_cost_usd": 0.010283,
+        "session_cost_usd": 0.070061
+      }
+    }
+  ]
+}

@@ -1,0 +1,435 @@
+{
+  "instance_id": "pytest-dev__pytest-11143",
+  "condition": "condition_a",
+  "turns_taken": 17,
+  "finished_by_tool": true,
+  "empty_action_retries": 1,
+  "wall_time_sec": 149.4,
+  "usage_metrics": {
+    "calls": 17,
+    "prompt_tokens": 167526,
+    "cache_hit_tokens": 147712,
+    "cache_miss_tokens": 19814,
+    "cache_hit_rate_pct": 88.17,
+    "completion_tokens": 6078,
+    "total_tokens": 173604,
+    "task_cost_usd": 0.007062,
+    "session_cost_usd": 0.044135
+  },
+  "usage_summary": "[Quota Tracker] Calls: 17 | Prompt Tokens: 167,526 | Completion Tokens: 6,078 | Total Tokens: 173,604 | Est. Cost: $0.0071[DEEPSEEK][DeepSeek OFF-PEAK (1x)] Calls: 17 | Cache Hit: 88.2% (147,712/167,526) | Out: 6,078 | Task Spend: $0.00706 | Total Session Spend: $0.04413",
+  "model_patch": "diff --git a/src/_pytest/assertion/rewrite.py b/src/_pytest/assertion/rewrite.py\nindex 157903faf..9bf79f1e1 100755\n--- a/src/_pytest/assertion/rewrite.py\n+++ b/src/_pytest/assertion/rewrite.py\n@@ -676,6 +676,7 @@ class AssertionRewriter(ast.NodeVisitor):\n                 expect_docstring\n                 and isinstance(item, ast.Expr)\n                 and isinstance(item.value, ast.Constant)\n+                and isinstance(item.value.value, str)\n             ):\n                 doc = item.value.value\n                 if self.is_rewrite_disabled(doc):\ndiff --git a/testing/test_assertrewrite.py b/testing/test_assertrewrite.py\nindex d01803204..42c8d2ea1 100755\n--- a/testing/test_assertrewrite.py\n+++ b/testing/test_assertrewrite.py\n@@ -141,6 +141,22 @@ class TestAssertionRewrite:\n         assert isinstance(m.body[1], ast.Assert)\n         assert m.body[1].msg is None\n \n+    @pytest.mark.parametrize(\"first\", [\"1\", \"1.0\", \"True\", \"None\", \"b'bytes'\"])\n+    def test_first_non_string_expression_is_not_a_docstring(self, first: str) -> None:\n+        \"\"\"A non-string first expression must not be mistaken for a docstring.\n+\n+        Regression test for #11168: this used to raise a TypeError in\n+        is_rewrite_disabled because ``\"PYTEST_DONT_REWRITE\" in <non-str>``\n+        was attempted.\n+        \"\"\"\n+        m = rewrite(f\"{first}\\nassert 14\")\n+        # The special imports are inserted before the non-string expression.\n+        assert isinstance(m.body[0], ast.Import)\n+        assert isinstance(m.body[1], ast.Import)\n+        assert isinstance(m.body[2], ast.Expr)\n+        assert isinstance(m.body[2].value, ast.Constant)\n+        assert not isinstance(m.body[2].value.value, str)\n+\n     def test_dont_rewrite_plugin(self, pytester: Pytester) -> None:\n         contents = {\n             \"conftest.py\": \"pytest_plugins = 'plugin'; import plugin\",\n",
+  "trajectory": [
+    {
+      "turn": 1,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && git status && git log --oneline -3"
+      },
+      "metrics_snapshot": {
+        "calls": 1,
+        "prompt_tokens": 2461,
+        "cache_hit_tokens": 0,
+        "cache_miss_tokens": 2461,
+        "cache_hit_rate_pct": 0.0,
+        "completion_tokens": 136,
+        "total_tokens": 2597,
+        "task_cost_usd": 0.000451,
+        "session_cost_usd": 0.037524
+      }
+    },
+    {
+      "turn": 1,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '650,780p' src/_pytest/assertion/rewrite.py"
+      },
+      "metrics_snapshot": {
+        "calls": 1,
+        "prompt_tokens": 2461,
+        "cache_hit_tokens": 0,
+        "cache_miss_tokens": 2461,
+        "cache_hit_rate_pct": 0.0,
+        "completion_tokens": 136,
+        "total_tokens": 2597,
+        "task_cost_usd": 0.000451,
+        "session_cost_usd": 0.037524
+      }
+    },
+    {
+      "turn": 2,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && cat > /tmp/test_first_num.py <<'EOF'\n1\nassert True\nEOF\npython -m pytest /tmp/test_first_num.py --collect-only 2>&1 | head -50"
+      },
+      "metrics_snapshot": {
+        "calls": 2,
+        "prompt_tokens": 6284,
+        "cache_hit_tokens": 2560,
+        "cache_miss_tokens": 3724,
+        "cache_hit_rate_pct": 40.74,
+        "completion_tokens": 775,
+        "total_tokens": 7059,
+        "task_cost_usd": 0.001031,
+        "session_cost_usd": 0.038104
+      }
+    },
+    {
+      "turn": 2,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python - <<'EOF'\nimport ast\nmod = ast.parse(\"1\\nassert True\\n\")\nprint(hasattr(mod, \"docstring\"), getattr(mod, \"docstring\", None))\nprint(ast.dump(mod, indent=2))\nEOF"
+      },
+      "metrics_snapshot": {
+        "calls": 2,
+        "prompt_tokens": 6284,
+        "cache_hit_tokens": 2560,
+        "cache_miss_tokens": 3724,
+        "cache_hit_rate_pct": 40.74,
+        "completion_tokens": 775,
+        "total_tokens": 7059,
+        "task_cost_usd": 0.001031,
+        "session_cost_usd": 0.038104
+      }
+    },
+    {
+      "turn": 3,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '660,700p' src/_pytest/assertion/rewrite.py && sed -n '740,750p' src/_pytest/assertion/rewrite.py"
+      },
+      "metrics_snapshot": {
+        "calls": 3,
+        "prompt_tokens": 11507,
+        "cache_hit_tokens": 6912,
+        "cache_miss_tokens": 4595,
+        "cache_hit_rate_pct": 60.07,
+        "completion_tokens": 1014,
+        "total_tokens": 12521,
+        "task_cost_usd": 0.001318,
+        "session_cost_usd": 0.038391
+      }
+    },
+    {
+      "turn": 3,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && grep -rn \"is_rewrite_disabled\\|DONT_REWRITE\\|docstring\" testing/test_assertrewrite.py | head -50"
+      },
+      "metrics_snapshot": {
+        "calls": 3,
+        "prompt_tokens": 11507,
+        "cache_hit_tokens": 6912,
+        "cache_miss_tokens": 4595,
+        "cache_hit_rate_pct": 60.07,
+        "completion_tokens": 1014,
+        "total_tokens": 12521,
+        "task_cost_usd": 0.001318,
+        "session_cost_usd": 0.038391
+      }
+    },
+    {
+      "turn": 4,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '120,165p' testing/test_assertrewrite.py"
+      },
+      "metrics_snapshot": {
+        "calls": 4,
+        "prompt_tokens": 17483,
+        "cache_hit_tokens": 12288,
+        "cache_miss_tokens": 5195,
+        "cache_hit_rate_pct": 70.29,
+        "completion_tokens": 1146,
+        "total_tokens": 18629,
+        "task_cost_usd": 0.001504,
+        "session_cost_usd": 0.038577
+      }
+    },
+    {
+      "turn": 4,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '1270,1310p' testing/test_assertrewrite.py"
+      },
+      "metrics_snapshot": {
+        "calls": 4,
+        "prompt_tokens": 17483,
+        "cache_hit_tokens": 12288,
+        "cache_miss_tokens": 5195,
+        "cache_hit_rate_pct": 70.29,
+        "completion_tokens": 1146,
+        "total_tokens": 18629,
+        "task_cost_usd": 0.001504,
+        "session_cost_usd": 0.038577
+      }
+    },
+    {
+      "turn": 5,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && grep -n \"def rewrite\" testing/test_assertrewrite.py && sed -n '1,70p' testing/test_assertrewrite.py"
+      },
+      "metrics_snapshot": {
+        "calls": 5,
+        "prompt_tokens": 24326,
+        "cache_hit_tokens": 18304,
+        "cache_miss_tokens": 6022,
+        "cache_hit_rate_pct": 75.24,
+        "completion_tokens": 2066,
+        "total_tokens": 26392,
+        "task_cost_usd": 0.002198,
+        "session_cost_usd": 0.039271
+      }
+    },
+    {
+      "turn": 6,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python - <<'EOF'\nfrom pathlib import Path\np = Path(\"src/_pytest/assertion/rewrite.py\")\ns = p.read_text()\nold = '''            if (\n                expect_docstring\n                and isinstance(item, ast.Expr)\n                and isinstance(item.value, ast.Constant)\n            ):\n                doc = item.value.value\n'''\nnew = '''            if (\n                expect_docstring\n                and isinstance(item, ast.Expr)\n                and isinstance(item.value, ast.Constant)\n                and isinstance(item.value.value, str)\n            ):\n                doc = item.value.value\n'''\nassert old in s\np.write_text(s.replace(old, new))\nEOF\nsed -n '672,688p' src/_pytest/assertion/rewrite.py"
+      },
+      "metrics_snapshot": {
+        "calls": 6,
+        "prompt_tokens": 32676,
+        "cache_hit_tokens": 25984,
+        "cache_miss_tokens": 6692,
+        "cache_hit_rate_pct": 79.52,
+        "completion_tokens": 2473,
+        "total_tokens": 35149,
+        "task_cost_usd": 0.002566,
+        "session_cost_usd": 0.039638
+      }
+    },
+    {
+      "turn": 7,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '60,155p' testing/test_assertrewrite.py"
+      },
+      "metrics_snapshot": {
+        "calls": 7,
+        "prompt_tokens": 41569,
+        "cache_hit_tokens": 34688,
+        "cache_miss_tokens": 6881,
+        "cache_hit_rate_pct": 83.45,
+        "completion_tokens": 2590,
+        "total_tokens": 44159,
+        "task_cost_usd": 0.00269,
+        "session_cost_usd": 0.039763
+      }
+    },
+    {
+      "turn": 8,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python - <<'EOF'\nfrom pathlib import Path\np = Path(\"testing/test_assertrewrite.py\")\ns = p.read_text()\nanchor = '''    def test_dont_rewrite_plugin(self, pytester: Pytester) -> None:\n'''\ntest = '''    @pytest.mark.parametrize(\"first\", [\"1\", \"1.0\", \"True\", \"None\", \"b'bytes'\"])\n    def test_first_non_string_expression_is_not_a_docstring(self, first: str) -> None:\n        \"\"\"A non-string first expression must not be mistaken for a docstring.\n\n        Regression test for #11168: this used to raise a TypeError in\n        is_rewrite_disabled because ``\"PYTEST_DONT_REWRITE\" in <non-str>``\n        was attempted.\n        \"\"\"\n        m = rewrite(f\"{first}\\\\nassert 14\")\n        # The special imports are inserted before the non-string expression.\n        assert isinstance(m.body[0], ast.Import)\n        assert isinstance(m.body[1], ast.Expr)\n        assert isinstance(m.body[1].value, ast.Constant)\n        assert not isinstance(m.body[1].value.value, str)\n\n'''\nassert anchor in s\np.write_text(s.replace(anchor, test + anchor))\nEOF\nsed -n '145,170p' testing/test_assertrewrite.py"
+      },
+      "metrics_snapshot": {
+        "calls": 8,
+        "prompt_tokens": 51466,
+        "cache_hit_tokens": 43648,
+        "cache_miss_tokens": 7818,
+        "cache_hit_rate_pct": 84.81,
+        "completion_tokens": 4012,
+        "total_tokens": 55478,
+        "task_cost_usd": 0.003711,
+        "session_cost_usd": 0.040784
+      }
+    },
+    {
+      "turn": 9,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python -m pytest /tmp/test_first_num.py --collect-only 2>&1 | tail -8; echo \"EXIT: $?\""
+      },
+      "metrics_snapshot": {
+        "calls": 9,
+        "prompt_tokens": 63120,
+        "cache_hit_tokens": 54912,
+        "cache_miss_tokens": 8208,
+        "cache_hit_rate_pct": 87.0,
+        "completion_tokens": 4180,
+        "total_tokens": 67300,
+        "task_cost_usd": 0.003904,
+        "session_cost_usd": 0.040977
+      }
+    },
+    {
+      "turn": 9,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python -m pytest testing/test_assertrewrite.py -k \"first_non_string or dont_rewrite or place_initial_imports\" -q 2>&1 | tail -20"
+      },
+      "metrics_snapshot": {
+        "calls": 9,
+        "prompt_tokens": 63120,
+        "cache_hit_tokens": 54912,
+        "cache_miss_tokens": 8208,
+        "cache_hit_rate_pct": 87.0,
+        "completion_tokens": 4180,
+        "total_tokens": 67300,
+        "task_cost_usd": 0.003904,
+        "session_cost_usd": 0.040977
+      }
+    },
+    {
+      "turn": 10,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python - <<'EOF'\nfrom pathlib import Path\np = Path(\"testing/test_assertrewrite.py\")\ns = p.read_text()\nold = '''        m = rewrite(f\"{first}\\\\nassert 14\")\n        # The special imports are inserted before the non-string expression.\n        assert isinstance(m.body[0], ast.Import)\n        assert isinstance(m.body[1], ast.Expr)\n        assert isinstance(m.body[1].value, ast.Constant)\n        assert not isinstance(m.body[1].value.value, str)\n'''\nnew = '''        m = rewrite(f\"{first}\\\\nassert 14\")\n        # The special imports are inserted before the non-string expression.\n        assert isinstance(m.body[0], ast.Import)\n        assert isinstance(m.body[1], ast.Import)\n        assert isinstance(m.body[2], ast.Expr)\n        assert isinstance(m.body[2].value, ast.Constant)\n        assert not isinstance(m.body[2].value.value, str)\n'''\nassert old in s\np.write_text(s.replace(old, new))\nEOF\npython -m pytest testing/test_assertrewrite.py -k \"first_non_string or dont_rewrite or place_initial_imports\" -q 2>&1 | tail -5"
+      },
+      "metrics_snapshot": {
+        "calls": 10,
+        "prompt_tokens": 75410,
+        "cache_hit_tokens": 66688,
+        "cache_miss_tokens": 8722,
+        "cache_hit_rate_pct": 88.43,
+        "completion_tokens": 4593,
+        "total_tokens": 80003,
+        "task_cost_usd": 0.004264,
+        "session_cost_usd": 0.041337
+      }
+    },
+    {
+      "turn": 11,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python -m pytest testing/test_assertrewrite.py -q 2>&1 | tail -15"
+      },
+      "metrics_snapshot": {
+        "calls": 11,
+        "prompt_tokens": 88154,
+        "cache_hit_tokens": 79232,
+        "cache_miss_tokens": 8922,
+        "cache_hit_rate_pct": 89.88,
+        "completion_tokens": 4702,
+        "total_tokens": 92856,
+        "task_cost_usd": 0.004397,
+        "session_cost_usd": 0.04147
+      }
+    },
+    {
+      "turn": 12,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /tmp && cat > test_num_first.py <<'EOF'\n42\n\n\ndef test_rewritten():\n    assert 1 == 2\nEOF\ncd /testbed && python -m pytest /tmp/test_num_first.py -q 2>&1 | tail -20"
+      },
+      "metrics_snapshot": {
+        "calls": 12,
+        "prompt_tokens": 101049,
+        "cache_hit_tokens": 91904,
+        "cache_miss_tokens": 9145,
+        "cache_hit_rate_pct": 90.95,
+        "completion_tokens": 4921,
+        "total_tokens": 105970,
+        "task_cost_usd": 0.0046,
+        "session_cost_usd": 0.041673
+      }
+    },
+    {
+      "turn": 12,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && git diff"
+      },
+      "metrics_snapshot": {
+        "calls": 12,
+        "prompt_tokens": 101049,
+        "cache_hit_tokens": 91904,
+        "cache_miss_tokens": 9145,
+        "cache_hit_rate_pct": 90.95,
+        "completion_tokens": 4921,
+        "total_tokens": 105970,
+        "task_cost_usd": 0.0046,
+        "session_cost_usd": 0.041673
+      }
+    },
+    {
+      "turn": 13,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && grep -rn \"\\.docstring\\|docstring =\" src/_pytest/assertion/ | head -20"
+      },
+      "metrics_snapshot": {
+        "calls": 13,
+        "prompt_tokens": 114816,
+        "cache_hit_tokens": 104960,
+        "cache_miss_tokens": 9856,
+        "cache_hit_rate_pct": 91.42,
+        "completion_tokens": 5390,
+        "total_tokens": 120206,
+        "task_cost_usd": 0.005027,
+        "session_cost_usd": 0.0421
+      }
+    },
+    {
+      "turn": 13,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python -m pytest testing/test_assertion.py -q 2>&1 | tail -8"
+      },
+      "metrics_snapshot": {
+        "calls": 13,
+        "prompt_tokens": 114816,
+        "cache_hit_tokens": 104960,
+        "cache_miss_tokens": 9856,
+        "cache_hit_rate_pct": 91.42,
+        "completion_tokens": 5390,
+        "total_tokens": 120206,
+        "task_cost_usd": 0.005027,
+        "session_cost_usd": 0.0421
+      }
+    },
+    {
+      "turn": 14,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python -m pytest testing/test_assertrewrite.py -q 2>&1 | tail -3 && git status --short"
+      },
+      "metrics_snapshot": {
+        "calls": 14,
+        "prompt_tokens": 129223,
+        "cache_hit_tokens": 119168,
+        "cache_miss_tokens": 10055,
+        "cache_hit_rate_pct": 92.22,
+        "completion_tokens": 5608,
+        "total_tokens": 134831,
+        "task_cost_usd": 0.005231,
+        "session_cost_usd": 0.042303
+      }
+    },
+    {
+      "turn": 16,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python -m pytest testing/test_assertrewrite.py -q 2>&1 | tail -3 && git diff --stat"
+      },
+      "metrics_snapshot": {
+        "calls": 16,
+        "prompt_tokens": 155623,
+        "cache_hit_tokens": 136064,
+        "cache_miss_tokens": 19559,
+        "cache_hit_rate_pct": 87.43,
+        "completion_tokens": 6047,
+        "total_tokens": 161670,
+        "task_cost_usd": 0.00697,
+        "session_cost_usd": 0.044043
+      }
+    },
+    {
+      "turn": 17,
+      "action": "finish_task",
+      "args": {},
+      "metrics_snapshot": {
+        "calls": 17,
+        "prompt_tokens": 167526,
+        "cache_hit_tokens": 147712,
+        "cache_miss_tokens": 19814,
+        "cache_hit_rate_pct": 88.17,
+        "completion_tokens": 6078,
+        "total_tokens": 173604,
+        "task_cost_usd": 0.007062,
+        "session_cost_usd": 0.044135
+      }
+    }
+  ]
+}

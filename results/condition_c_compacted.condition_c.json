@@ -1,10 +1,10 @@
 {
-    "total_instances": 15,
-    "submitted_instances": 15,
-    "completed_instances": 7,
+    "total_instances": 25,
+    "submitted_instances": 25,
+    "completed_instances": 11,
     "resolved_instances": 2,
-    "unresolved_instances": 5,
-    "empty_patch_instances": 8,
+    "unresolved_instances": 9,
+    "empty_patch_instances": 14,
     "error_instances": 0,
     "completed_ids": [
         "mwaskom__seaborn-3010",
@@ -13,7 +13,11 @@
         "psf__requests-1963",
         "psf__requests-2317",
         "psf__requests-863",
-        "pylint-dev__pylint-5859"
+        "pylint-dev__pylint-5859",
+        "pylint-dev__pylint-7080",
+        "pytest-dev__pytest-11143",
+        "pytest-dev__pytest-5227",
+        "pytest-dev__pytest-5413"
     ],
     "incomplete_ids": [],
     "empty_patch_ids": [
@@ -24,7 +28,13 @@
         "psf__requests-2148",
         "psf__requests-2674",
         "psf__requests-3362",
-        "pylint-dev__pylint-6506"
+        "pylint-dev__pylint-6506",
+        "pylint-dev__pylint-7114",
+        "pylint-dev__pylint-7228",
+        "pylint-dev__pylint-7993",
+        "pytest-dev__pytest-11148",
+        "pytest-dev__pytest-5103",
+        "pytest-dev__pytest-5221"
     ],
     "submitted_ids": [
         "mwaskom__seaborn-2848",
@@ -41,7 +51,17 @@
         "psf__requests-3362",
         "psf__requests-863",
         "pylint-dev__pylint-5859",
-        "pylint-dev__pylint-6506"
+        "pylint-dev__pylint-6506",
+        "pylint-dev__pylint-7080",
+        "pylint-dev__pylint-7114",
+        "pylint-dev__pylint-7228",
+        "pylint-dev__pylint-7993",
+        "pytest-dev__pytest-11143",
+        "pytest-dev__pytest-11148",
+        "pytest-dev__pytest-5103",
+        "pytest-dev__pytest-5221",
+        "pytest-dev__pytest-5227",
+        "pytest-dev__pytest-5413"
     ],
     "resolved_ids": [
         "mwaskom__seaborn-3010",
@@ -52,7 +72,11 @@
         "pallets__flask-4992",
         "psf__requests-1963",
         "psf__requests-2317",
-        "psf__requests-863"
+        "psf__requests-863",
+        "pylint-dev__pylint-7080",
+        "pytest-dev__pytest-11143",
+        "pytest-dev__pytest-5227",
+        "pytest-dev__pytest-5413"
     ],
     "error_ids": [],
     "schema_version": 2

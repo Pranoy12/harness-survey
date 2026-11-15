@@ -1,0 +1,401 @@
+{
+  "instance_id": "pytest-dev__pytest-5227",
+  "condition": "condition_b_codeblock",
+  "turns_taken": 25,
+  "finished_by_tool": false,
+  "empty_action_retries": 4,
+  "wall_time_sec": 90.69,
+  "usage_metrics": {
+    "calls": 25,
+    "prompt_tokens": 250655,
+    "cache_hit_tokens": 228608,
+    "cache_miss_tokens": 22047,
+    "cache_hit_rate_pct": 91.2,
+    "completion_tokens": 9233,
+    "total_tokens": 259888,
+    "task_cost_usd": 0.009533,
+    "session_cost_usd": 0.050625
+  },
+  "usage_summary": "[Quota Tracker] Calls: 25 | Prompt Tokens: 250,655 | Completion Tokens: 9,233 | Total Tokens: 259,888 | Est. Cost: $0.0095[DEEPSEEK][DeepSeek OFF-PEAK (1x)] Calls: 25 | Cache Hit: 91.2% (228,608/250,655) | Out: 9,233 | Task Spend: $0.00953 | Total Session Spend: $0.05062",
+  "model_patch": "diff --git a/src/_pytest/logging.py b/src/_pytest/logging.py\nindex 757cb279..08670d2b 100755\n--- a/src/_pytest/logging.py\n+++ b/src/_pytest/logging.py\n@@ -15,7 +15,7 @@ from _pytest.compat import dummy_context_manager\n from _pytest.config import create_terminal_writer\n from _pytest.pathlib import Path\n \n-DEFAULT_LOG_FORMAT = \"%(filename)-25s %(lineno)4d %(levelname)-8s %(message)s\"\n+DEFAULT_LOG_FORMAT = \"%(levelname)-8s %(name)s:%(filename)s:%(lineno)d %(message)s\"\n DEFAULT_LOG_DATE_FORMAT = \"%H:%M:%S\"\n \n \ndiff --git a/testing/logging/test_reporting.py b/testing/logging/test_reporting.py\nindex aed203b7..52eb52e0 100755\n--- a/testing/logging/test_reporting.py\n+++ b/testing/logging/test_reporting.py\n@@ -248,7 +248,7 @@ def test_log_cli_enabled_disabled(testdir, enabled):\n             [\n                 \"test_log_cli_enabled_disabled.py::test_log_cli \",\n                 \"*-- live log call --*\",\n-                \"test_log_cli_enabled_disabled.py* CRITICAL critical message logged by test\",\n+                \"*CRITICAL*test_log_cli_enabled_disabled.py*critical message logged by test*\",\n                 \"PASSED*\",\n             ]\n         )\n@@ -282,7 +282,7 @@ def test_log_cli_default_level(testdir):\n     result.stdout.fnmatch_lines(\n         [\n             \"test_log_cli_default_level.py::test_log_cli \",\n-            \"test_log_cli_default_level.py*WARNING message will be shown*\",\n+            \"*WARNING*test_log_cli_default_level.py*WARNING message will be shown*\",\n         ]\n     )\n     assert \"INFO message won't be shown\" not in result.stdout.str()\n@@ -523,7 +523,7 @@ def test_sections_single_new_line_after_test_outcome(testdir, request):\n     )\n     assert (\n         re.search(\n-            r\"(.+)live log teardown(.+)\\n(.+)WARNING(.+)\\n(.+)WARNING(.+)\",\n+            r\"(.+)live log teardown(.+)\\n(.*)WARNING(.+)\\n(.*)WARNING(.+)\",\n             result.stdout.str(),\n             re.MULTILINE,\n         )\n@@ -531,7 +531,7 @@ def test_sections_single_new_line_after_test_outcome(testdir, request):\n     )\n     assert (\n         re.search(\n-            r\"(.+)live log finish(.+)\\n(.+)WARNING(.+)\\n(.+)WARNING(.+)\",\n+            r\"(.+)live log finish(.+)\\n(.*)WARNING(.+)\\n(.*)WARNING(.+)\",\n             result.stdout.str(),\n             re.MULTILINE,\n         )\n@@ -565,7 +565,7 @@ def test_log_cli_level(testdir):\n     # fnmatch_lines does an assertion internally\n     result.stdout.fnmatch_lines(\n         [\n-            \"test_log_cli_level.py*This log message will be shown\",\n+            \"*INFO*test_log_cli_level.py*This log message will be shown\",\n             \"PASSED\",  # 'PASSED' on its own line because the log message prints a new line\n         ]\n     )\n@@ -579,7 +579,7 @@ def test_log_cli_level(testdir):\n     # fnmatch_lines does an assertion internally\n     result.stdout.fnmatch_lines(\n         [\n-            \"test_log_cli_level.py* This log message will be shown\",\n+            \"*INFO*test_log_cli_level.py*This log message will be shown\",\n             \"PASSED\",  # 'PASSED' on its own line because the log message prints a new line\n         ]\n     )\n@@ -615,7 +615,7 @@ def test_log_cli_ini_level(testdir):\n     # fnmatch_lines does an assertion internally\n     result.stdout.fnmatch_lines(\n         [\n-            \"test_log_cli_ini_level.py* This log message will be shown\",\n+            \"*INFO*test_log_cli_ini_level.py*This log message will be shown\",\n             \"PASSED\",  # 'PASSED' on its own line because the log message prints a new line\n         ]\n     )\n",
+  "trajectory": [
+    {
+      "turn": 1,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && git status --short && grep -R \"DEFAULT_LOG_FORMAT\" -n . | head -20"
+      },
+      "metrics_snapshot": {
+        "calls": 1,
+        "prompt_tokens": 603,
+        "cache_hit_tokens": 0,
+        "cache_miss_tokens": 603,
+        "cache_hit_rate_pct": 0.0,
+        "completion_tokens": 87,
+        "total_tokens": 690,
+        "task_cost_usd": 0.000143,
+        "session_cost_usd": 0.041235
+      }
+    },
+    {
+      "turn": 2,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '1,220p' src/_pytest/logging.py && grep -R \"filename\\|DEFAULT_LOG_FORMAT\\|log_format\\|caplog\" -n testing/test_logging.py | head -80"
+      },
+      "metrics_snapshot": {
+        "calls": 2,
+        "prompt_tokens": 1361,
+        "cache_hit_tokens": 512,
+        "cache_miss_tokens": 849,
+        "cache_hit_rate_pct": 37.62,
+        "completion_tokens": 185,
+        "total_tokens": 1546,
+        "task_cost_usd": 0.00024,
+        "session_cost_usd": 0.041332
+      }
+    },
+    {
+      "turn": 3,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && find . -name 'test_logging*' -o -name '*logging*' | head -20 && git log --oneline -5"
+      },
+      "metrics_snapshot": {
+        "calls": 3,
+        "prompt_tokens": 3839,
+        "cache_hit_tokens": 1152,
+        "cache_miss_tokens": 2687,
+        "cache_hit_rate_pct": 30.01,
+        "completion_tokens": 265,
+        "total_tokens": 4104,
+        "task_cost_usd": 0.000566,
+        "session_cost_usd": 0.041657
+      }
+    },
+    {
+      "turn": 4,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && ls testing/logging && sed -n '1,260p' testing/logging/test_logging.py"
+      },
+      "metrics_snapshot": {
+        "calls": 4,
+        "prompt_tokens": 6522,
+        "cache_hit_tokens": 3584,
+        "cache_miss_tokens": 2938,
+        "cache_hit_rate_pct": 54.95,
+        "completion_tokens": 328,
+        "total_tokens": 6850,
+        "task_cost_usd": 0.000648,
+        "session_cost_usd": 0.04174
+      }
+    },
+    {
+      "turn": 5,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && grep -R \"filename\\|DEFAULT_LOG_FORMAT\\|log_format\\|%(levelname)\" -n testing/logging doc/en/logging.rst | head -80"
+      },
+      "metrics_snapshot": {
+        "calls": 5,
+        "prompt_tokens": 9315,
+        "cache_hit_tokens": 6144,
+        "cache_miss_tokens": 3171,
+        "cache_hit_rate_pct": 65.96,
+        "completion_tokens": 422,
+        "total_tokens": 9737,
+        "task_cost_usd": 0.000747,
+        "session_cost_usd": 0.041839
+      }
+    },
+    {
+      "turn": 7,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '1,200p' testing/logging/test_reporting.py"
+      },
+      "metrics_snapshot": {
+        "calls": 7,
+        "prompt_tokens": 15874,
+        "cache_hit_tokens": 12032,
+        "cache_miss_tokens": 3842,
+        "cache_hit_rate_pct": 75.8,
+        "completion_tokens": 864,
+        "total_tokens": 16738,
+        "task_cost_usd": 0.001131,
+        "session_cost_usd": 0.042223
+      }
+    },
+    {
+      "turn": 9,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '1,200p' testing/logging/test_formatter.py"
+      },
+      "metrics_snapshot": {
+        "calls": 9,
+        "prompt_tokens": 25633,
+        "cache_hit_tokens": 20096,
+        "cache_miss_tokens": 5537,
+        "cache_hit_rate_pct": 78.4,
+        "completion_tokens": 1000,
+        "total_tokens": 26633,
+        "task_cost_usd": 0.001491,
+        "session_cost_usd": 0.042583
+      }
+    },
+    {
+      "turn": 10,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && grep -R \"levelname\\|lineno\\|dummypath\\|test_.*\\.py *[0-9]\\|INFO \" -n testing/logging | head -80 && sed -n '200,700p' testing/logging/test_reporting.py"
+      },
+      "metrics_snapshot": {
+        "calls": 10,
+        "prompt_tokens": 30872,
+        "cache_hit_tokens": 24960,
+        "cache_miss_tokens": 5912,
+        "cache_hit_rate_pct": 80.85,
+        "completion_tokens": 1609,
+        "total_tokens": 32481,
+        "task_cost_usd": 0.001927,
+        "session_cost_usd": 0.043019
+      }
+    },
+    {
+      "turn": 11,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && git log --all --oneline | head -20 && git branch -a && git tag | tail"
+      },
+      "metrics_snapshot": {
+        "calls": 11,
+        "prompt_tokens": 38722,
+        "cache_hit_tokens": 30080,
+        "cache_miss_tokens": 8642,
+        "cache_hit_rate_pct": 77.68,
+        "completion_tokens": 2225,
+        "total_tokens": 40947,
+        "task_cost_usd": 0.002722,
+        "session_cost_usd": 0.043813
+      }
+    },
+    {
+      "turn": 13,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '450,900p' testing/logging/test_reporting.py"
+      },
+      "metrics_snapshot": {
+        "calls": 13,
+        "prompt_tokens": 55582,
+        "cache_hit_tokens": 46208,
+        "cache_miss_tokens": 9374,
+        "cache_hit_rate_pct": 83.13,
+        "completion_tokens": 3304,
+        "total_tokens": 58886,
+        "task_cost_usd": 0.003527,
+        "session_cost_usd": 0.044619
+      }
+    },
+    {
+      "turn": 14,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '220,520p' src/_pytest/logging.py"
+      },
+      "metrics_snapshot": {
+        "calls": 14,
+        "prompt_tokens": 66637,
+        "cache_hit_tokens": 54656,
+        "cache_miss_tokens": 11981,
+        "cache_hit_rate_pct": 82.02,
+        "completion_tokens": 3602,
+        "total_tokens": 70239,
+        "task_cost_usd": 0.004122,
+        "session_cost_usd": 0.045214
+      }
+    },
+    {
+      "turn": 16,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python - <<'PY'\nfrom pathlib import Path\np = Path('src/_pytest/logging.py')\ns = p.read_text()\nold = 'DEFAULT_LOG_FORMAT = \"%(filename)-25s %(lineno)4d %(levelname)-8s %(message)s\"'\nnew = 'DEFAULT_LOG_FORMAT = \"%(levelname)-8s %(name)s:%(filename)s:%(lineno)d %(message)s\"'\nassert old in s\np.write_text(s.replace(old, new))\nPY"
+      },
+      "metrics_snapshot": {
+        "calls": 16,
+        "prompt_tokens": 93542,
+        "cache_hit_tokens": 78976,
+        "cache_miss_tokens": 14566,
+        "cache_hit_rate_pct": 84.43,
+        "completion_tokens": 4309,
+        "total_tokens": 97851,
+        "task_cost_usd": 0.005007,
+        "session_cost_usd": 0.046099
+      }
+    },
+    {
+      "turn": 17,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && git diff"
+      },
+      "metrics_snapshot": {
+        "calls": 17,
+        "prompt_tokens": 107258,
+        "cache_hit_tokens": 92416,
+        "cache_miss_tokens": 14842,
+        "cache_hit_rate_pct": 86.16,
+        "completion_tokens": 4347,
+        "total_tokens": 111605,
+        "task_cost_usd": 0.005112,
+        "session_cost_usd": 0.046204
+      }
+    },
+    {
+      "turn": 18,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python -m pytest testing/logging -q 2>&1 | tail -120"
+      },
+      "metrics_snapshot": {
+        "calls": 18,
+        "prompt_tokens": 121187,
+        "cache_hit_tokens": 106112,
+        "cache_miss_tokens": 15075,
+        "cache_hit_rate_pct": 87.56,
+        "completion_tokens": 4404,
+        "total_tokens": 125591,
+        "task_cost_usd": 0.005222,
+        "session_cost_usd": 0.046314
+      }
+    },
+    {
+      "turn": 19,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && grep -n \"\\.py\\*\\|WARNING\\*\\|CRITICAL\\|INFO\\|DEBUG\\|Captured\" testing/logging/test_reporting.py"
+      },
+      "metrics_snapshot": {
+        "calls": 19,
+        "prompt_tokens": 136715,
+        "cache_hit_tokens": 119936,
+        "cache_miss_tokens": 16779,
+        "cache_hit_rate_pct": 87.73,
+        "completion_tokens": 4940,
+        "total_tokens": 141655,
+        "task_cost_usd": 0.005841,
+        "session_cost_usd": 0.046933
+      }
+    },
+    {
+      "turn": 20,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '230,300p' testing/logging/test_reporting.py && sed -n '550,630p' testing/logging/test_reporting.py && sed -n '900,930p' testing/logging/test_reporting.py"
+      },
+      "metrics_snapshot": {
+        "calls": 20,
+        "prompt_tokens": 153577,
+        "cache_hit_tokens": 135424,
+        "cache_miss_tokens": 18153,
+        "cache_hit_rate_pct": 88.18,
+        "completion_tokens": 5199,
+        "total_tokens": 158776,
+        "task_cost_usd": 0.006249,
+        "session_cost_usd": 0.047341
+      }
+    },
+    {
+      "turn": 21,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && find / -path /proc -prune -o -name 'test_reporting.py' -print 2>/dev/null | head -20"
+      },
+      "metrics_snapshot": {
+        "calls": 21,
+        "prompt_tokens": 171875,
+        "cache_hit_tokens": 152192,
+        "cache_miss_tokens": 19683,
+        "cache_hit_rate_pct": 88.55,
+        "completion_tokens": 6849,
+        "total_tokens": 178724,
+        "task_cost_usd": 0.007518,
+        "session_cost_usd": 0.04861
+      }
+    },
+    {
+      "turn": 22,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python -m pytest \"testing/logging/test_reporting.py::test_sections_single_new_line_after_test_outcome\" -q 2>&1 | tail -60"
+      },
+      "metrics_snapshot": {
+        "calls": 22,
+        "prompt_tokens": 190312,
+        "cache_hit_tokens": 170368,
+        "cache_miss_tokens": 19944,
+        "cache_hit_rate_pct": 89.52,
+        "completion_tokens": 7367,
+        "total_tokens": 197679,
+        "task_cost_usd": 0.007923,
+        "session_cost_usd": 0.049015
+      }
+    },
+    {
+      "turn": 23,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python - <<'PY'\nfrom pathlib import Path\np = Path('testing/logging/test_reporting.py')\ns = p.read_text()\nrepls = [\n('\"test_log_cli_enabled_disabled.py* CRITICAL critical message logged by test\",',\n '\"*CRITICAL*test_log_cli_enabled_disabled.py*critical message logged by test*\",'),\n('\"test_log_cli_default_level.py*WARNING message will be shown*\",',\n '\"*WARNING*test_log_cli_default_level.py*WARNING message will be shown*\",'),\n('\"test_log_cli_level.py*This log message will be shown\",',\n '\"*INFO*test_log_cli_level.py*This log message will be shown\",'),\n('\"test_log_cli_level.py* This log message will be shown\",',\n '\"*INFO*test_log_cli_level.py*This log message will be shown\",'),\n('\"test_log_cli_ini_level.py* This log message will be shown\",',\n '\"*INFO*test_log_cli_ini_level.py*This log message will be shown\",'),\n(r'r\"(.+)live log teardown(.+)\\n(.+)WARNING(.+)\\n(.+)WARNING(.+)\"',\n r'r\"(.+)live log teardown(.+)\\n(.*)WARNING(.+)\\n(.*)WARNING(.+)\"'),\n(r'r\"(.+)live log finish(.+)\\n(.+)WARNING(.+)\\n(.+)WARNING(.+)\"',\n r'r\"(.+)live log finish(.+)\\n(.*)WARNING(.+)\\n(.*)WARNING(.+)\"'),\n]\nfor old, new in repls:\n    if old in s:\n        s = s.replace(old, new)\n    else:\n        print(\"NOT FOUND:\", old)\np.write_text(s)\nPY"
+      },
+      "metrics_snapshot": {
+        "calls": 23,
+        "prompt_tokens": 210064,
+        "cache_hit_tokens": 188800,
+        "cache_miss_tokens": 21264,
+        "cache_hit_rate_pct": 89.88,
+        "completion_tokens": 9071,
+        "total_tokens": 219135,
+        "task_cost_usd": 0.009199,
+        "session_cost_usd": 0.050291
+      }
+    },
+    {
+      "turn": 24,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python -m pytest testing/logging -q 2>&1 | tail -40 && git diff --stat"
+      },
+      "metrics_snapshot": {
+        "calls": 24,
+        "prompt_tokens": 230274,
+        "cache_hit_tokens": 208512,
+        "cache_miss_tokens": 21762,
+        "cache_hit_rate_pct": 90.55,
+        "completion_tokens": 9171,
+        "total_tokens": 239445,
+        "task_cost_usd": 0.009392,
+        "session_cost_usd": 0.050484
+      }
+    },
+    {
+      "turn": 25,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && git diff && python -m pytest testing/logging -q 2>&1 | tail -5"
+      },
+      "metrics_snapshot": {
+        "calls": 25,
+        "prompt_tokens": 250655,
+        "cache_hit_tokens": 228608,
+        "cache_miss_tokens": 22047,
+        "cache_hit_rate_pct": 91.2,
+        "completion_tokens": 9233,
+        "total_tokens": 259888,
+        "task_cost_usd": 0.009533,
+        "session_cost_usd": 0.050625
+      }
+    }
+  ]
+}
