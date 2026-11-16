@@ -1,0 +1,381 @@
+{
+  "instance_id": "django__django-11001",
+  "condition": "condition_b_codeblock",
+  "turns_taken": 22,
+  "finished_by_tool": true,
+  "empty_action_retries": 2,
+  "wall_time_sec": 116.07,
+  "usage_metrics": {
+    "calls": 22,
+    "prompt_tokens": 138236,
+    "cache_hit_tokens": 125952,
+    "cache_miss_tokens": 12284,
+    "cache_hit_rate_pct": 91.11,
+    "completion_tokens": 12587,
+    "total_tokens": 150823,
+    "task_cost_usd": 0.009773,
+    "session_cost_usd": 0.009773
+  },
+  "usage_summary": "[Quota Tracker] Calls: 22 | Prompt Tokens: 138,236 | Completion Tokens: 12,587 | Total Tokens: 150,823 | Est. Cost: $0.0098[DEEPSEEK][DeepSeek OFF-PEAK (1x)] Calls: 22 | Cache Hit: 91.1% (125,952/138,236) | Out: 12,587 | Task Spend: $0.00977 | Total Session Spend: $0.00977",
+  "model_patch": "diff --git a/django/db/models/sql/compiler.py b/django/db/models/sql/compiler.py\nindex 7649c39262..ee32393db3 100755\n--- a/django/db/models/sql/compiler.py\n+++ b/django/db/models/sql/compiler.py\n@@ -32,7 +32,7 @@ class SQLCompiler:\n         self.select = None\n         self.annotation_col_map = None\n         self.klass_info = None\n-        self.ordering_parts = re.compile(r'(.*)\\s(ASC|DESC)(.*)')\n+        self.ordering_parts = re.compile(r'(.*)\\s(ASC|DESC)(.*)', re.MULTILINE | re.DOTALL)\n         self._meta_ordering = None\n \n     def setup_query(self):\ndiff --git a/tests/ordering/tests.py b/tests/ordering/tests.py\nindex 16e5cc9b2d..6eb8a0cf48 100755\n--- a/tests/ordering/tests.py\n+++ b/tests/ordering/tests.py\n@@ -2,6 +2,7 @@ from datetime import datetime\n from operator import attrgetter\n \n from django.db.models import Count, DateTimeField, F, Max, OuterRef, Subquery\n+from django.db.models.expressions import RawSQL\n from django.db.models.functions import Upper\n from django.test import TestCase\n from django.utils.deprecation import RemovedInDjango31Warning\n@@ -237,6 +238,14 @@ class OrderingTests(TestCase):\n         with self.assertRaisesMessage(TypeError, msg):\n             qs.last()\n \n+    def test_order_by_multiline_rawsql(self):\n+        queryset = Article.objects.order_by(\n+            RawSQL('case when id = 1 then 1\\n        else null end', ()).desc(),\n+            RawSQL('case when id = 2 then 2\\n        else null end', ()).asc(),\n+        )\n+        sql = str(queryset.query)\n+        self.assertEqual(sql.count('case when'), 2)\n+\n     def test_extra_ordering(self):\n         \"\"\"\n         Ordering can be based on fields included from an 'extra' clause\n",
+  "trajectory": [
+    {
+      "turn": 1,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && git status --short && grep -R \"ordering_parts\" -n django/db/models/sql/compiler.py && sed -n '1550,1640p' django/db/models/sql/compiler.py"
+      },
+      "metrics_snapshot": {
+        "calls": 1,
+        "prompt_tokens": 809,
+        "cache_hit_tokens": 0,
+        "cache_miss_tokens": 809,
+        "cache_hit_rate_pct": 0.0,
+        "completion_tokens": 260,
+        "total_tokens": 1069,
+        "task_cost_usd": 0.000277,
+        "session_cost_usd": 0.000277
+      }
+    },
+    {
+      "turn": 2,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '1,50p' django/db/models/sql/compiler.py && sed -n '320,390p' django/db/models/sql/compiler.py && grep -R \"ordering_parts\" -n tests | head -20"
+      },
+      "metrics_snapshot": {
+        "calls": 2,
+        "prompt_tokens": 1945,
+        "cache_hit_tokens": 768,
+        "cache_miss_tokens": 1177,
+        "cache_hit_rate_pct": 39.49,
+        "completion_tokens": 504,
+        "total_tokens": 2449,
+        "task_cost_usd": 0.000481,
+        "session_cost_usd": 0.000481
+      }
+    },
+    {
+      "turn": 4,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && grep -R \"RawSQL\" -n tests | grep -i \"order\\|ordering\" | head -50"
+      },
+      "metrics_snapshot": {
+        "calls": 4,
+        "prompt_tokens": 7262,
+        "cache_hit_tokens": 4352,
+        "cache_miss_tokens": 2910,
+        "cache_hit_rate_pct": 59.93,
+        "completion_tokens": 1425,
+        "total_tokens": 8687,
+        "task_cost_usd": 0.001305,
+        "session_cost_usd": 0.001305
+      }
+    },
+    {
+      "turn": 6,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && grep -R \"RawSQL\" -n tests | head -80"
+      },
+      "metrics_snapshot": {
+        "calls": 6,
+        "prompt_tokens": 13255,
+        "cache_hit_tokens": 9856,
+        "cache_miss_tokens": 3399,
+        "cache_hit_rate_pct": 74.36,
+        "completion_tokens": 1637,
+        "total_tokens": 14892,
+        "task_cost_usd": 0.001522,
+        "session_cost_usd": 0.001522
+      }
+    },
+    {
+      "turn": 7,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && ls tests/ordering && sed -n '1,120p' tests/ordering/tests.py && grep -n \"class .*Tests\\|RawSQL\\|extra.*order\" tests/ordering/tests.py | head -80"
+      },
+      "metrics_snapshot": {
+        "calls": 7,
+        "prompt_tokens": 16688,
+        "cache_hit_tokens": 12928,
+        "cache_miss_tokens": 3760,
+        "cache_hit_rate_pct": 77.47,
+        "completion_tokens": 2383,
+        "total_tokens": 19071,
+        "task_cost_usd": 0.002033,
+        "session_cost_usd": 0.002033
+      }
+    },
+    {
+      "turn": 8,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && sed -n '230,310p' tests/ordering/tests.py && cat tests/ordering/models.py"
+      },
+      "metrics_snapshot": {
+        "calls": 8,
+        "prompt_tokens": 21506,
+        "cache_hit_tokens": 16256,
+        "cache_miss_tokens": 5250,
+        "cache_hit_rate_pct": 75.59,
+        "completion_tokens": 3056,
+        "total_tokens": 24562,
+        "task_cost_usd": 0.00267,
+        "session_cost_usd": 0.00267
+      }
+    },
+    {
+      "turn": 9,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && git log -1 --format='%H %ad %s' && python - <<'PY'\nimport django\nprint(django.get_version())\nPY"
+      },
+      "metrics_snapshot": {
+        "calls": 9,
+        "prompt_tokens": 27450,
+        "cache_hit_tokens": 20992,
+        "cache_miss_tokens": 6458,
+        "cache_hit_rate_pct": 76.47,
+        "completion_tokens": 3372,
+        "total_tokens": 30822,
+        "task_cost_usd": 0.003055,
+        "session_cost_usd": 0.003055
+      }
+    },
+    {
+      "turn": 10,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python - <<'PY'\nimport re\nold = re.compile(r'(.*)\\s(ASC|DESC)(.*)')\nsql1 = \"\"\"case when headline = 'Article 1' then 1\n        else null end ASC\"\"\"\nsql2 = \"\"\"case when headline = 'Article 2' then 1\n        else null end DESC\"\"\"\nfor sql in (sql1, sql2):\n    print(repr(old.search(sql).group(1)))\nnew = re.compile(r'\\s+(ASC|DESC)\\s*$', re.IGNORECASE)\nfor sql in (sql1, sql2):\n    print(repr(new.sub('', sql)))"
+      },
+      "metrics_snapshot": {
+        "calls": 10,
+        "prompt_tokens": 33545,
+        "cache_hit_tokens": 26880,
+        "cache_miss_tokens": 6665,
+        "cache_hit_rate_pct": 80.13,
+        "completion_tokens": 4876,
+        "total_tokens": 38421,
+        "task_cost_usd": 0.004006,
+        "session_cost_usd": 0.004006
+      }
+    },
+    {
+      "turn": 11,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python - <<'PY'\nfrom pathlib import Path\np = Path('django/db/models/sql/compiler.py')\ns = p.read_text()\nold = \"self.ordering_parts = re.compile(r'(.*)\\\\s(ASC|DESC)(.*)')\"\nnew = \"self.ordering_parts = re.compile(r'(.*)\\\\s(ASC|DESC)(.*)', re.MULTILINE | re.DOTALL)\"\nassert old in s\np.write_text(s.replace(old, new))\nPY\ngit diff -- django/db/models/sql/compiler.py"
+      },
+      "metrics_snapshot": {
+        "calls": 11,
+        "prompt_tokens": 39986,
+        "cache_hit_tokens": 32896,
+        "cache_miss_tokens": 7090,
+        "cache_hit_rate_pct": 82.27,
+        "completion_tokens": 6552,
+        "total_tokens": 46538,
+        "task_cost_usd": 0.005093,
+        "session_cost_usd": 0.005093
+      }
+    },
+    {
+      "turn": 12,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && git log --all --oneline --decorate -- django/db/models/sql/compiler.py | head -20"
+      },
+      "metrics_snapshot": {
+        "calls": 12,
+        "prompt_tokens": 46759,
+        "cache_hit_tokens": 39296,
+        "cache_miss_tokens": 7463,
+        "cache_hit_rate_pct": 84.04,
+        "completion_tokens": 7594,
+        "total_tokens": 54353,
+        "task_cost_usd": 0.005794,
+        "session_cost_usd": 0.005794
+      }
+    },
+    {
+      "turn": 13,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && git branch -a && git tag | tail -20 && git remote -v"
+      },
+      "metrics_snapshot": {
+        "calls": 13,
+        "prompt_tokens": 54174,
+        "cache_hit_tokens": 45952,
+        "cache_miss_tokens": 8222,
+        "cache_hit_rate_pct": 84.82,
+        "completion_tokens": 8873,
+        "total_tokens": 63047,
+        "task_cost_usd": 0.006695,
+        "session_cost_usd": 0.006695
+      }
+    },
+    {
+      "turn": 14,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python - <<'PY'\nfrom pathlib import Path\np = Path('tests/ordering/tests.py')\ns = p.read_text()\nold = \"from django.db.models import Count, DateTimeField, F, Max, OuterRef, Subquery\\n\"\nnew = \"from django.db.models import Count, DateTimeField, F, Max, OuterRef, Subquery\\nfrom django.db.models.expressions import RawSQL\\n\"\nassert old in s\ns = s.replace(old, new)\nmarker = \"    def test_extra_ordering(self):\\n\"\ntest = '''    def test_order_by_multiline_rawsql(self):\n        queryset = Article.objects.order_by(\n            RawSQL('case when id = 1 then 1\\\\n        else null end', ()).desc(),\n            RawSQL('case when id = 2 then 2\\\\n        else null end', ()).asc(),\n        )\n        sql = str(queryset.query)\n        self.assertEqual(sql.count('case when'), 2)\n\n'''\nassert marker in s\ns = s.replace(marker, test + marker)\np.write_text(s)\nPY\ngit diff -- tests/ordering/tests.py"
+      },
+      "metrics_snapshot": {
+        "calls": 14,
+        "prompt_tokens": 61728,
+        "cache_hit_tokens": 53248,
+        "cache_miss_tokens": 8480,
+        "cache_hit_rate_pct": 86.26,
+        "completion_tokens": 10433,
+        "total_tokens": 72161,
+        "task_cost_usd": 0.007692,
+        "session_cost_usd": 0.007692
+      }
+    },
+    {
+      "turn": 15,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python -m pytest tests/ordering/tests.py::OrderingTests::test_order_by_multiline_rawsql -q"
+      },
+      "metrics_snapshot": {
+        "calls": 15,
+        "prompt_tokens": 69856,
+        "cache_hit_tokens": 60800,
+        "cache_miss_tokens": 9056,
+        "cache_hit_rate_pct": 87.04,
+        "completion_tokens": 10484,
+        "total_tokens": 80340,
+        "task_cost_usd": 0.007831,
+        "session_cost_usd": 0.007831
+      }
+    },
+    {
+      "turn": 16,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python tests/runtests.py ordering -v 2"
+      },
+      "metrics_snapshot": {
+        "calls": 16,
+        "prompt_tokens": 78077,
+        "cache_hit_tokens": 68864,
+        "cache_miss_tokens": 9213,
+        "cache_hit_rate_pct": 88.2,
+        "completion_tokens": 10569,
+        "total_tokens": 88646,
+        "task_cost_usd": 0.00793,
+        "session_cost_usd": 0.00793
+      }
+    },
+    {
+      "turn": 17,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python tests/runtests.py ordering expressions -v 1"
+      },
+      "metrics_snapshot": {
+        "calls": 17,
+        "prompt_tokens": 87082,
+        "cache_hit_tokens": 77056,
+        "cache_miss_tokens": 10026,
+        "cache_hit_rate_pct": 88.49,
+        "completion_tokens": 11156,
+        "total_tokens": 98238,
+        "task_cost_usd": 0.008429,
+        "session_cost_usd": 0.008429
+      }
+    },
+    {
+      "turn": 18,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && git diff --check && git diff"
+      },
+      "metrics_snapshot": {
+        "calls": 18,
+        "prompt_tokens": 96331,
+        "cache_hit_tokens": 86016,
+        "cache_miss_tokens": 10315,
+        "cache_hit_rate_pct": 89.29,
+        "completion_tokens": 11305,
+        "total_tokens": 107636,
+        "task_cost_usd": 0.008588,
+        "session_cost_usd": 0.008588
+      }
+    },
+    {
+      "turn": 19,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && cp django/db/models/sql/compiler.py /tmp/compiler.fixed && python - <<'PY'\nfrom pathlib import Path\np = Path('django/db/models/sql/compiler.py')\ns = p.read_text()\ns = s.replace(\"re.compile(r'(.*)\\\\s(ASC|DESC)(.*)', re.MULTILINE | re.DOTALL)\", \"re.compile(r'(.*)\\\\s(ASC|DESC)(.*)')\")\np.write_text(s)\nPY\npython tests/runtests.py ordering.tests.OrderingTests.test_order_by_multiline_rawsql -v 1; status=$?; cp /tmp/compiler.fixed django/db/models/sql/compiler.py; exit $status"
+      },
+      "metrics_snapshot": {
+        "calls": 19,
+        "prompt_tokens": 106215,
+        "cache_hit_tokens": 95232,
+        "cache_miss_tokens": 10983,
+        "cache_hit_rate_pct": 89.66,
+        "completion_tokens": 11960,
+        "total_tokens": 118175,
+        "task_cost_usd": 0.009109,
+        "session_cost_usd": 0.009109
+      }
+    },
+    {
+      "turn": 20,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && git diff --check && git diff"
+      },
+      "metrics_snapshot": {
+        "calls": 20,
+        "prompt_tokens": 116454,
+        "cache_hit_tokens": 105088,
+        "cache_miss_tokens": 11366,
+        "cache_hit_rate_pct": 90.24,
+        "completion_tokens": 12524,
+        "total_tokens": 128978,
+        "task_cost_usd": 0.009535,
+        "session_cost_usd": 0.009535
+      }
+    },
+    {
+      "turn": 21,
+      "action": "run_shell_command",
+      "args": {
+        "command": "cd /testbed && python tests/runtests.py ordering expressions -v 1"
+      },
+      "metrics_snapshot": {
+        "calls": 21,
+        "prompt_tokens": 127214,
+        "cache_hit_tokens": 115200,
+        "cache_miss_tokens": 12014,
+        "cache_hit_rate_pct": 90.56,
+        "completion_tokens": 12557,
+        "total_tokens": 139771,
+        "task_cost_usd": 0.009682,
+        "session_cost_usd": 0.009682
+      }
+    },
+    {
+      "turn": 22,
+      "action": "finish_task",
+      "args": {},
+      "metrics_snapshot": {
+        "calls": 22,
+        "prompt_tokens": 138236,
+        "cache_hit_tokens": 125952,
+        "cache_miss_tokens": 12284,
+        "cache_hit_rate_pct": 91.11,
+        "completion_tokens": 12587,
+        "total_tokens": 150823,
+        "task_cost_usd": 0.009773,
+        "session_cost_usd": 0.009773
+      }
+    }
+  ]
+}

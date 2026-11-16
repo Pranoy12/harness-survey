@@ -12,7 +12,7 @@ TARGET_QUOTAS = {
     "pytest-dev/pytest": 17,    # All available in Lite
     "pylint-dev/pylint": 6,     # All available in Lite
     "mwaskom/seaborn": 4,       # All available in Lite
-    # "django/django": 14         # Lightweight slice (forms, utils, validators)
+    "django/django": 4          # Lightweight slice (forms, utils, validators)
 }
 
 

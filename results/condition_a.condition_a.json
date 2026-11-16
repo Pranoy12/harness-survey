@@ -1,12 +1,15 @@
 {
-    "total_instances": 36,
-    "submitted_instances": 36,
-    "completed_instances": 31,
+    "total_instances": 40,
+    "submitted_instances": 40,
+    "completed_instances": 34,
     "resolved_instances": 13,
-    "unresolved_instances": 18,
-    "empty_patch_instances": 5,
+    "unresolved_instances": 21,
+    "empty_patch_instances": 6,
     "error_instances": 0,
     "completed_ids": [
+        "django__django-10914",
+        "django__django-10924",
+        "django__django-11001",
         "mwaskom__seaborn-2848",
         "mwaskom__seaborn-3010",
         "mwaskom__seaborn-3190",
@@ -41,6 +44,7 @@
     ],
     "incomplete_ids": [],
     "empty_patch_ids": [
+        "django__django-11019",
         "psf__requests-2148",
         "pylint-dev__pylint-7080",
         "pytest-dev__pytest-11148",
@@ -48,6 +52,10 @@
         "pytest-dev__pytest-5495"
     ],
     "submitted_ids": [
+        "django__django-10914",
+        "django__django-10924",
+        "django__django-11001",
+        "django__django-11019",
         "mwaskom__seaborn-2848",
         "mwaskom__seaborn-3010",
         "mwaskom__seaborn-3190",
@@ -101,6 +109,9 @@
         "pytest-dev__pytest-9359"
     ],
     "unresolved_ids": [
+        "django__django-10914",
+        "django__django-10924",
+        "django__django-11001",
         "pallets__flask-4045",
         "pallets__flask-5063",
         "psf__requests-1963",

@@ -1,4 +1,8 @@
 condition,instance_id,resolved,non_empty_patch,finished_by_tool,turns_taken,total_cmds,first_edit_turn,post_fix_overhead,redundancy_pct,files_touched,lines_changed,touched_docs,prompt_tokens,completion_tokens,cache_hit_tokens,cache_hit_pct,cost_usd
+condition_a,django__django-10914,0,1,1,24,29,11,9,69.44,3,19,0,326742,7424,310528,95.04,0.00782
+condition_a,django__django-10924,0,1,1,23,22,16,1,36.0,1,13,0,289538,7914,273536,94.47,0.00797
+condition_a,django__django-11001,0,1,1,19,18,12,3,72.73,2,23,0,221448,7974,209024,94.39,0.00728
+condition_a,django__django-11019,0,0,0,25,20,,,64.29,0,0,0,355237,16926,315264,88.75,0.0171
 condition_a,mwaskom__seaborn-2848,1,1,1,25,24,24,1,51.85,3,15,0,402619,6940,378240,93.94,0.00896
 condition_a,mwaskom__seaborn-3010,1,1,1,12,16,5,4,40.0,2,13,0,89608,4114,74752,83.42,0.00492
 condition_a,mwaskom__seaborn-3190,1,1,0,25,38,21,4,66.67,1,2,0,448148,8153,424704,94.77,0.00968
@@ -35,6 +39,10 @@ condition_a,pytest-dev__pytest-7490,0,1,0,25,28,22,0,79.17,1,15,0,445877,23180,4
 condition_a,pytest-dev__pytest-8365,0,1,1,23,22,18,5,58.82,1,8,0,336085,13296,320896,95.48,0.01122
 condition_a,pytest-dev__pytest-8906,0,1,1,19,24,7,3,40.0,3,21,0,262665,8376,247424,94.2,0.00805
 condition_a,pytest-dev__pytest-9359,1,1,1,22,25,14,6,52.38,2,18,0,273990,8184,258432,94.32,0.00802
+condition_b_codeblock,django__django-10914,0,1,1,7,6,4,2,45.45,2,8,0,55898,10319,42496,76.02,0.00833
+condition_b_codeblock,django__django-10924,0,1,0,25,19,21,0,52.17,4,21,0,270716,25803,251648,92.96,0.0191
+condition_b_codeblock,django__django-11001,0,1,1,22,19,11,3,71.43,2,11,0,138236,12587,125952,91.11,0.00977
+condition_b_codeblock,django__django-11019,0,0,0,25,19,,,70.59,0,0,0,232921,16750,213760,91.77,0.01357
 condition_b_codeblock,mwaskom__seaborn-2848,1,1,1,25,20,20,2,72.22,2,11,0,336062,12517,309120,91.98,0.01248
 condition_b_codeblock,mwaskom__seaborn-3010,1,1,1,16,13,9,3,53.33,2,16,0,145784,11075,129280,88.68,0.00951
 condition_b_codeblock,mwaskom__seaborn-3190,0,1,0,25,22,24,1,64.71,2,16,0,366079,14168,339840,92.83,0.01346
@@ -71,6 +79,10 @@ condition_b_codeblock,pytest-dev__pytest-7490,0,1,0,25,16,20,0,76.92,1,12,0,2992
 condition_b_codeblock,pytest-dev__pytest-8365,1,1,1,23,15,17,3,66.67,2,41,0,130453,22939,119040,91.25,0.01583
 condition_b_codeblock,pytest-dev__pytest-8906,0,1,1,12,8,7,5,50.0,2,10,0,34387,3077,28416,82.64,0.00283
 condition_b_codeblock,pytest-dev__pytest-9359,1,1,1,25,13,16,9,57.14,1,3,0,235223,22746,219776,93.43,0.01662
+condition_c_compacted,django__django-10914,0,0,0,25,46,25,0,77.42,0,0,0,98021,6870,16512,16.85,0.0164
+condition_c_compacted,django__django-10924,0,1,0,25,32,23,2,75.38,1,8,0,99863,7958,13824,13.84,0.01772
+condition_c_compacted,django__django-11001,0,1,0,25,27,23,2,80.77,1,2,0,84494,7251,23680,28.03,0.01354
+condition_c_compacted,django__django-11019,0,0,0,25,25,,,80.77,0,0,0,113572,10579,19200,16.91,0.02056
 condition_c_compacted,mwaskom__seaborn-2848,0,0,0,25,30,,,80.0,0,0,0,78149,3869,15488,19.82,0.01177
 condition_c_compacted,mwaskom__seaborn-3010,1,1,0,25,26,25,0,79.31,1,2,0,95842,5520,43904,45.81,0.01123
 condition_c_compacted,mwaskom__seaborn-3190,0,1,0,25,28,25,0,80.0,1,8,0,108874,4254,23296,21.4,0.01546
